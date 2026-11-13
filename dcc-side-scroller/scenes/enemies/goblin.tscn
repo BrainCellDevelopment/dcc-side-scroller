@@ -1,0 +1,40 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/goblin.gd" id="1_gob"]
+[ext_resource type="PackedScene" path="res://scenes/ui/health_bar.tscn" id="2_hb"]
+
+[sub_resource type="RectangleShape2D" id="shape_body"]
+size = Vector2(12, 20)
+
+[sub_resource type="RectangleShape2D" id="shape_attack"]
+size = Vector2(16, 16)
+
+[node name="Goblin" type="CharacterBody2D" groups=["enemies"]]
+collision_layer = 12
+collision_mask = 3
+script = ExtResource("1_gob")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -10)
+shape = SubResource("shape_body")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="AttackArea" type="Area2D" parent="Visual"]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Visual/AttackArea"]
+position = Vector2(12, -10)
+shape = SubResource("shape_attack")
+disabled = true
+
+[node name="LedgeCheck" type="RayCast2D" parent="Visual"]
+position = Vector2(10, -2)
+enabled = true
+target_position = Vector2(0, 12)
+collision_mask = 1
+
+[node name="HealthBar" parent="." instance=ExtResource("2_hb")]
+position = Vector2(0, -32)

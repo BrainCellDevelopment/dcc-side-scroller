@@ -1,0 +1,33 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
+
+[sub_resource type="RectangleShape2D" id="shape_body"]
+size = Vector2(14, 30)
+
+[sub_resource type="RectangleShape2D" id="shape_attack"]
+size = Vector2(26, 26)
+
+[node name="Player" type="CharacterBody2D" groups=["player"]]
+collision_layer = 2
+collision_mask = 9
+script = ExtResource("1_player")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -15)
+shape = SubResource("shape_body")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="AttackArea" type="Area2D" parent="Visual"]
+collision_layer = 0
+collision_mask = 4
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Visual/AttackArea"]
+position = Vector2(20, -16)
+shape = SubResource("shape_attack")
+disabled = true
+
+[node name="InvulnTimer" type="Timer" parent="."]
+wait_time = 0.8
+one_shot = true

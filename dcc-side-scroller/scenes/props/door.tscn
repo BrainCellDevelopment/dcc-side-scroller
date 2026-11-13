@@ -1,0 +1,44 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/props/door.gd" id="1_door"]
+
+[sub_resource type="RectangleShape2D" id="shape_body"]
+size = Vector2(18, 104)
+
+[sub_resource type="RectangleShape2D" id="shape_zone"]
+size = Vector2(150, 100)
+
+[node name="Door" type="Node2D"]
+script = ExtResource("1_door")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Body" type="StaticBody2D" parent="."]
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Body"]
+position = Vector2(0, -52)
+shape = SubResource("shape_body")
+
+[node name="Zone" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Zone"]
+position = Vector2(0, -50)
+shape = SubResource("shape_zone")
+
+[node name="Prompt" type="Label" parent="."]
+z_index = 50
+z_as_relative = false
+offset_left = -70.0
+offset_top = -128.0
+offset_right = 70.0
+offset_bottom = -116.0
+mouse_filter = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 8
+text = "E: open"
+horizontal_alignment = 1

@@ -1,0 +1,533 @@
+extends Node2D
+
+enum Phase { PLAY, ARENA, HANDOFF, CHASE, AFTERMATH, COMPLETE }
+
+const GOBLIN_SCENE: PackedScene = preload("res://scenes/enemies/goblin.tscn")
+const ENGINEER_NAME: String = "Goblin Engineer"
+const CHASE_CHECKPOINT: int = 7
+const STAGE_CHASE: int = 1
+const STAGE_AFTERMATH: int = 2
+const CHASE_PLAYER_OFFSET: float = 300.0
+const INTRO_DELAY: float = 0.8
+const INTRO_RUMBLE: float = 1.2
+const INTRO_MARGIN: float = 140.0
+const FOCUS_ON_FLOOR: float = 40.0
+const KILLS_FOR_PEST: int = 10
+const LOOT_BOX_COUNT: int = 2
+const DOZER_ROUNDS: int = 3
+const HATCH_HINT: String = "Wait for the hatch to glow, then land on it"
+const ACHIEVEMENTS: Dictionary = {
+	"welcome": ["Still Breathing", "The world ended and you kept your cat and your boxers. Pants were optional, apparently."],
+	"first_goblin": ["Hands-On Learner", "You punched a goblin until it stopped. Its pineapple on a stick survived, and judges you."],
+	"engineer_down": ["Performance Review", "The Engineer's work was sloppy and so was his knife. He has gone to get a bigger tool."],
+	"dozer_stomp": ["Hood Ornament", "You jumped on heavy machinery while it was moving. Your insurance has been cancelled."],
+	"dozer_down": ["Warranty Void", "Steam power: unstable, loud, and now all over the walls. Loot boxes are waiting."],
+	"safe_room": ["Indoor Voice", "Nothing can attack you in here. Enjoy the rug. It is the nicest thing you own now."],
+	"mind_gap": ["Mind The Gap", "A hole in the ground tried to eat you. You hopped it like an overdue library book."],
+	"first_hurt": ["Learning Experience", "You took damage. The tutorial calls this feedback. The goblin calls it lunch."],
+	"rebar": ["Poke Averse", "You went over the sharp metal instead of through it. Doctors hate this one trick."],
+	"crater": ["Crater Tourist", "You walked into a hole in the world on purpose. Reviews are mixed."],
+	"stairs": ["Stairway To Somewhere Worse", "Nineteen flights down and nobody offered an elevator. Typical."],
+	"thrower_down": ["Rock, Paper, Fist", "You punched the guy throwing rocks. The rocks declined to comment."],
+	"hall_door": ["Door Policy", "The door was locked until the goblins stopped objecting. They stopped."],
+	"ambush": ["Surprise Party", "Three goblins dropped in without an invitation. You brought your own fists."],
+	"secret_route": ["Off The Beaten Path", "You found the high road. The goblins down below are filing a complaint."],
+	"gauntlet": ["Sharp Dressed Feet", "You crossed a corridor designed by someone who really hates shoes."],
+	"pest_control": ["Pest Control", "Ten goblins down. The rest have started talking about a union."],
+	"reinforcements": ["Management Escalation", "The Engineer called for backup. Backup arrived through the ceiling, unhappy."],
+}
+
+var section: int = 0
+var complete: bool = false
+
+var _phase: Phase = Phase.PLAY
+var _boxes_opened: int = 0
+var _talked: bool = false
+var _hall_goblins: int = 0
+var _kills: int = 0
+var _rounds_cleared: int = 0
+var _reinforced: bool = false
+var _intro_started: bool = false
+var _focus_y: float = 0.0
+var _bg_section: int = -1
+var _hint_owner: Area2D = null
+var _section_areas: Dictionary = {}
+var _seen: Dictionary = {}
+var _shake_strength: float = 0.0
+var _shake_time: float = 0.0
+var _shake_total: float = 0.01
+
+@onready var _player: CharacterBody2D = $Player
+@onready var _camera: Camera2D = $Camera2D
+@onready var _background: CanvasLayer = $Background
+@onready var _engineer: CharacterBody2D = $Engineer
+@onready var _dozer: AnimatableBody2D = $Dozer
+@onready var _hud: CanvasLayer = $HUD
+@onready var _goblins: Node2D = $Goblins
+@onready var _triggers: Node2D = $Triggers
+@onready var _arena_left_body: Node2D = $Walls/ArenaLeftWall
+@onready var _arena_right_body: Node2D = $Walls/ArenaRightWall
+@onready var _arena_left: CollisionShape2D = $Walls/ArenaLeftWall/CollisionShape2D
+@onready var _arena_right: CollisionShape2D = $Walls/ArenaRightWall/CollisionShape2D
+@onready var _scroll_start: Marker2D = $Markers/ScrollStart
+@onready var _chase_end: Marker2D = $Markers/ChaseEnd
+@onready var _safe_zone: Area2D = $Guildhall/SafeZone
+@onready var _mordecai: Area2D = $Guildhall/Mordecai
+@onready var _exit_zone: Area2D = $Guildhall/ExitZone
+@onready var _hall_door: Node2D = $Doors/HallDoor
+@onready var _guild_entry_door: Node2D = $Doors/GuildEntryDoor
+@onready var _guild_exit_door: Node2D = $Doors/GuildExitDoor
+@onready var _boxes: Node2D = $Guildhall/LootBoxes
+
+
+func _ready() -> void:
+	_player.connect("died", _on_player_died)
+	_engineer.connect("defeated", _on_engineer_defeated)
+	_dozer.connect("round_cleared", _on_dozer_round_cleared)
+	_dozer.connect("destroyed", _on_dozer_destroyed)
+	_dozer.connect("pass_finished", _on_dozer_pass_finished)
+	_dozer.connect("turn_finished", _on_dozer_turn_finished)
+	if _dozer.has_signal("vulnerable_changed"):
+		_dozer.connect("vulnerable_changed", _on_vulnerable_changed)
+	Game.screen_shake.connect(_on_screen_shake)
+	Game.player_health_changed.connect(_on_player_health_changed)
+	Game.boss_health_changed.connect(_on_boss_health_changed)
+	for goblin: Node in _goblins.get_children():
+		_watch_goblin(goblin)
+	for node: Node in _triggers.get_children():
+		var area: Area2D = node as Area2D
+		if area == null:
+			continue
+		area.body_entered.connect(_on_trigger_entered.bind(area))
+		area.body_exited.connect(_on_trigger_exited.bind(area))
+		if str(area.get_meta("kind")) == "section":
+			_section_areas[int(str(area.get_meta("arg")))] = area
+	_safe_zone.body_entered.connect(_on_safe_zone_entered)
+	_safe_zone.body_exited.connect(_on_safe_zone_exited)
+	for box: Node in _boxes.get_children():
+		box.connect("opened", _on_loot_box_opened)
+	_mordecai.connect("dialogue_finished", _on_mordecai_done)
+	_guild_exit_door.connect("opened", _try_exit)
+	_exit_zone.body_entered.connect(_on_exit_entered)
+	_dozer.visible = false
+	_begin()
+	_setup_doors()
+
+
+func _physics_process(delta: float) -> void:
+	var view: Vector2 = _view_size()
+	var half: Vector2 = view * 0.5
+	var target: Vector2 = _camera.global_position
+	match _phase:
+		Phase.ARENA, Phase.HANDOFF:
+			if _phase == Phase.HANDOFF and _intro_started:
+				var left_edge: float = _scroll_start.global_position.x
+				_player.global_position.x = clampf(_player.global_position.x, left_edge + 8.0, left_edge + view.x - 8.0)
+			target = Vector2(_scroll_start.global_position.x + half.x, float(_camera.limit_bottom) - half.y)
+		Phase.CHASE:
+			var left: float = _dozer.get("scroll_x")
+			_dozer.set("max_scroll_x", _chase_end.global_position.x - view.x)
+			_player.global_position.x = clampf(_player.global_position.x, left + 8.0, left + view.x - 8.0)
+			target = Vector2(left + half.x, float(_camera.limit_bottom) - half.y)
+		_:
+			target = _follow_target(view)
+	_camera.global_position = target
+	_update_shake(delta)
+
+
+func _view_size() -> Vector2:
+	return get_viewport().get_visible_rect().size / _camera.zoom
+
+
+func _follow_target(view: Vector2) -> Vector2:
+	var py: float = _player.global_position.y
+	if _player.is_on_floor():
+		_focus_y = py - FOCUS_ON_FLOOR
+	else:
+		var low: float = view.y * 0.28
+		var high: float = view.y * 0.3
+		if py > _focus_y + low:
+			_focus_y = py - low
+		elif py < _focus_y - high:
+			_focus_y = py + high
+	return Vector2(_player.global_position.x, _focus_y)
+
+
+func _update_shake(delta: float) -> void:
+	if _shake_time <= 0.0:
+		_camera.offset = Vector2.ZERO
+		return
+	_shake_time -= delta
+	var decay: float = clampf(_shake_time / _shake_total, 0.0, 1.0)
+	_camera.offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * _shake_strength * decay
+
+
+func _on_screen_shake(strength: float, duration: float) -> void:
+	_shake_strength = strength
+	_shake_time = duration
+	_shake_total = maxf(duration, 0.01)
+
+
+func _snap_camera() -> void:
+	_focus_y = _player.global_position.y - FOCUS_ON_FLOOR
+	_camera.global_position = _follow_target(_view_size())
+	_camera.reset_smoothing()
+
+
+func _begin() -> void:
+	if Game.checkpoint_index < 0:
+		_enter_section(0)
+		_unlock("welcome")
+		_snap_camera()
+		return
+	var pos: Vector2 = Game.checkpoint_position
+	_player.global_position = pos + Vector2(0.0, -2.0)
+	_prune_before(pos.x)
+	_seen[_section_at(pos.x)] = true
+	_enter_section(_section_at(pos.x))
+	match Game.checkpoint_stage:
+		STAGE_CHASE:
+			_begin_intro()
+		STAGE_AFTERMATH:
+			_engineer.queue_free()
+			_dozer.queue_free()
+			_phase = Phase.AFTERMATH
+			_enter_section(section)
+	_snap_camera()
+
+
+func _prune_before(x: float) -> void:
+	for node: Node in _goblins.get_children():
+		var goblin: Node2D = node as Node2D
+		if goblin != null and goblin.global_position.x < x - 64.0:
+			goblin.queue_free()
+
+
+func _section_at(x: float) -> int:
+	for index: int in _section_areas.keys():
+		var area: Area2D = _section_areas[index] as Area2D
+		if x >= float(area.get_meta("x0")) and x < float(area.get_meta("x1")):
+			return index
+	return 0
+
+
+func _enter_section(index: int) -> void:
+	if complete:
+		return
+	if _phase >= Phase.CHASE:
+		index = maxi(index, 5)
+	var area: Area2D = _section_areas[index] as Area2D
+	section = index
+	if index != _bg_section:
+		_bg_section = index
+		_background.call("set_style", int(area.get_meta("bg")))
+	if _phase == Phase.PLAY or _phase == Phase.AFTERMATH:
+		_camera.limit_left = int(area.get_meta("l"))
+		_camera.limit_right = int(area.get_meta("r"))
+		_camera.limit_top = int(area.get_meta("t"))
+		_camera.limit_bottom = int(area.get_meta("b"))
+		if _phase == Phase.AFTERMATH and index == 5:
+			_camera.limit_right = int((_section_areas[6] as Area2D).get_meta("r"))
+	var title: String = str(area.get_meta("title"))
+	if not title.is_empty() and not _seen.has(index):
+		_hud.call("show_banner", title, 2.0)
+	_seen[index] = true
+
+
+func _unlock(id: String) -> void:
+	var entry: Array = ACHIEVEMENTS[id]
+	Game.unlock_achievement(id, str(entry[0]), str(entry[1]))
+
+
+func _on_trigger_entered(body: Node2D, area: Area2D) -> void:
+	if body != _player:
+		return
+	match str(area.get_meta("kind")):
+		"section":
+			_enter_section(int(str(area.get_meta("arg"))))
+		"hint":
+			_hint_owner = area
+			Game.set_hint(str(area.get_meta("arg")))
+		"ach":
+			_unlock(str(area.get_meta("arg")))
+			area.set_deferred("monitoring", false)
+		"ambush":
+			_ambush(area)
+			area.set_deferred("monitoring", false)
+		"arena":
+			_start_arena()
+			area.set_deferred("monitoring", false)
+
+
+func _on_trigger_exited(body: Node2D, area: Area2D) -> void:
+	if body == _player and _hint_owner == area:
+		_hint_owner = null
+		Game.set_hint("")
+
+
+func _watch_goblin(goblin: Node) -> void:
+	goblin.connect("died", _on_goblin_died)
+
+
+func _spawn_goblin(pos: Vector2) -> void:
+	var goblin: Node2D = GOBLIN_SCENE.instantiate() as Node2D
+	goblin.position = pos
+	_goblins.add_child.call_deferred(goblin)
+	_watch_goblin(goblin)
+
+
+func _ambush(area: Area2D) -> void:
+	var parts: PackedStringArray = str(area.get_meta("arg")).split(",")
+	var y: float = float(parts[parts.size() - 1])
+	for i: int in range(parts.size() - 1):
+		_spawn_goblin(Vector2(float(parts[i]), y))
+	_unlock("ambush")
+	Game.shake(3.0, 0.3)
+
+
+func _on_goblin_died(enemy: Node) -> void:
+	_kills += 1
+	_unlock("first_goblin")
+	var variant: Variant = enemy.get("variant")
+	if variant != null and int(variant) == 1:
+		_unlock("thrower_down")
+	if _kills >= KILLS_FOR_PEST:
+		_unlock("pest_control")
+
+
+func _on_player_health_changed(current: int, maximum: int) -> void:
+	if current < maximum:
+		_unlock("first_hurt")
+
+
+func _start_arena() -> void:
+	if _phase != Phase.PLAY:
+		return
+	_phase = Phase.ARENA
+	var area: Area2D = _section_areas[4] as Area2D
+	_camera.limit_left = int(_scroll_start.global_position.x)
+	_camera.limit_right = int(_chase_end.global_position.x)
+	_camera.limit_top = int(area.get_meta("t"))
+	_camera.limit_bottom = int(area.get_meta("b"))
+	_arena_left.set_deferred("disabled", false)
+	_arena_right.set_deferred("disabled", false)
+	_engineer.set("arena_left", _arena_left_body.global_position.x + 90.0)
+	_engineer.set("arena_right", _arena_right_body.global_position.x - 12.0)
+	_engineer.call("activate")
+	_hud.call("show_banner", "GOBLIN ENGINEER", 2.0)
+
+
+func _on_boss_health_changed(boss_name: String, current: int, maximum: int) -> void:
+	if boss_name != ENGINEER_NAME or _reinforced or _phase != Phase.ARENA:
+		return
+	if current <= 0 or current * 2 > maximum:
+		return
+	_reinforced = true
+	var center: float = _scroll_start.global_position.x + 320.0
+	var y: float = _scroll_start.global_position.y - 220.0
+	_spawn_goblin(Vector2(center - 90.0, y))
+	_spawn_goblin(Vector2(center + 90.0, y))
+	_unlock("reinforcements")
+
+
+func _on_engineer_defeated(_engineer_node: Node) -> void:
+	if _phase != Phase.ARENA:
+		return
+	_phase = Phase.HANDOFF
+	_unlock("engineer_down")
+	_engineer.set("scripted", true)
+	Game.clear_boss()
+	var floor_y: float = _scroll_start.global_position.y
+	Game.set_checkpoint(CHASE_CHECKPOINT, Vector2(_scroll_start.global_position.x + CHASE_PLAYER_OFFSET, floor_y), STAGE_CHASE)
+	var start: Vector2 = _engineer.global_position
+	var run_to: Vector2 = Vector2(minf(_scroll_start.global_position.x + _view_size().x + 40.0, _arena_right_body.global_position.x - 24.0), start.y)
+	var visual: Node2D = _engineer.get_node("Visual") as Node2D
+	visual.scale.x = -1.0 if run_to.x < start.x else 1.0
+	_engineer.call("set_pose", "walk")
+	var tween: Tween = create_tween()
+	tween.tween_property(_engineer, "global_position", run_to, absf(run_to.x - start.x) / 170.0)
+	tween.tween_callback(_begin_intro)
+
+
+func _begin_intro() -> void:
+	_phase = Phase.HANDOFF
+	_intro_started = true
+	if is_instance_valid(_engineer):
+		_engineer.queue_free()
+	var area: Area2D = _section_areas[4] as Area2D
+	_camera.position_smoothing_enabled = false
+	_camera.limit_left = int(_scroll_start.global_position.x)
+	_camera.limit_right = int(_chase_end.global_position.x)
+	_camera.limit_top = int(area.get_meta("t"))
+	_camera.limit_bottom = int(area.get_meta("b"))
+	_arena_left.set_deferred("disabled", false)
+	_arena_right.set_deferred("disabled", false)
+	var floor_y: float = _scroll_start.global_position.y
+	Game.set_checkpoint(CHASE_CHECKPOINT, Vector2(_scroll_start.global_position.x + CHASE_PLAYER_OFFSET, floor_y), STAGE_CHASE)
+	Game.set_hint("")
+	var tween: Tween = create_tween()
+	tween.tween_interval(INTRO_DELAY)
+	tween.tween_callback(_intro_rumble)
+	tween.tween_interval(INTRO_RUMBLE)
+	tween.tween_callback(_intro_charge_in)
+
+
+func _intro_rumble() -> void:
+	if _phase != Phase.HANDOFF:
+		return
+	Game.shake(2.0, INTRO_RUMBLE)
+	_hud.call("show_banner", "SOMETHING BIG IS COMING", 1.6)
+
+
+func _intro_charge_in() -> void:
+	if _phase != Phase.HANDOFF:
+		return
+	var left: float = _scroll_start.global_position.x
+	_dozer.call("set_driver", true)
+	_dozer.call("roar_pass", left + _view_size().x + INTRO_MARGIN, left - INTRO_MARGIN, _player)
+
+
+func _on_dozer_pass_finished() -> void:
+	if _phase == Phase.HANDOFF:
+		_dozer.call("turn_around", _scroll_start.global_position.x + 10.0)
+
+
+func _on_dozer_turn_finished() -> void:
+	if _phase == Phase.HANDOFF:
+		_begin_chase()
+		_hud.call("show_banner", "GOBLIN MURDER DOZER", 2.0)
+
+
+func _begin_chase() -> void:
+	_phase = Phase.CHASE
+	if is_instance_valid(_engineer):
+		_engineer.queue_free()
+	var area: Area2D = _section_areas[5] as Area2D
+	section = 5
+	_bg_section = 5
+	_background.call("set_style", int(area.get_meta("bg")))
+	_camera.position_smoothing_enabled = false
+	_camera.limit_left = int(_scroll_start.global_position.x)
+	_camera.limit_right = int(_chase_end.global_position.x)
+	_camera.limit_top = int(area.get_meta("t"))
+	_camera.limit_bottom = int(area.get_meta("b"))
+	_arena_left.set_deferred("disabled", true)
+	_arena_right.set_deferred("disabled", true)
+	var floor_y: float = _scroll_start.global_position.y
+	Game.set_checkpoint(CHASE_CHECKPOINT, Vector2(_scroll_start.global_position.x + CHASE_PLAYER_OFFSET, floor_y), STAGE_CHASE)
+	Game.set_hint(HATCH_HINT)
+	_dozer.call("start", _player, _scroll_start.global_position.x)
+
+
+func _on_vulnerable_changed(is_vulnerable: bool) -> void:
+	if _phase != Phase.CHASE:
+		return
+	if is_vulnerable:
+		Game.set_hint("Now! Land on the glowing hatch!")
+	elif _rounds_cleared == 0:
+		Game.set_hint(HATCH_HINT)
+	else:
+		Game.set_hint("")
+
+
+func _on_dozer_round_cleared(round_number: int) -> void:
+	_rounds_cleared = round_number
+	Game.set_hint("")
+	if round_number == 1:
+		_unlock("dozer_stomp")
+	if round_number < DOZER_ROUNDS:
+		_hud.call("show_banner", "ROUND %d" % (round_number + 1), 1.2)
+
+
+func _on_dozer_destroyed() -> void:
+	if _phase != Phase.CHASE:
+		return
+	_phase = Phase.AFTERMATH
+	_camera.position_smoothing_enabled = true
+	_camera.limit_right = int((_section_areas[6] as Area2D).get_meta("r"))
+	Game.set_hint("Head right.")
+	_unlock("dozer_down")
+
+
+func _on_safe_zone_entered(body: Node2D) -> void:
+	if body != _player:
+		return
+	Game.set_safe_zone(true)
+	Game.set_hint("")
+	_unlock("safe_room")
+
+
+func _on_safe_zone_exited(body: Node2D) -> void:
+	if body == _player:
+		Game.set_safe_zone(false)
+
+
+func _on_mordecai_done() -> void:
+	_talked = true
+	for box: Node in _boxes.get_children():
+		box.call("summon", _player, _mordecai.global_position + Vector2(0.0, -30.0))
+	_check_exit_ready()
+
+
+func _on_loot_box_opened(_tier: String) -> void:
+	_boxes_opened += 1
+	_check_exit_ready()
+
+
+func _check_exit_ready() -> void:
+	if not _talked or _boxes_opened < LOOT_BOX_COUNT or _guild_exit_door.get("is_open"):
+		return
+	Game.set_hint("The door is open.")
+	_guild_exit_door.call("unlock")
+	_guild_exit_door.call("open")
+
+
+func _try_exit() -> void:
+	if not bool(_guild_exit_door.get("is_open")):
+		return
+	for body: Node2D in _exit_zone.get_overlapping_bodies():
+		_on_exit_entered(body)
+
+
+func _on_exit_entered(body: Node2D) -> void:
+	if body != _player or complete or not bool(_guild_exit_door.get("is_open")):
+		return
+	_phase = Phase.COMPLETE
+	complete = true
+	section = 7
+	Game.set_hint("")
+	Game.clear_checkpoint()
+	_hud.call("show_banner", "LEVEL 0 COMPLETE\nLevel 1 coming soon", 0.0)
+
+
+func _setup_doors() -> void:
+	var hall: Area2D = _section_areas[2] as Area2D
+	var x0: float = float(hall.get_meta("x0"))
+	var x1: float = float(hall.get_meta("x1"))
+	if Game.checkpoint_index >= 3:
+		_hall_door.call("open", false)
+	else:
+		for node: Node in _goblins.get_children():
+			var goblin: Node2D = node as Node2D
+			if goblin != null and goblin.global_position.x >= x0 and goblin.global_position.x < x1:
+				_hall_goblins += 1
+				goblin.connect("died", _on_hall_goblin_died)
+		if _hall_goblins == 0:
+			_hall_door.call("unlock")
+	if Game.checkpoint_index >= 8:
+		_guild_entry_door.call("open", false)
+
+
+func _on_hall_goblin_died(_enemy: Node) -> void:
+	_hall_goblins -= 1
+	if _hall_goblins > 0:
+		return
+	_hall_door.call("unlock")
+	_hall_door.call("open")
+
+
+func _on_player_died() -> void:
+	_hud.call("show_banner", "YOU DIED", 0.0)
+	await get_tree().create_timer(1.8).timeout
+	Game.reset_run()
+	get_tree().reload_current_scene()
