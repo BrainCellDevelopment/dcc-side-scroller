@@ -1,0 +1,55 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/props/mordecai.gd" id="1_mord"]
+[ext_resource type="Texture2D" path="res://assets/characters/mordecai.png" id="2_sheet"]
+
+[sub_resource type="RectangleShape2D" id="shape_zone"]
+size = Vector2(120, 60)
+
+[sub_resource type="StyleBoxFlat" id="style_speech"]
+bg_color = Color(0.05, 0.04, 0.08, 0.85)
+content_margin_left = 4.0
+content_margin_top = 2.0
+content_margin_right = 4.0
+content_margin_bottom = 2.0
+
+[node name="Mordecai" type="Area2D"]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("1_mord")
+sheet = ExtResource("2_sheet")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -30)
+shape = SubResource("shape_zone")
+
+[node name="Prompt" type="Label" parent="."]
+z_index = 50
+z_as_relative = false
+offset_left = -40.0
+offset_top = -56.0
+offset_right = 40.0
+offset_bottom = -44.0
+mouse_filter = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 8
+text = "E: talk"
+horizontal_alignment = 1
+
+[node name="Speech" type="Label" parent="."]
+visible = false
+z_index = 50
+z_as_relative = false
+offset_left = -110.0
+offset_top = -62.0
+offset_right = 110.0
+offset_bottom = -50.0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 8
+theme_override_styles/normal = SubResource("style_speech")
+horizontal_alignment = 1
+autowrap_mode = 3

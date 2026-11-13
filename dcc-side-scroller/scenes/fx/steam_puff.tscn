@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/fx/oneshot_fx.gd" id="1_fx"]
+[ext_resource type="Texture2D" path="res://assets/fx/steam_puff.png" id="2_sheet"]
+
+[node name="SteamPuff" type="Node2D"]
+z_index = 10
+script = ExtResource("1_fx")
+sheet = ExtResource("2_sheet")
+frame_size = Vector2i(24, 24)
+frame_count = 6
+fps = 8.0
+drift = Vector2(0, -14)

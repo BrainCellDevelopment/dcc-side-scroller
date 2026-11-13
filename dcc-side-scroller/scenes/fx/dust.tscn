@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/fx/oneshot_fx.gd" id="1_fx"]
+[ext_resource type="Texture2D" path="res://assets/fx/dust.png" id="2_sheet"]
+
+[node name="Dust" type="Node2D"]
+z_index = 10
+script = ExtResource("1_fx")
+sheet = ExtResource("2_sheet")
+frame_size = Vector2i(16, 16)
+frame_count = 5
+fps = 14.0
+drift = Vector2(0, -6)

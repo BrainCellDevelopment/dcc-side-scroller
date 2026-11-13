@@ -1,0 +1,57 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/dozer.gd" id="1_dozer"]
+[ext_resource type="Texture2D" path="res://assets/boss/dozer_body.png" id="2_body"]
+
+[sub_resource type="RectangleShape2D" id="shape_deck"]
+size = Vector2(84, 6)
+
+[sub_resource type="CircleShape2D" id="shape_wheel"]
+radius = 11.0
+
+[sub_resource type="RectangleShape2D" id="shape_grinder"]
+size = Vector2(80, 22)
+
+[sub_resource type="RectangleShape2D" id="shape_stomp"]
+size = Vector2(60, 12)
+
+[node name="Dozer" type="AnimatableBody2D"]
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("1_dozer")
+
+[node name="Deck" type="CollisionShape2D" parent="."]
+position = Vector2(-10, -27)
+shape = SubResource("shape_deck")
+one_way_collision = true
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Body" type="Sprite2D" parent="Visual"]
+texture = ExtResource("2_body")
+centered = false
+offset = Vector2(-56, -64)
+
+[node name="WheelArea" type="Area2D" parent="."]
+position = Vector2(44, -13)
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WheelArea"]
+shape = SubResource("shape_wheel")
+
+[node name="GrinderArea" type="Area2D" parent="."]
+position = Vector2(-10, -12)
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="GrinderArea"]
+shape = SubResource("shape_grinder")
+
+[node name="StompZone" type="Area2D" parent="."]
+position = Vector2(-12, -36)
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StompZone"]
+shape = SubResource("shape_stomp")

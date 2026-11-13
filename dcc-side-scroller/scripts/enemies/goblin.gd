@@ -1,0 +1,385 @@
+extends CharacterBody2D
+
+signal died(enemy: Node)
+
+enum State { PATROL, CHASE, ATTACK, HURT, DEAD }
+enum AttackPhase { WINDUP, ACTIVE, COOLDOWN }
+
+const SpriteUtil: GDScript = preload("res://scripts/util/sprite_util.gd")
+const GRUNT_SHEET: Texture2D = preload("res://assets/characters/goblin.png")
+const THROWER_SHEET: Texture2D = preload("res://assets/characters/goblin_thrower.png")
+const ROCK_SCENE: PackedScene = preload("res://scenes/enemies/rock.tscn")
+const FRAME: Vector2i = Vector2i(32, 32)
+const ANIMS: Dictionary = {
+	"idle": {"row": 0, "count": 4, "fps": 5.0, "loop": true},
+	"walk": {"row": 1, "count": 6, "fps": 10.0, "loop": true},
+	"windup": {"row": 2, "count": 2, "fps": 6.0, "loop": false},
+	"attack": {"row": 3, "count": 3, "fps": 16.0, "loop": false},
+	"hurt": {"row": 4, "count": 1, "fps": 1.0, "loop": false},
+	"die": {"row": 5, "count": 4, "fps": 10.0, "loop": false},
+}
+const THROW_WINDUP: float = 0.5
+const THROW_ACTIVE: float = 0.2
+const THROW_INTERVAL: float = 2.2
+const KEEP_DISTANCE: float = 70.0
+const THROW_RANGE_X: float = 230.0
+const THROW_RANGE_Y: float = 90.0
+const ROCK_SPEED_MAX: float = 380.0
+const HURT_TIME: float = 0.2
+const KNOCKBACK: Vector2 = Vector2(120.0, -90.0)
+const HEIGHT_TOLERANCE: float = 40.0
+
+@export_enum("Grunt", "Thrower") var variant: int = 0
+@export var max_health: int = 2
+@export var speed: float = 55.0
+@export var chase_speed: float = 80.0
+@export var detect_range: float = 150.0
+@export var attack_range: float = 18.0
+@export var attack_damage: int = 1
+@export var attack_windup: float = 0.35
+@export var attack_active: float = 0.15
+@export var attack_cooldown: float = 0.9
+@export var patrol_distance: float = 40.0
+
+var health: int = 0
+var state: State = State.PATROL
+var attack_phase: AttackPhase = AttackPhase.WINDUP
+var facing: int = 1
+var spawn_x: float = 0.0
+var state_timer: float = 0.0
+var engaged: bool = false
+var has_hit: bool = false
+var gravity_force: float = 980.0
+var sight_height: float = HEIGHT_TOLERANCE
+var throw_cooldown: float = 0.0
+var windup_time: float = 0.35
+var active_time: float = 0.15
+var sprite: AnimatedSprite2D = null
+var flash_tween: Tween = null
+
+@onready var visual: Node2D = $Visual
+@onready var attack_area: Area2D = $Visual/AttackArea
+@onready var attack_shape: CollisionShape2D = $Visual/AttackArea/CollisionShape2D
+@onready var body_shape: CollisionShape2D = $CollisionShape2D
+@onready var ledge_check: RayCast2D = $Visual/LedgeCheck
+@onready var health_bar: Node2D = $HealthBar
+
+
+func _ready() -> void:
+	gravity_force = float(ProjectSettings.get_setting("physics/2d/default_gravity"))
+	if variant == 1:
+		max_health = 2
+		speed = 40.0
+		chase_speed = 40.0
+		detect_range = 250.0
+		sight_height = THROW_RANGE_Y
+		windup_time = THROW_WINDUP
+		active_time = THROW_ACTIVE
+		throw_cooldown = 0.8
+	health = max_health
+	spawn_x = global_position.x
+	sprite = SpriteUtil.make_sprite(THROWER_SHEET if variant == 1 else GRUNT_SHEET, FRAME, ANIMS)
+	sprite.name = "Sprite"
+	visual.add_child(sprite)
+	visual.move_child(sprite, 0)
+	sprite.play("idle")
+	attack_area.body_entered.connect(_on_attack_body_entered)
+
+
+func _exit_tree() -> void:
+	_set_engaged(false)
+
+
+func _physics_process(delta: float) -> void:
+	if state == State.DEAD:
+		return
+	if not is_on_floor():
+		velocity.y += gravity_force * delta
+	throw_cooldown = maxf(throw_cooldown - delta, 0.0)
+	var player: CharacterBody2D = _get_player()
+	match state:
+		State.PATROL:
+			_patrol(player)
+		State.CHASE:
+			_chase(player)
+		State.ATTACK:
+			_attack(delta)
+		State.HURT:
+			_hurt(delta, player)
+	move_and_slide()
+	_update_animation()
+
+
+func take_damage(amount: int, from: Vector2) -> void:
+	if state == State.DEAD:
+		return
+	health = maxi(health - amount, 0)
+	health_bar.call("update_health", health, max_health)
+	attack_shape.set_deferred("disabled", true)
+	_flash()
+	if health <= 0:
+		_die()
+		return
+	var push: float = -float(facing)
+	if global_position.x > from.x:
+		push = 1.0
+	elif global_position.x < from.x:
+		push = -1.0
+	velocity = Vector2(push * KNOCKBACK.x, KNOCKBACK.y)
+	state = State.HURT
+	state_timer = HURT_TIME
+
+
+func _patrol(player: CharacterBody2D) -> void:
+	if player != null and _sees(player, 1.0, sight_height):
+		_set_engaged(true)
+		state = State.CHASE
+		return
+	var offset: float = global_position.x - spawn_x
+	if offset > patrol_distance:
+		_face(-1)
+	elif offset < -patrol_distance:
+		_face(1)
+	if _blocked_ahead():
+		if absf(offset) > patrol_distance:
+			spawn_x = global_position.x
+		_face(-facing)
+		if _blocked_ahead():
+			velocity.x = 0.0
+			return
+	velocity.x = float(facing) * speed
+
+
+func _chase(player: CharacterBody2D) -> void:
+	if variant == 1:
+		_chase_thrower(player)
+		return
+	if player == null or not _sees(player, 1.25, HEIGHT_TOLERANCE * 1.5):
+		_set_engaged(false)
+		state = State.PATROL
+		return
+	var dx: float = player.global_position.x - global_position.x
+	if absf(dx) > 2.0:
+		_face(1 if dx > 0.0 else -1)
+	if absf(dx) <= attack_range and is_on_floor():
+		_start_attack()
+		return
+	if _blocked_ahead() or absf(dx) <= 2.0:
+		velocity.x = 0.0
+	else:
+		velocity.x = float(facing) * chase_speed
+
+
+func _chase_thrower(player: CharacterBody2D) -> void:
+	if player == null or not _sees(player, 1.25, THROW_RANGE_Y * 1.5):
+		_set_engaged(false)
+		state = State.PATROL
+		velocity.x = 0.0
+		return
+	var dx: float = player.global_position.x - global_position.x
+	var dy: float = player.global_position.y - global_position.y
+	if absf(dx) > 2.0:
+		_face(1 if dx > 0.0 else -1)
+	if absf(dx) < KEEP_DISTANCE and is_on_floor():
+		if _blocked_behind():
+			velocity.x = 0.0
+		else:
+			velocity.x = -float(facing) * speed
+	else:
+		velocity.x = 0.0
+	if throw_cooldown <= 0.0 and absf(dx) <= THROW_RANGE_X and absf(dy) <= THROW_RANGE_Y and is_on_floor():
+		_start_attack()
+
+
+func _start_attack() -> void:
+	state = State.ATTACK
+	attack_phase = AttackPhase.WINDUP
+	if variant == 0:
+		windup_time = attack_windup
+		active_time = attack_active
+	state_timer = windup_time
+	has_hit = false
+	velocity.x = 0.0
+
+
+func _attack(delta: float) -> void:
+	velocity.x = 0.0
+	state_timer -= delta
+	match attack_phase:
+		AttackPhase.WINDUP:
+			if variant == 1:
+				var target: CharacterBody2D = _get_player()
+				if target != null:
+					var tx: float = target.global_position.x - global_position.x
+					if absf(tx) > 2.0:
+						_face(1 if tx > 0.0 else -1)
+			if state_timer <= 0.0:
+				attack_phase = AttackPhase.ACTIVE
+				state_timer = active_time
+				if variant == 1:
+					_throw_rock()
+				else:
+					attack_shape.set_deferred("disabled", false)
+		AttackPhase.ACTIVE:
+			if variant == 1:
+				if state_timer <= 0.0:
+					throw_cooldown = maxf(THROW_INTERVAL - THROW_WINDUP - THROW_ACTIVE, 0.1)
+					state = State.CHASE
+				return
+			for body: Node2D in attack_area.get_overlapping_bodies():
+				_try_hit(body)
+			if state_timer <= 0.0:
+				attack_phase = AttackPhase.COOLDOWN
+				state_timer = attack_cooldown
+				attack_shape.set_deferred("disabled", true)
+		AttackPhase.COOLDOWN:
+			if state_timer <= 0.0:
+				state = State.CHASE
+
+
+func _hurt(delta: float, player: CharacterBody2D) -> void:
+	state_timer -= delta
+	velocity.x = move_toward(velocity.x, 0.0, 300.0 * delta)
+	if state_timer > 0.0:
+		return
+	if player != null:
+		_set_engaged(true)
+		state = State.CHASE
+	else:
+		_set_engaged(false)
+		state = State.PATROL
+
+
+func _die() -> void:
+	state = State.DEAD
+	velocity = Vector2.ZERO
+	set_deferred("collision_layer", 0)
+	body_shape.set_deferred("disabled", true)
+	_set_engaged(false)
+	died.emit(self)
+	sprite.speed_scale = 1.0
+	sprite.play("die")
+	var tween: Tween = create_tween()
+	tween.tween_interval(0.5)
+	tween.tween_property(self, "modulate:a", 0.0, 0.3)
+	tween.tween_callback(queue_free)
+
+
+func _try_hit(body: Node2D) -> void:
+	if has_hit or state != State.ATTACK or attack_phase != AttackPhase.ACTIVE:
+		return
+	if body == null or not body.is_in_group("player") or not body.has_method("take_damage"):
+		return
+	if body.has_method("is_dead") and bool(body.call("is_dead")):
+		return
+	has_hit = true
+	body.call("take_damage", attack_damage, global_position)
+
+
+func _on_attack_body_entered(body: Node2D) -> void:
+	_try_hit(body)
+
+
+func _sees(player: CharacterBody2D, range_scale: float, height: float) -> bool:
+	var delta_pos: Vector2 = player.global_position - global_position
+	return absf(delta_pos.x) <= detect_range * range_scale and absf(delta_pos.y) <= height
+
+
+func _blocked_ahead() -> bool:
+	if is_on_wall() and get_wall_normal().x * float(facing) < 0.0:
+		return true
+	if is_on_floor():
+		ledge_check.force_raycast_update()
+		return not ledge_check.is_colliding()
+	return false
+
+
+func _face(dir: int) -> void:
+	facing = dir
+	visual.scale.x = float(dir)
+
+
+func _set_engaged(value: bool) -> void:
+	if engaged == value:
+		return
+	engaged = value
+	if value:
+		Game.enemy_engaged()
+	else:
+		Game.enemy_disengaged()
+
+
+func _blocked_behind() -> bool:
+	if is_on_wall() and get_wall_normal().x * float(facing) > 0.0:
+		return true
+	if not is_on_floor():
+		return false
+	var ahead_x: float = absf(ledge_check.position.x)
+	ledge_check.position.x = -ahead_x
+	ledge_check.force_raycast_update()
+	var found: bool = ledge_check.is_colliding()
+	ledge_check.position.x = ahead_x
+	ledge_check.force_raycast_update()
+	return not found
+
+
+func _throw_rock() -> void:
+	var player: CharacterBody2D = _get_player()
+	var holder: Node = get_tree().current_scene
+	if player == null or holder == null:
+		return
+	var origin: Vector2 = visual.to_global(Vector2(11.0, -19.0))
+	var target: Vector2 = player.global_position + Vector2(0.0, -14.0)
+	var rock: Area2D = ROCK_SCENE.instantiate() as Area2D
+	holder.add_child(rock)
+	rock.global_position = origin
+	var g: float = float(rock.get("fall_gravity"))
+	var offset: Vector2 = target - origin
+	var flight: float = clampf(offset.length() / 300.0, 0.35, 0.9)
+	var launch_velocity: Vector2 = Vector2(offset.x / flight, offset.y / flight - 0.5 * g * flight)
+	if launch_velocity.length() > ROCK_SPEED_MAX:
+		launch_velocity = launch_velocity.normalized() * ROCK_SPEED_MAX
+	rock.call("launch", launch_velocity, attack_damage)
+
+
+func _play(anim: StringName, anim_speed: float = 1.0) -> void:
+	sprite.speed_scale = anim_speed
+	if sprite.animation != anim:
+		sprite.play(anim)
+
+
+func _update_animation() -> void:
+	match state:
+		State.PATROL, State.CHASE:
+			if is_on_floor() and absf(velocity.x) > 5.0:
+				_play(&"walk", clampf(absf(velocity.x) / 50.0, 0.7, 1.8))
+			else:
+				_play(&"idle")
+		State.ATTACK:
+			match attack_phase:
+				AttackPhase.WINDUP:
+					_play(&"windup", (2.0 / 6.0) / maxf(windup_time, 0.05))
+				AttackPhase.ACTIVE:
+					_play(&"attack", (3.0 / 16.0) / maxf(active_time, 0.05))
+				AttackPhase.COOLDOWN:
+					if state_timer < attack_cooldown * 0.6:
+						_play(&"idle")
+		State.HURT:
+			_play(&"hurt")
+
+
+func _flash() -> void:
+	if flash_tween != null and flash_tween.is_valid():
+		flash_tween.kill()
+	visual.modulate = Color(4.0, 4.0, 4.0, 1.0)
+	flash_tween = create_tween()
+	flash_tween.tween_property(visual, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.15)
+
+
+func _get_player() -> CharacterBody2D:
+	var player: CharacterBody2D = get_tree().get_first_node_in_group("player") as CharacterBody2D
+	if player == null or not is_instance_valid(player):
+		return null
+	if player.has_method("is_dead") and bool(player.call("is_dead")):
+		return null
+	return player

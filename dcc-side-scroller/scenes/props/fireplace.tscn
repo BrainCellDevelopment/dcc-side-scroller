@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/props/anim_prop.gd" id="1_prop"]
+[ext_resource type="Texture2D" path="res://assets/props/fireplace.png" id="2_sheet"]
+
+[node name="Fireplace" type="Node2D"]
+script = ExtResource("1_prop")
+sheet = ExtResource("2_sheet")
+frame_size = Vector2i(48, 56)
+frame_count = 4
+fps = 8.0
