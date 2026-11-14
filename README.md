@@ -1,2 +1,3 @@
-#DCC Side Scroller
-- Mychal level 1
+# DCC Side Scroller
+- Mychal: Level 0 (tutorial level)
+- Lukas: Level 1
