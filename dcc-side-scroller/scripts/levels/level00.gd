@@ -181,28 +181,34 @@ func _setup_gates() -> void:
 	for gate: Dictionary in GATES:
 		var area: Area2D = _section_areas[int(gate["section"])] as Area2D
 		var edge: float = float(area.get_meta("x0"))
-		_gate_edges.append(edge)
-		var veil: Node2D = Node2D.new()
-		veil.set_script(VEIL_SCRIPT)
-		veil.set("edge_x", edge)
-		veil.name = "Veil%d" % int(gate["section"])
-		add_child(veil)
-		for part: Dictionary in [{"scene": FRAME_NEAR_SCENE, "z": FRAME_NEAR_Z, "tag": "Near"}, {"scene": FRAME_FAR_SCENE, "z": FRAME_FAR_Z, "tag": "Far"}]:
-			var half: Node2D = (part["scene"] as PackedScene).instantiate() as Node2D
-			half.position = Vector2(edge, float(gate["floor_y"]))
-			half.z_index = int(part["z"])
-			half.name = "Frame%s%d" % [str(part["tag"]), int(gate["section"])]
-			add_child(half)
 		var door: Node2D = GATE_SCENE.instantiate() as Node2D
 		door.position = Vector2(edge + DOOR_OFFSET, float(gate["floor_y"]))
 		door.name = "Gate%d" % int(gate["section"])
-		door.set("veil", veil)
 		add_child(door)
-		var passed: float = _player.global_position.x - (edge + DOOR_OFFSET)
-		if passed > float(door.get("seal_distance")):
-			door.call("start_sealed")
-		elif passed > 0.0:
-			door.call("start_open")
+		_wire_gate(door, edge, float(gate["floor_y"]), str(gate["section"]))
+	_wire_gate(_guild_entry_door, _guild_entry_door.global_position.x - DOOR_OFFSET, _guild_entry_door.global_position.y, "Guild")
+
+
+func _wire_gate(door: Node2D, edge: float, floor_y: float, tag: String) -> void:
+	_gate_edges.append(edge)
+	var veil: Node2D = Node2D.new()
+	veil.set_script(VEIL_SCRIPT)
+	veil.set("edge_x", edge)
+	veil.name = "Veil" + tag
+	add_child(veil)
+	for part: Dictionary in [{"scene": FRAME_NEAR_SCENE, "z": FRAME_NEAR_Z, "tag": "Near"}, {"scene": FRAME_FAR_SCENE, "z": FRAME_FAR_Z, "tag": "Far"}]:
+		var half: Node2D = (part["scene"] as PackedScene).instantiate() as Node2D
+		half.position = Vector2(edge, floor_y)
+		half.z_index = int(part["z"])
+		half.name = "Frame%s%s" % [str(part["tag"]), tag]
+		add_child(half)
+	door.set("veil", veil)
+	var passed: float = _player.global_position.x - door.global_position.x
+	if passed > float(door.get("close_distance")):
+		door.call("open", false)
+		door.call("close", false)
+	elif passed > 0.0:
+		door.call("open", false)
 
 
 func _update_player_z() -> void:

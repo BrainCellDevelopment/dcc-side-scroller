@@ -26,7 +26,7 @@ RES = {
 for _k in ["torch", "lichen", "fire", "burnt_tree", "bike_rack", "moped", "rubble", "big_door", "rug", "fireplace",
            "bed", "desk", "bookshelf", "guildmaster", "stair_rail", "crate", "sign_arrow", "street_lamp", "street_lamp_bent", "street_sign", "stop_sign"]:
     RES["prop_" + _k] = "res://scenes/props/%s.tscn" % _k
-RES["door"] = "res://scenes/props/door.tscn"
+RES["door"] = "res://scenes/props/gate_door.tscn"
 RES["mordecai"] = "res://scenes/props/mordecai.tscn"
 EXISTING = ["player", "goblin", "engineer", "dozer", "hud", "lootbox"]
 
@@ -576,8 +576,6 @@ def write_tscn(info):
 
     for d in doors:
         dp = {"position": vec(d["x"], d["y"]), "locked": "true" if d["locked"] else "false"}
-        if d.get("open"):
-            dp["start_open"] = "true"
         if d.get("range"):
             dp["auto_open_range"] = "%d.0" % d["range"]
         if d["text"]:
