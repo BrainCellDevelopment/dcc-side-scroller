@@ -63,6 +63,7 @@ RES.update({
     "prop_pipe_h": "res://scenes/props/pipe_h.tscn",
     "fastfood_room": "res://scenes/level/fastfood_room.tscn",
     "swine_arena": "res://scenes/level/swine_arena.tscn",
+    "greenroom": "res://scenes/level/greenroom.tscn",
 })
 RES.update(section_rats.RES)
 RES.update(hoarder_kit.RES)
@@ -232,6 +233,14 @@ def section_swine(x0):
     kit.add_prop("prop_sign_hazard", x0 + 24, FLOOR)
 
 
+GREENROOM = {}
+
+
+def emit_greenroom(w):
+    # Mordecai's greenroom: the stairwell landing between the heal trigger and the end trigger (greenroom.gd).
+    w.inst("Greenroom", ".", "greenroom", position=vec(kit.mx(GREENROOM["x"]), GREENROOM["y"]))
+
+
 def emit_swine(w):
     w.inst("SwineArena", ".", "swine_arena", position=vec(kit.mx(SWINE["center"]), FLOOR))
 
@@ -262,6 +271,7 @@ def section_collapse(x0):
     kit.trig("Cigarette", "cigarette", "", x0 + 150, x0 + 190, FLOOR - 120, FLOOR + 20)
     kit.trig("Landing", "heal", "", x0 + 400, x0 + 432, low - 120, low + 20)
     trig("EndZone", "end", "", x0 + 540, x0 + 580, low - 120, low + 20)
+    GREENROOM.update(x=x0 + 496, y=low)
 
 
 BUILDERS = [section_tunnel, section_rats_corridor, section_saferoom, section_hoarder, section_workshop, section_swine, section_collapse]
@@ -305,6 +315,7 @@ def write_tscn():
     workshop.emit(kit, w)
     emit_saferoom(w)
     emit_swine(w)
+    emit_greenroom(w)
     hoarder_kit.emit(kit, w)
     inst("EntryDoor", "Doors", "door", position=vec(kit.mx(DOOR_U), FLOOR), start_open="true",
          close_behind="true", close_side="-1.0", sealed_text='"Locked. No way back."')

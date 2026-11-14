@@ -5,6 +5,7 @@ signal attacked
 
 const COYOTE_TIME: float = 0.1
 const JUMP_BUFFER_TIME: float = 0.1
+const DROP_THROUGH_TIME: float = 0.25
 const HURT_STUN_TIME: float = 0.2
 const BUFF_SPEED: float = 1.2
 const BUFF_DAMAGE: int = 1
@@ -167,6 +168,27 @@ func _physics_process(delta: float) -> void:
 	_update_animation()
 
 
+## Down (or down + jump) while standing on a one-way platform drops through it. Returns true if a drop began.
+func _drop_through() -> bool:
+	if not is_on_floor():
+		return false
+	for i: int in get_slide_collision_count():
+		var c: KinematicCollision2D = get_slide_collision(i)
+		var body: Node = c.get_collider() as Node
+		if body != null and c.get_normal().y < -0.5 and body.get("one_way") == true:
+			add_collision_exception_with(body as PhysicsBody2D)
+			position.y += 1.0
+			_coyote_left = 0.0
+			get_tree().create_timer(DROP_THROUGH_TIME).timeout.connect(_end_drop.bind(body))
+			return true
+	return false
+
+
+func _end_drop(body: Node) -> void:
+	if is_instance_valid(body):
+		remove_collision_exception_with(body as PhysicsBody2D)
+
+
 func _slide_off_enemies() -> void:
 	for i: int in get_slide_collision_count():
 		var c: KinematicCollision2D = get_slide_collision(i)
@@ -298,7 +320,10 @@ func _handle_input(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, axis * top_speed, acceleration * delta)
 		_set_facing(1 if axis > 0.0 else -1)
 
-	if Game.action_just_pressed("jump"):
+	var drop_asked: bool = Game.action_just_pressed("move_down") or (Game.action_just_pressed("jump") and Game.action_pressed("move_down"))
+	if drop_asked and _drop_through():
+		_jump_buffer_left = 0.0
+	elif Game.action_just_pressed("jump"):
 		_jump_buffer_left = JUMP_BUFFER_TIME
 	if _jump_buffer_left > 0.0 and _coyote_left > 0.0:
 		if _spend_stamina(jump_cost):
