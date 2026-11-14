@@ -81,6 +81,7 @@ var _shake_total: float = 0.01
 
 
 func _ready() -> void:
+	_camera.zoom = Vector2.ONE * Game.WORLD_SCALE
 	_player.connect("died", _on_player_died)
 	_engineer.connect("defeated", _on_engineer_defeated)
 	_dozer.connect("round_cleared", _on_dozer_round_cleared)

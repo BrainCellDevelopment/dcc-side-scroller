@@ -89,6 +89,7 @@ func _get_root(style_index: int) -> Node2D:
 	var root: Node2D = Node2D.new()
 	root.name = "Style_" + String(def["name"])
 	root.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	root.scale = Vector2.ONE * Game.WORLD_SCALE
 	add_child(root)
 	var data: Array = []
 	for item: Variant in def["layers"]:
@@ -137,7 +138,7 @@ func _process(_delta: float) -> void:
 func _update_style(style_index: int) -> void:
 	if not is_inside_tree():
 		return
-	var view: Vector2 = get_viewport().get_visible_rect().size
+	var view: Vector2 = get_viewport().get_visible_rect().size / Game.WORLD_SCALE
 	var cam_pos: Vector2 = Vector2(view.x * 0.5, anchor_cam_y)
 	var cam: Camera2D = get_viewport().get_camera_2d()
 	if cam != null:
