@@ -46,6 +46,7 @@ const SAFE_SPOT_COUNT: int = 4
 const MISSILE_SCENE: PackedScene = preload("res://scenes/combat/magic_missile.tscn")
 const CAST_FLASH: PackedScene = preload("res://scenes/fx/magic_impact.tscn")
 const SPELL_COOLDOWN: float = 0.35
+const CAST_ORIGIN: Vector2 = Vector2(3.0, -47.0)
 const SPELL_RANGE: float = 280.0
 const SPELL_ARC: float = 75.0
 const MISSILE_FAN: float = 0.3
@@ -250,9 +251,9 @@ func _try_cast() -> void:
 		return
 	_spell_cooldown = SPELL_COOLDOWN
 	Game.report_spell_cast()
-	var origin: Vector2 = global_position + Vector2(float(facing) * 10.0, -24.0)
+	var origin: Vector2 = global_position + Vector2(float(facing) * CAST_ORIGIN.x, CAST_ORIGIN.y)
 	var flash: Node2D = CAST_FLASH.instantiate() as Node2D
-	flash.scale = Vector2.ONE * 0.6
+	flash.scale = Vector2.ONE * 0.45
 	flash.position = origin
 	get_parent().add_child(flash)
 	var forward: Vector2 = Vector2(float(facing), 0.0)
