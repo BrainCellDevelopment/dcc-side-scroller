@@ -47,6 +47,7 @@ func _ready() -> void:
 	var start: String = OS.get_environment("DCC_START")
 	if start.begins_with("fight"):
 		Game.set_checkpoint(7, Vector2(float(DOZER_ARENA_X) + 56.0, 912.0), {"fight": 1, "fight2": 3, "fight3": 4}[start])
+	Game.intro_played = true
 	_level = LEVEL.instantiate()
 	add_child(_level)
 	_player = _level.get_node("Player") as CharacterBody2D
