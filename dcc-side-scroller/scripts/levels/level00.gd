@@ -1,21 +1,22 @@
 extends Node2D
 
-enum Phase { PLAY, ARENA, HANDOFF, CHASE, AFTERMATH, COMPLETE }
+enum Phase { PLAY, ARENA, FIGHT, AFTERMATH, COMPLETE }
 
 const GOBLIN_SCENE: PackedScene = preload("res://scenes/enemies/goblin.tscn")
 const ENGINEER_NAME: String = "Goblin Engineer"
-const CHASE_CHECKPOINT: int = 7
-const STAGE_CHASE: int = 1
+const RUN_CHECKPOINT: int = 7
+const STAGE_RUN: int = 1
 const STAGE_AFTERMATH: int = 2
-const CHASE_PLAYER_OFFSET: float = 300.0
-const INTRO_DELAY: float = 0.8
-const INTRO_RUMBLE: float = 1.2
-const INTRO_MARGIN: float = 140.0
+const ENGINEER_RUN_SPEED: float = 170.0
+const ENGINEER_RUN_DISTANCE: float = 1600.0
+const ENGINEER_EXIT_PAD: float = 60.0
+const CHECKPOINT_OFFSET: float = 56.0
 const FOCUS_ON_FLOOR: float = 40.0
 const KILLS_FOR_PEST: int = 10
 const LOOT_BOX_COUNT: int = 2
 const DOZER_ROUNDS: int = 3
 const HATCH_HINT: String = "Wait for the hatch to glow, then land on it"
+const FOLLOW_HINT: String = "After him!"
 const ACHIEVEMENTS: Dictionary = {
 	"welcome": ["Still Breathing", "The world ended and you kept your cat and your boxers. Pants were optional, apparently."],
 	"first_goblin": ["Hands-On Learner", "You punched a goblin until it stopped. Its pineapple on a stick survived, and judges you."],
@@ -29,7 +30,6 @@ const ACHIEVEMENTS: Dictionary = {
 	"crater": ["Crater Tourist", "You walked into a hole in the world on purpose. Reviews are mixed."],
 	"stairs": ["Stairway To Somewhere Worse", "Nineteen flights down and nobody offered an elevator. Typical."],
 	"thrower_down": ["Rock, Paper, Fist", "You punched the guy throwing rocks. The rocks declined to comment."],
-	"hall_door": ["Door Policy", "The door was locked until the goblins stopped objecting. They stopped."],
 	"ambush": ["Surprise Party", "Three goblins dropped in without an invitation. You brought your own fists."],
 	"secret_route": ["Off The Beaten Path", "You found the high road. The goblins down below are filing a complaint."],
 	"gauntlet": ["Sharp Dressed Feet", "You crossed a corridor designed by someone who really hates shoes."],
@@ -43,11 +43,10 @@ var complete: bool = false
 var _phase: Phase = Phase.PLAY
 var _boxes_opened: int = 0
 var _talked: bool = false
-var _hall_goblins: int = 0
 var _kills: int = 0
 var _rounds_cleared: int = 0
 var _reinforced: bool = false
-var _intro_started: bool = false
+var _engineer_fleeing: bool = false
 var _focus_y: float = 0.0
 var _bg_section: int = -1
 var _hint_owner: Area2D = null
@@ -70,11 +69,13 @@ var _shake_total: float = 0.01
 @onready var _arena_left: CollisionShape2D = $Walls/ArenaLeftWall/CollisionShape2D
 @onready var _arena_right: CollisionShape2D = $Walls/ArenaRightWall/CollisionShape2D
 @onready var _scroll_start: Marker2D = $Markers/ScrollStart
-@onready var _chase_end: Marker2D = $Markers/ChaseEnd
+@onready var _dozer_arena: Marker2D = $Markers/DozerArena
+@onready var _dozer_left: Marker2D = $Markers/DozerLeft
+@onready var _dozer_right: Marker2D = $Markers/DozerRight
+@onready var _dozer_wall: CollisionShape2D = $Walls/DozerWall/CollisionShape2D
 @onready var _safe_zone: Area2D = $Guildhall/SafeZone
 @onready var _mordecai: Area2D = $Guildhall/Mordecai
 @onready var _exit_zone: Area2D = $Guildhall/ExitZone
-@onready var _hall_door: Node2D = $Doors/HallDoor
 @onready var _guild_entry_door: Node2D = $Doors/GuildEntryDoor
 @onready var _guild_exit_door: Node2D = $Doors/GuildExitDoor
 @onready var _boxes: Node2D = $Guildhall/LootBoxes
@@ -85,8 +86,6 @@ func _ready() -> void:
 	_engineer.connect("defeated", _on_engineer_defeated)
 	_dozer.connect("round_cleared", _on_dozer_round_cleared)
 	_dozer.connect("destroyed", _on_dozer_destroyed)
-	_dozer.connect("pass_finished", _on_dozer_pass_finished)
-	_dozer.connect("turn_finished", _on_dozer_turn_finished)
 	if _dozer.has_signal("vulnerable_changed"):
 		_dozer.connect("vulnerable_changed", _on_vulnerable_changed)
 	Game.screen_shake.connect(_on_screen_shake)
@@ -110,6 +109,8 @@ func _ready() -> void:
 	_guild_exit_door.connect("opened", _try_exit)
 	_exit_zone.body_entered.connect(_on_exit_entered)
 	_dozer.visible = false
+	_dozer.set("patrol_min_x", _dozer_left.global_position.x)
+	_dozer.set("patrol_max_x", _dozer_right.global_position.x)
 	_begin()
 	_setup_doors()
 
@@ -119,18 +120,12 @@ func _physics_process(delta: float) -> void:
 	var half: Vector2 = view * 0.5
 	var target: Vector2 = _camera.global_position
 	match _phase:
-		Phase.ARENA, Phase.HANDOFF:
-			if _phase == Phase.HANDOFF and _intro_started:
-				var left_edge: float = _scroll_start.global_position.x
-				_player.global_position.x = clampf(_player.global_position.x, left_edge + 8.0, left_edge + view.x - 8.0)
+		Phase.ARENA:
 			target = Vector2(_scroll_start.global_position.x + half.x, float(_camera.limit_bottom) - half.y)
-		Phase.CHASE:
-			var left: float = _dozer.get("scroll_x")
-			_dozer.set("max_scroll_x", _chase_end.global_position.x - view.x)
-			_player.global_position.x = clampf(_player.global_position.x, left + 8.0, left + view.x - 8.0)
-			target = Vector2(left + half.x, float(_camera.limit_bottom) - half.y)
 		_:
 			target = _follow_target(view)
+	if _engineer_fleeing and is_instance_valid(_engineer) and _engineer.global_position.x > _camera.global_position.x + half.x + ENGINEER_EXIT_PAD:
+		_finish_engineer_exit()
 	_camera.global_position = target
 	_update_shake(delta)
 
@@ -186,8 +181,8 @@ func _begin() -> void:
 	_seen[_section_at(pos.x)] = true
 	_enter_section(_section_at(pos.x))
 	match Game.checkpoint_stage:
-		STAGE_CHASE:
-			_begin_intro()
+		STAGE_RUN:
+			_engineer.queue_free()
 		STAGE_AFTERMATH:
 			_engineer.queue_free()
 			_dozer.queue_free()
@@ -214,7 +209,7 @@ func _section_at(x: float) -> int:
 func _enter_section(index: int) -> void:
 	if complete:
 		return
-	if _phase >= Phase.CHASE:
+	if _phase >= Phase.FIGHT:
 		index = maxi(index, 5)
 	var area: Area2D = _section_areas[index] as Area2D
 	section = index
@@ -256,6 +251,9 @@ func _on_trigger_entered(body: Node2D, area: Area2D) -> void:
 			area.set_deferred("monitoring", false)
 		"arena":
 			_start_arena()
+			area.set_deferred("monitoring", false)
+		"dozer":
+			_start_fight()
 			area.set_deferred("monitoring", false)
 
 
@@ -306,7 +304,7 @@ func _start_arena() -> void:
 	_phase = Phase.ARENA
 	var area: Area2D = _section_areas[4] as Area2D
 	_camera.limit_left = int(_scroll_start.global_position.x)
-	_camera.limit_right = int(_chase_end.global_position.x)
+	_camera.limit_right = int(_arena_right_body.global_position.x)
 	_camera.limit_top = int(area.get_meta("t"))
 	_camera.limit_bottom = int(area.get_meta("b"))
 	_arena_left.set_deferred("disabled", false)
@@ -333,94 +331,54 @@ func _on_boss_health_changed(boss_name: String, current: int, maximum: int) -> v
 func _on_engineer_defeated(_engineer_node: Node) -> void:
 	if _phase != Phase.ARENA:
 		return
-	_phase = Phase.HANDOFF
+	_phase = Phase.PLAY
 	_unlock("engineer_down")
 	_engineer.set("scripted", true)
 	Game.clear_boss()
-	var floor_y: float = _scroll_start.global_position.y
-	Game.set_checkpoint(CHASE_CHECKPOINT, Vector2(_scroll_start.global_position.x + CHASE_PLAYER_OFFSET, floor_y), STAGE_CHASE)
-	var start: Vector2 = _engineer.global_position
-	var run_to: Vector2 = Vector2(minf(_scroll_start.global_position.x + _view_size().x + 40.0, _arena_right_body.global_position.x - 24.0), start.y)
-	var visual: Node2D = _engineer.get_node("Visual") as Node2D
-	visual.scale.x = -1.0 if run_to.x < start.x else 1.0
-	_engineer.call("set_pose", "walk")
-	var tween: Tween = create_tween()
-	tween.tween_property(_engineer, "global_position", run_to, absf(run_to.x - start.x) / 170.0)
-	tween.tween_callback(_begin_intro)
-
-
-func _begin_intro() -> void:
-	_phase = Phase.HANDOFF
-	_intro_started = true
-	if is_instance_valid(_engineer):
-		_engineer.queue_free()
-	var area: Area2D = _section_areas[4] as Area2D
-	_camera.position_smoothing_enabled = false
-	_camera.limit_left = int(_scroll_start.global_position.x)
-	_camera.limit_right = int(_chase_end.global_position.x)
-	_camera.limit_top = int(area.get_meta("t"))
-	_camera.limit_bottom = int(area.get_meta("b"))
-	_arena_left.set_deferred("disabled", false)
-	_arena_right.set_deferred("disabled", false)
-	var floor_y: float = _scroll_start.global_position.y
-	Game.set_checkpoint(CHASE_CHECKPOINT, Vector2(_scroll_start.global_position.x + CHASE_PLAYER_OFFSET, floor_y), STAGE_CHASE)
-	Game.set_hint("")
-	var tween: Tween = create_tween()
-	tween.tween_interval(INTRO_DELAY)
-	tween.tween_callback(_intro_rumble)
-	tween.tween_interval(INTRO_RUMBLE)
-	tween.tween_callback(_intro_charge_in)
-
-
-func _intro_rumble() -> void:
-	if _phase != Phase.HANDOFF:
-		return
-	Game.shake(2.0, INTRO_RUMBLE)
-	_hud.call("show_banner", "SOMETHING BIG IS COMING", 1.6)
-
-
-func _intro_charge_in() -> void:
-	if _phase != Phase.HANDOFF:
-		return
-	var left: float = _scroll_start.global_position.x
-	_dozer.call("set_driver", true)
-	_dozer.call("roar_pass", left + _view_size().x + INTRO_MARGIN, left - INTRO_MARGIN, _player)
-
-
-func _on_dozer_pass_finished() -> void:
-	if _phase == Phase.HANDOFF:
-		_dozer.call("turn_around", _scroll_start.global_position.x + 10.0)
-
-
-func _on_dozer_turn_finished() -> void:
-	if _phase == Phase.HANDOFF:
-		_begin_chase()
-		_hud.call("show_banner", "GOBLIN MURDER DOZER", 2.0)
-
-
-func _begin_chase() -> void:
-	_phase = Phase.CHASE
-	if is_instance_valid(_engineer):
-		_engineer.queue_free()
-	var area: Area2D = _section_areas[5] as Area2D
-	section = 5
-	_bg_section = 5
-	_background.call("set_style", int(area.get_meta("bg")))
-	_camera.position_smoothing_enabled = false
-	_camera.limit_left = int(_scroll_start.global_position.x)
-	_camera.limit_right = int(_chase_end.global_position.x)
-	_camera.limit_top = int(area.get_meta("t"))
-	_camera.limit_bottom = int(area.get_meta("b"))
 	_arena_left.set_deferred("disabled", true)
 	_arena_right.set_deferred("disabled", true)
-	var floor_y: float = _scroll_start.global_position.y
-	Game.set_checkpoint(CHASE_CHECKPOINT, Vector2(_scroll_start.global_position.x + CHASE_PLAYER_OFFSET, floor_y), STAGE_CHASE)
+	_enter_section(5)
+	Game.set_checkpoint(RUN_CHECKPOINT, _arena_checkpoint(), STAGE_RUN)
+	var visual: Node2D = _engineer.get_node("Visual") as Node2D
+	visual.scale.x = 1.0
+	_engineer.call("set_pose", "walk")
+	_engineer_fleeing = true
+	_player.set("control_enabled", false)
+	var tween: Tween = create_tween()
+	tween.tween_property(_engineer, "global_position:x", _engineer.global_position.x + ENGINEER_RUN_DISTANCE, ENGINEER_RUN_DISTANCE / ENGINEER_RUN_SPEED)
+	tween.tween_callback(_finish_engineer_exit)
+
+
+func _finish_engineer_exit() -> void:
+	if is_instance_valid(_engineer):
+		_engineer.queue_free()
+	_engineer_fleeing = false
+	_player.set("control_enabled", true)
+	Game.set_hint(FOLLOW_HINT)
+
+
+func _arena_checkpoint() -> Vector2:
+	return _dozer_arena.global_position + Vector2(CHECKPOINT_OFFSET, 0.0)
+
+
+func _start_fight() -> void:
+	if _phase != Phase.PLAY:
+		return
+	_phase = Phase.FIGHT
+	_engineer_fleeing = false
+	_dozer_wall.set_deferred("disabled", false)
+	var area: Area2D = _section_areas[5] as Area2D
+	_camera.limit_left = int(_dozer_arena.global_position.x)
+	_camera.limit_right = int(_guild_entry_door.global_position.x + 48.0)
+	_camera.limit_top = int(area.get_meta("t"))
+	_camera.limit_bottom = int(area.get_meta("b"))
 	Game.set_hint(HATCH_HINT)
-	_dozer.call("start", _player, _scroll_start.global_position.x)
+	_hud.call("show_banner", "GOBLIN MURDER DOZER", 2.0)
+	_dozer.call("begin_patrol", _player, _dozer_arena.global_position.y)
 
 
 func _on_vulnerable_changed(is_vulnerable: bool) -> void:
-	if _phase != Phase.CHASE:
+	if _phase != Phase.FIGHT:
 		return
 	if is_vulnerable:
 		Game.set_hint("Now! Land on the glowing hatch!")
@@ -440,13 +398,16 @@ func _on_dozer_round_cleared(round_number: int) -> void:
 
 
 func _on_dozer_destroyed() -> void:
-	if _phase != Phase.CHASE:
+	if _phase != Phase.FIGHT:
 		return
 	_phase = Phase.AFTERMATH
-	_camera.position_smoothing_enabled = true
+	_dozer_wall.set_deferred("disabled", true)
 	_camera.limit_right = int((_section_areas[6] as Area2D).get_meta("r"))
+	Game.set_checkpoint(8, _guild_entry_door.global_position + Vector2(8.0, 0.0), STAGE_AFTERMATH)
 	Game.set_hint("Head right.")
 	_unlock("dozer_down")
+	_guild_entry_door.call("unlock")
+	_guild_entry_door.call("open")
 
 
 func _on_safe_zone_entered(body: Node2D) -> void:
@@ -495,35 +456,15 @@ func _on_exit_entered(body: Node2D) -> void:
 	_phase = Phase.COMPLETE
 	complete = true
 	section = 7
+	Game.register_tutorial_complete()
 	Game.set_hint("")
 	Game.clear_checkpoint()
 	_hud.call("show_banner", "LEVEL 0 COMPLETE\nLevel 1 coming soon", 0.0)
 
 
 func _setup_doors() -> void:
-	var hall: Area2D = _section_areas[2] as Area2D
-	var x0: float = float(hall.get_meta("x0"))
-	var x1: float = float(hall.get_meta("x1"))
-	if Game.checkpoint_index >= 3:
-		_hall_door.call("open", false)
-	else:
-		for node: Node in _goblins.get_children():
-			var goblin: Node2D = node as Node2D
-			if goblin != null and goblin.global_position.x >= x0 and goblin.global_position.x < x1:
-				_hall_goblins += 1
-				goblin.connect("died", _on_hall_goblin_died)
-		if _hall_goblins == 0:
-			_hall_door.call("unlock")
 	if Game.checkpoint_index >= 8:
 		_guild_entry_door.call("open", false)
-
-
-func _on_hall_goblin_died(_enemy: Node) -> void:
-	_hall_goblins -= 1
-	if _hall_goblins > 0:
-		return
-	_hall_door.call("unlock")
-	_hall_door.call("open")
 
 
 func dev_goto(target: String) -> bool:
@@ -547,11 +488,8 @@ func dev_goto(target: String) -> bool:
 			index = 6
 		"guildhall":
 			index = 8
-		"chase":
-			Game.clear_checkpoint()
-			Game.set_checkpoint(CHASE_CHECKPOINT, Vector2(_scroll_start.global_position.x + CHASE_PLAYER_OFFSET, _scroll_start.global_position.y), STAGE_CHASE)
-			Game.reset_run()
-			return true
+		"dozerfight", "chase":
+			index = 7
 		_:
 			if target.begins_with("cp") and target.substr(2).is_valid_int():
 				index = target.substr(2).to_int()
@@ -567,6 +505,7 @@ func dev_goto(target: String) -> bool:
 
 
 func _on_player_died() -> void:
+	Game.register_tutorial_death()
 	_hud.call("show_banner", "YOU DIED", 0.0)
 	await get_tree().create_timer(1.8).timeout
 	Game.reset_run()

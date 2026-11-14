@@ -10,8 +10,6 @@ const JUMP_CUT: float = 0.45
 const SpriteUtil: GDScript = preload("res://scripts/util/sprite_util.gd")
 const HIT_SPARK: PackedScene = preload("res://scenes/fx/hit_spark.tscn")
 const DUST: PackedScene = preload("res://scenes/fx/dust.tscn")
-const CARL_SHEET: Texture2D = preload("res://assets/characters/carl.png")
-const FRAME: Vector2i = Vector2i(64, 56)
 const ANIMS: Dictionary = {
 	"idle": {"row": 0, "count": 4, "fps": 5.0, "loop": true},
 	"run": {"row": 1, "count": 6, "fps": 12.0, "loop": true},
@@ -64,7 +62,7 @@ var _standstill: bool = true
 func _ready() -> void:
 	_gravity = float(ProjectSettings.get_setting("physics/2d/default_gravity"))
 	health = max_health
-	_body = SpriteUtil.make_sprite(CARL_SHEET, FRAME, ANIMS)
+	_body = SpriteUtil.make_sprite(Game.skin_sheet(), Game.skin_frame(), ANIMS)
 	_body.name = "Body"
 	_visual.add_child(_body)
 	_visual.move_child(_body, 0)

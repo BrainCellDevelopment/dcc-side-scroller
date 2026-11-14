@@ -63,9 +63,6 @@ size = Vector2(280, 420)
 [sub_resource type="RectangleShape2D" id="shape_344x420"]
 size = Vector2(344, 420)
 
-[sub_resource type="RectangleShape2D" id="shape_48x420"]
-size = Vector2(48, 420)
-
 [sub_resource type="RectangleShape2D" id="shape_56x48"]
 size = Vector2(56, 48)
 
@@ -74,6 +71,9 @@ size = Vector2(32, 360)
 
 [sub_resource type="RectangleShape2D" id="shape_40x48"]
 size = Vector2(40, 48)
+
+[sub_resource type="RectangleShape2D" id="shape_48x420"]
+size = Vector2(48, 420)
 
 [sub_resource type="RectangleShape2D" id="shape_16x720"]
 size = Vector2(16, 720)
@@ -99,8 +99,8 @@ size = Vector2(8080, 1900)
 [sub_resource type="RectangleShape2D" id="shape_704x1900"]
 size = Vector2(704, 1900)
 
-[sub_resource type="RectangleShape2D" id="shape_6000x1900"]
-size = Vector2(6000, 1900)
+[sub_resource type="RectangleShape2D" id="shape_1312x1900"]
+size = Vector2(1312, 1900)
 
 [sub_resource type="RectangleShape2D" id="shape_896x1900"]
 size = Vector2(896, 1900)
@@ -578,94 +578,19 @@ position = Vector2(17662, 802)
 position = Vector2(17912, 802)
 
 [node name="D149" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(18316, 802)
+position = Vector2(18132, 802)
 
 [node name="D150" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(18636, 802)
+position = Vector2(18312, 802)
 
 [node name="D151" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(18956, 802)
+position = Vector2(18632, 802)
 
 [node name="D152" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(19276, 802)
+position = Vector2(18882, 802)
 
 [node name="D153" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(19596, 802)
-
-[node name="D154" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(19916, 802)
-
-[node name="D155" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(20236, 802)
-
-[node name="D156" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(20556, 802)
-
-[node name="D157" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(20876, 802)
-
-[node name="D158" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(21196, 802)
-
-[node name="D159" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(21516, 802)
-
-[node name="D160" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(21836, 802)
-
-[node name="D161" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(22156, 802)
-
-[node name="D162" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(22476, 802)
-
-[node name="D163" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(22796, 802)
-
-[node name="D164" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(23116, 802)
-
-[node name="D165" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(23436, 802)
-
-[node name="D166" parent="Deco" instance=ExtResource("10_p_torch")]
-position = Vector2(23756, 802)
-
-[node name="D167" parent="Deco" instance=ExtResource("11_p_lichen")]
-position = Vector2(18476, 842)
-
-[node name="D168" parent="Deco" instance=ExtResource("11_p_lichen")]
-position = Vector2(18956, 842)
-
-[node name="D169" parent="Deco" instance=ExtResource("11_p_lichen")]
-position = Vector2(19436, 842)
-
-[node name="D170" parent="Deco" instance=ExtResource("11_p_lichen")]
-position = Vector2(19916, 842)
-
-[node name="D171" parent="Deco" instance=ExtResource("11_p_lichen")]
-position = Vector2(20396, 842)
-
-[node name="D172" parent="Deco" instance=ExtResource("11_p_lichen")]
-position = Vector2(20876, 842)
-
-[node name="D173" parent="Deco" instance=ExtResource("11_p_lichen")]
-position = Vector2(21356, 842)
-
-[node name="D174" parent="Deco" instance=ExtResource("11_p_lichen")]
-position = Vector2(21836, 842)
-
-[node name="D175" parent="Deco" instance=ExtResource("11_p_lichen")]
-position = Vector2(22316, 842)
-
-[node name="D176" parent="Deco" instance=ExtResource("11_p_lichen")]
-position = Vector2(22796, 842)
-
-[node name="D177" parent="Deco" instance=ExtResource("11_p_lichen")]
-position = Vector2(23276, 842)
-
-[node name="D178" parent="Deco" instance=ExtResource("11_p_lichen")]
-position = Vector2(23756, 842)
+position = Vector2(19132, 802)
 
 [node name="Banner0" type="Polygon2D" parent="Deco"]
 position = Vector2(17562, 762)
@@ -1181,116 +1106,28 @@ style = 2
 
 [node name="P096" parent="Platforms" instance=ExtResource("13_platform")]
 position = Vector2(18016, 912)
-size = Vector2(656, 64)
+size = Vector2(416, 64)
 style = 2
 
 [node name="P097" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(18416, 896)
-size = Vector2(32, 16)
+position = Vector2(18432, 912)
+size = Vector2(896, 64)
 style = 2
 
 [node name="P098" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(18672, 1008)
-size = Vector2(32, 16)
+position = Vector2(18704, 864)
+size = Vector2(112, 16)
 style = 2
+one_way = true
 
 [node name="P099" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(18704, 912)
-size = Vector2(1024, 64)
+position = Vector2(19040, 864)
+size = Vector2(112, 16)
 style = 2
+one_way = true
 
 [node name="P100" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(19216, 880)
-size = Vector2(48, 32)
-style = 2
-
-[node name="P101" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(19472, 880)
-size = Vector2(32, 32)
-style = 2
-
-[node name="P102" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(19728, 1008)
-size = Vector2(32, 16)
-style = 2
-
-[node name="P103" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(19760, 912)
-size = Vector2(1136, 64)
-style = 2
-
-[node name="P104" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(20272, 880)
-size = Vector2(96, 32)
-style = 2
-
-[node name="P105" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(20528, 896)
-size = Vector2(32, 16)
-style = 2
-
-[node name="P106" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(20608, 880)
-size = Vector2(32, 32)
-style = 2
-
-[node name="P107" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(20896, 1008)
-size = Vector2(32, 16)
-style = 2
-
-[node name="P108" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(20928, 912)
-size = Vector2(944, 64)
-style = 2
-
-[node name="P109" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(21376, 896)
-size = Vector2(32, 16)
-style = 2
-
-[node name="P110" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(21600, 864)
-size = Vector2(128, 48)
-style = 2
-
-[node name="P111" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(21872, 1008)
-size = Vector2(32, 16)
-style = 2
-
-[node name="P112" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(21904, 912)
-size = Vector2(928, 64)
-style = 2
-
-[node name="P113" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(22384, 880)
-size = Vector2(32, 32)
-style = 2
-
-[node name="P114" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(22528, 896)
-size = Vector2(64, 16)
-style = 2
-
-[node name="P115" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(22832, 1008)
-size = Vector2(32, 16)
-style = 2
-
-[node name="P116" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(22864, 912)
-size = Vector2(1152, 64)
-style = 2
-
-[node name="P117" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(23328, 880)
-size = Vector2(48, 32)
-style = 2
-
-[node name="P118" parent="Platforms" instance=ExtResource("13_platform")]
-position = Vector2(24016, 912)
+position = Vector2(19328, 912)
 size = Vector2(896, 64)
 style = 3
 
@@ -1370,46 +1207,6 @@ width = 48.0
 position = Vector2(16688, 912)
 width = 48.0
 
-[node name="S019" parent="Hazards" instance=ExtResource("14_spikes")]
-position = Vector2(18672, 1008)
-width = 32.0
-
-[node name="S020" parent="Hazards" instance=ExtResource("14_spikes")]
-position = Vector2(18960, 912)
-width = 32.0
-
-[node name="S021" parent="Hazards" instance=ExtResource("14_spikes")]
-position = Vector2(19728, 1008)
-width = 32.0
-
-[node name="S022" parent="Hazards" instance=ExtResource("14_spikes")]
-position = Vector2(20016, 912)
-width = 48.0
-
-[node name="S023" parent="Hazards" instance=ExtResource("14_spikes")]
-position = Vector2(20896, 1008)
-width = 32.0
-
-[node name="S024" parent="Hazards" instance=ExtResource("14_spikes")]
-position = Vector2(21152, 912)
-width = 32.0
-
-[node name="S025" parent="Hazards" instance=ExtResource("14_spikes")]
-position = Vector2(21872, 1008)
-width = 32.0
-
-[node name="S026" parent="Hazards" instance=ExtResource("14_spikes")]
-position = Vector2(22128, 912)
-width = 48.0
-
-[node name="S027" parent="Hazards" instance=ExtResource("14_spikes")]
-position = Vector2(22832, 1008)
-width = 32.0
-
-[node name="S028" parent="Hazards" instance=ExtResource("14_spikes")]
-position = Vector2(23088, 912)
-width = 32.0
-
 [node name="K000" parent="Hazards" instance=ExtResource("15_killzone")]
 position = Vector2(1120, 344)
 size = Vector2(48, 144)
@@ -1446,26 +1243,6 @@ size = Vector2(64, 108)
 position = Vector2(14816, 988)
 size = Vector2(64, 108)
 
-[node name="K009" parent="Hazards" instance=ExtResource("15_killzone")]
-position = Vector2(18672, 988)
-size = Vector2(32, 108)
-
-[node name="K010" parent="Hazards" instance=ExtResource("15_killzone")]
-position = Vector2(19728, 988)
-size = Vector2(32, 108)
-
-[node name="K011" parent="Hazards" instance=ExtResource("15_killzone")]
-position = Vector2(20896, 988)
-size = Vector2(32, 108)
-
-[node name="K012" parent="Hazards" instance=ExtResource("15_killzone")]
-position = Vector2(21872, 988)
-size = Vector2(32, 108)
-
-[node name="K013" parent="Hazards" instance=ExtResource("15_killzone")]
-position = Vector2(22832, 988)
-size = Vector2(32, 108)
-
 [node name="CP0" parent="Checkpoints" instance=ExtResource("16_checkpoint")]
 position = Vector2(4376, 304)
 index = 0
@@ -1501,8 +1278,13 @@ position = Vector2(17232, 912)
 index = 6
 stage = 0
 
+[node name="CP7" parent="Checkpoints" instance=ExtResource("16_checkpoint")]
+position = Vector2(18488, 912)
+index = 7
+stage = 1
+
 [node name="CP8" parent="Checkpoints" instance=ExtResource("16_checkpoint")]
-position = Vector2(24072, 912)
+position = Vector2(19384, 912)
 index = 8
 stage = 2
 
@@ -1656,16 +1438,6 @@ metadata/arg = "stairs"
 [node name="Shape" type="CollisionShape2D" parent="Triggers/A_stairs"]
 shape = SubResource("shape_32x420")
 
-[node name="A_door" type="Area2D" parent="Triggers"]
-position = Vector2(9116, 822)
-collision_layer = 0
-collision_mask = 2
-metadata/kind = "ach"
-metadata/arg = "hall_door"
-
-[node name="Shape" type="CollisionShape2D" parent="Triggers/A_door"]
-shape = SubResource("shape_48x420")
-
 [node name="H_fork" type="Area2D" parent="Triggers"]
 position = Vector2(10199, 822)
 collision_layer = 0
@@ -1736,6 +1508,16 @@ metadata/arg = ""
 [node name="Shape" type="CollisionShape2D" parent="Triggers/T_arena"]
 shape = SubResource("shape_32x360")
 
+[node name="T_dozer" type="Area2D" parent="Triggers"]
+position = Vector2(18544, 792)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "dozer"
+metadata/arg = ""
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/T_dozer"]
+shape = SubResource("shape_32x360")
+
 [node name="LeftBound" type="StaticBody2D" parent="Walls"]
 position = Vector2(-8, 54)
 collision_layer = 1
@@ -1762,8 +1544,17 @@ collision_mask = 0
 shape = SubResource("shape_16x720")
 disabled = true
 
+[node name="DozerWall" type="StaticBody2D" parent="Walls"]
+position = Vector2(18456, 662)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/DozerWall"]
+shape = SubResource("shape_16x720")
+disabled = true
+
 [node name="RightBound" type="StaticBody2D" parent="Walls"]
-position = Vector2(24920, 662)
+position = Vector2(20232, 662)
 collision_layer = 1
 collision_mask = 0
 
@@ -1776,11 +1567,17 @@ position = Vector2(80, 304)
 [node name="ScrollStart" type="Marker2D" parent="Markers"]
 position = Vector2(17342, 912)
 
-[node name="ChaseEnd" type="Marker2D" parent="Markers"]
-position = Vector2(24016, 912)
+[node name="DozerArena" type="Marker2D" parent="Markers"]
+position = Vector2(18432, 912)
+
+[node name="DozerLeft" type="Marker2D" parent="Markers"]
+position = Vector2(18532, 912)
+
+[node name="DozerRight" type="Marker2D" parent="Markers"]
+position = Vector2(19302, 912)
 
 [node name="GuildCenter" type="Marker2D" parent="Markers"]
-position = Vector2(24464, 912)
+position = Vector2(19776, 912)
 
 [node name="G01" parent="Goblins" instance=ExtResource("17_goblin")]
 position = Vector2(2108, 302)
@@ -1947,28 +1744,24 @@ position = Vector2(17852, 910)
 max_health = 16
 
 [node name="Dozer" parent="." instance=ExtResource("19_dozer")]
-position = Vector2(17352, 912)
+position = Vector2(18432, 912)
 
 [node name="Player" parent="." instance=ExtResource("20_player")]
 position = Vector2(80, 302)
 
-[node name="HallDoor" parent="Doors" instance=ExtResource("21_door")]
-position = Vector2(9162, 912)
-locked = true
-locked_text = "Locked. Clear the goblins."
-
 [node name="GuildEntryDoor" parent="Doors" instance=ExtResource("21_door")]
-position = Vector2(24064, 912)
-locked = false
+position = Vector2(19376, 912)
+locked = true
 auto_open_range = 170.0
+locked_text = "Locked. Finish the dozer."
 
 [node name="GuildExitDoor" parent="Doors" instance=ExtResource("21_door")]
-position = Vector2(24866, 912)
+position = Vector2(20178, 912)
 locked = true
 locked_text = "Locked. Talk to Mordecai and open your boxes."
 
 [node name="Guildhall" type="Node2D" parent="."]
-position = Vector2(24464, 912)
+position = Vector2(19776, 912)
 
 [node name="G0_bookshelf" parent="Guildhall" instance=ExtResource("22_p_bookshelf")]
 position = Vector2(-310, 0)
@@ -2126,36 +1919,36 @@ metadata/title = ""
 shape = SubResource("shape_704x1900")
 
 [node name="Sec5" type="Area2D" parent="Triggers"]
-position = Vector2(21016, 550)
+position = Vector2(18672, 550)
 collision_layer = 0
 collision_mask = 2
 metadata/kind = "section"
 metadata/arg = "5"
 metadata/l = 17342
-metadata/r = 24016
+metadata/r = 19328
 metadata/t = 492
 metadata/b = 972
 metadata/bg = 2
 metadata/x0 = 18016
-metadata/x1 = 24016
+metadata/x1 = 19328
 metadata/title = ""
 
 [node name="Shape" type="CollisionShape2D" parent="Triggers/Sec5"]
-shape = SubResource("shape_6000x1900")
+shape = SubResource("shape_1312x1900")
 
 [node name="Sec6" type="Area2D" parent="Triggers"]
-position = Vector2(24464, 550)
+position = Vector2(19776, 550)
 collision_layer = 0
 collision_mask = 2
 metadata/kind = "section"
 metadata/arg = "6"
-metadata/l = 23696
-metadata/r = 24912
+metadata/l = 19008
+metadata/r = 20224
 metadata/t = 492
 metadata/b = 972
 metadata/bg = 3
-metadata/x0 = 24016
-metadata/x1 = 24912
+metadata/x0 = 19328
+metadata/x1 = 20224
 metadata/title = "GUILDHALL"
 
 [node name="Shape" type="CollisionShape2D" parent="Triggers/Sec6"]

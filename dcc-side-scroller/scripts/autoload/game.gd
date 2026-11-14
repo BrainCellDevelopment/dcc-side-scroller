@@ -10,9 +10,17 @@ signal loot_box_opened(tier: String)
 signal hint_changed(text: String)
 signal item_added(item: Dictionary)
 signal screen_shake(strength: float, duration: float)
+signal skin_unlocked(skin_id: String)
 
 const FLOOR_TIME: float = 432000.0
 const ACTION_DEADZONE: float = 0.5
+const SAVE_PATH: String = "user://profile.cfg"
+const TUTORIAL_DEATHS_FOR_SKIN: int = 5
+const DEFAULT_SKIN: String = "default"
+const SKINS: Dictionary = {
+	"default": {"name": "Carl", "sheet": "res://assets/characters/carl.png", "frame": Vector2i(64, 56)},
+	"day_one": {"name": "Day One Carl", "sheet": "res://assets/characters/skins/carl_day_one.png", "frame": Vector2i(64, 56)},
+}
 
 var in_combat: bool = false
 var in_safe_zone: bool = false
@@ -22,6 +30,9 @@ var checkpoint_position: Vector2 = Vector2.ZERO
 var checkpoint_stage: int = 0
 
 var items: Array[Dictionary] = []
+var unlocked_skins: Array[String] = [DEFAULT_SKIN]
+var selected_skin: String = DEFAULT_SKIN
+var tutorial_death_streak: int = 0
 
 var _engaged_enemies: int = 0
 var _unlocked: Dictionary = {}
@@ -29,6 +40,7 @@ var _unlocked: Dictionary = {}
 
 func _ready() -> void:
 	_register_inputs()
+	_load_profile()
 
 
 func _process(delta: float) -> void:
@@ -117,6 +129,77 @@ func reset_run() -> void:
 	floor_time_left = FLOOR_TIME
 	items.clear()
 	set_hint("")
+
+
+func skin_sheet() -> Texture2D:
+	return load(str(SKINS[selected_skin]["sheet"])) as Texture2D
+
+
+func skin_frame() -> Vector2i:
+	return SKINS[selected_skin]["frame"] as Vector2i
+
+
+func register_tutorial_death() -> void:
+	tutorial_death_streak += 1
+	if tutorial_death_streak >= TUTORIAL_DEATHS_FOR_SKIN:
+		unlock_skin("day_one")
+	_save_profile()
+
+
+func register_tutorial_complete() -> void:
+	tutorial_death_streak = 0
+	_save_profile()
+
+
+func unlock_skin(skin_id: String) -> bool:
+	if not SKINS.has(skin_id) or unlocked_skins.has(skin_id):
+		return false
+	unlocked_skins.append(skin_id)
+	selected_skin = skin_id
+	_save_profile()
+	skin_unlocked.emit(skin_id)
+	unlock_achievement("skin_" + skin_id, "Slow Learner", "Five deaths in a row in the tutorial. Unlocked skin: %s." % str(SKINS[skin_id]["name"]))
+	return true
+
+
+func select_skin(skin_id: String) -> bool:
+	if not SKINS.has(skin_id) or not unlocked_skins.has(skin_id):
+		return false
+	selected_skin = skin_id
+	_save_profile()
+	return true
+
+
+func reset_profile() -> void:
+	unlocked_skins = [DEFAULT_SKIN]
+	selected_skin = DEFAULT_SKIN
+	tutorial_death_streak = 0
+	_save_profile()
+
+
+func _load_profile() -> void:
+	if OS.has_environment("DCC_NO_SAVE"):
+		return
+	var config: ConfigFile = ConfigFile.new()
+	if config.load(SAVE_PATH) != OK:
+		return
+	for skin_id: Variant in config.get_value("skins", "unlocked", [DEFAULT_SKIN]):
+		if SKINS.has(str(skin_id)) and not unlocked_skins.has(str(skin_id)):
+			unlocked_skins.append(str(skin_id))
+	var chosen: String = str(config.get_value("skins", "selected", DEFAULT_SKIN))
+	if unlocked_skins.has(chosen):
+		selected_skin = chosen
+	tutorial_death_streak = int(config.get_value("progress", "tutorial_death_streak", 0))
+
+
+func _save_profile() -> void:
+	if OS.has_environment("DCC_NO_SAVE"):
+		return
+	var config: ConfigFile = ConfigFile.new()
+	config.set_value("skins", "unlocked", unlocked_skins)
+	config.set_value("skins", "selected", selected_skin)
+	config.set_value("progress", "tutorial_death_streak", tutorial_death_streak)
+	config.save(SAVE_PATH)
 
 
 func _refresh_combat() -> void:
