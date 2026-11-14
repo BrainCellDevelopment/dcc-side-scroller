@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/level/bathroom_closet.gd" id="1_closet"]
+
+[node name="BathroomCloset" type="CanvasLayer"]
+script = ExtResource("1_closet")

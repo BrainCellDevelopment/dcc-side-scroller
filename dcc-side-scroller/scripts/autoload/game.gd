@@ -154,8 +154,8 @@ func report_loot_box_opened(tier: String) -> void:
 	loot_box_opened.emit(tier)
 
 
-func add_item(id: String, item_name: String, tier: String = "", extra: Dictionary = {}) -> void:
-	if not Inventory.add_item(id, item_name, tier, 1, extra):
+func add_item(id: String, item_name: String, tier: String = "", extra: Dictionary = {}, count: int = 1) -> void:
+	if not Inventory.add_item(id, item_name, tier, count, extra):
 		return
 	var info: Dictionary = {"id": id, "name": item_name, "tier": tier}
 	info.merge(extra)
@@ -206,6 +206,7 @@ func reset_run() -> void:
 	_refresh_combat()
 	set_safe_zone(false)
 	floor_time_left = FLOOR_TIME
+	SystemVoice.end_floor()
 	Inventory.clear()
 	set_hint("")
 
@@ -351,6 +352,16 @@ func _register_inputs() -> void:
 	_add_action(&"sprint", sprint_events)
 	_add_action(&"interact", interact_events)
 	_add_action(&"spell", spell_events)
+	var throw_events: Array[InputEvent] = [
+		_key(KEY_G),
+		_joy_button(JOY_BUTTON_LEFT_SHOULDER),
+	]
+	_add_action(&"throw", throw_events)
+	var charm_events: Array[InputEvent] = [
+		_key(KEY_C),
+		_joy_button(JOY_BUTTON_RIGHT_STICK),
+	]
+	_add_action(&"charm", charm_events)
 
 
 func _add_action(action: StringName, events: Array[InputEvent]) -> void:

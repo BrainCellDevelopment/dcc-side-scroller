@@ -6,10 +6,16 @@ signal attacked
 const COYOTE_TIME: float = 0.1
 const JUMP_BUFFER_TIME: float = 0.1
 const HURT_STUN_TIME: float = 0.2
+const BUFF_SPEED: float = 1.2
+const BUFF_DAMAGE: int = 1
 const JUMP_CUT: float = 0.45
 const SpriteUtil: GDScript = preload("res://scripts/util/sprite_util.gd")
 const HIT_SPARK: PackedScene = preload("res://scenes/fx/hit_spark.tscn")
 const DUST: PackedScene = preload("res://scenes/fx/dust.tscn")
+const Explosives: GDScript = preload("res://scripts/combat/explosives.gd")
+const ItemEffects: GDScript = preload("res://scripts/combat/item_effects.gd")
+const DYNAMITE: PackedScene = preload("res://scenes/combat/dynamite.tscn")
+const THROW_COOLDOWN: float = 0.5
 const DUST_COOLDOWN: float = 0.18
 const LAND_SPEED: float = 140.0
 const STOMP_MIN_FALL: float = 40.0
@@ -50,18 +56,30 @@ const CAST_ORIGIN: Vector2 = Vector2(3.0, -47.0)
 const SPELL_RANGE: float = 280.0
 const SPELL_ARC: float = 75.0
 const MISSILE_FAN: float = 0.3
+const CHARM_COST: float = 4.0
+const CHARM_COOLDOWN: float = 1.5
+const CHARM_RANGE: float = 140.0
+const CHARM_ARC: float = 80.0
+const CHARM_BASE_SECONDS: float = 15.0
+const CHARM_PER_CHARISMA: float = 1.0
 const Targeting: GDScript = preload("res://scripts/combat/targeting.gd")
 
 var health: int = 0
 var stamina: float = 0.0
 var control_enabled: bool = true
+var buff_left: float = 0.0
+var buff_name: String = ""
 var facing: int = 1
 
 var _dead: bool = false
+var _base_max_health: int = 10
 var mana: float = 0.0
 var _mana_delay: float = 0.0
+var _health_regen_acc: float = 0.0
 var _mana_shown: int = -1
 var _spell_cooldown: float = 0.0
+var _charm_cooldown: float = 0.0
+var _throw_cooldown: float = 0.0
 var _exhausted: bool = false
 var _stamina_delay: float = 0.0
 var _stamina_shown: int = -1
@@ -91,7 +109,9 @@ var _standstill: bool = true
 
 func _ready() -> void:
 	_gravity = float(ProjectSettings.get_setting("physics/2d/default_gravity"))
+	_base_max_health = max_health
 	max_health += PlayerStats.max_health() - PlayerStats.BASE_HEALTH
+	PlayerStats.stats_changed.connect(_on_stats_changed)
 	health = Game.take_carried_health(max_health)
 	stamina = max_stamina
 	_body = SpriteUtil.make_sprite(Game.skin_sheet(), Game.skin_frame(), Game.skin_anims())
@@ -119,6 +139,10 @@ func _physics_process(delta: float) -> void:
 	if velocity.y >= 0.0:
 		_jumping = false
 
+	if buff_left > 0.0:
+		buff_left = maxf(buff_left - delta, 0.0)
+		if buff_left <= 0.0:
+			buff_name = ""
 	_hurt_left = maxf(_hurt_left - delta, 0.0)
 	_cooldown_left = maxf(_cooldown_left - delta, 0.0)
 	_jump_buffer_left = maxf(_jump_buffer_left - delta, 0.0)
@@ -133,6 +157,7 @@ func _physics_process(delta: float) -> void:
 
 	_regen_stamina(delta)
 	_regen_mana(delta)
+	_regen_health(delta)
 	_track_safe_spot(delta, on_floor)
 	_update_attack(delta)
 	_prev_vy = velocity.y
@@ -159,6 +184,9 @@ func _slide_off_enemies() -> void:
 
 func _stomp(enemy: Node2D) -> void:
 	enemy.call("take_damage", stomp_damage, global_position)
+	SystemVoice.count("stomp")
+	if enemy.get("health") != null and int(enemy.get("health")) <= 0:
+		PlayerStats.add_smush()
 	var holding_jump: bool = Game.action_pressed("jump")
 	velocity.y = jump_velocity * 0.85 if holding_jump else -stomp_bounce
 	_jumping = holding_jump
@@ -178,6 +206,7 @@ func take_damage(amount: int, from: Vector2) -> void:
 	_jumping = false
 	_hurt_left = HURT_STUN_TIME
 	Game.shake(2.0, 0.12)
+	ItemEffects.reflect_damage(get_tree(), amount, from)
 	if health <= 0:
 		_die()
 		return
@@ -203,6 +232,56 @@ func kill(force: bool = false) -> void:
 	_die()
 
 
+func restore_all() -> void:
+	if _dead:
+		return
+	health = max_health
+	Game.report_player_health(health, max_health)
+	stamina = max_stamina
+	_exhausted = false
+	_stamina_shown = -1
+	_report_stamina()
+	mana = max_mana
+	_mana_shown = -1
+	_report_mana()
+	PlayerStats.restore_mana(PlayerStats.max_mana())
+
+
+func _on_stats_changed() -> void:
+	var target: int = _base_max_health + PlayerStats.max_health() - PlayerStats.BASE_HEALTH
+	if target == max_health or _dead:
+		return
+	health = clampi(health + maxi(target - max_health, 0), 1, target)
+	max_health = target
+	Game.report_player_health(health, max_health)
+
+
+## Short timed buff (Tally's meal): faster and hits harder until it runs out.
+func apply_buff(buff: String, seconds: float) -> void:
+	buff_name = buff
+	buff_left = seconds
+
+
+## Item effect: returns false (nothing spent) when already at full health.
+func heal(amount: int) -> bool:
+	if _dead or health >= max_health:
+		return false
+	health = mini(health + amount, max_health)
+	Game.report_player_health(health, max_health)
+	return true
+
+
+## Item effect: refills the spell bar and the stat-sheet mana. False when both are full.
+func restore_mana(amount: int) -> bool:
+	if _dead or (mana >= max_mana and PlayerStats.mana >= PlayerStats.max_mana()):
+		return false
+	mana = minf(mana + float(amount), max_mana)
+	_mana_shown = -1
+	_report_mana()
+	PlayerStats.restore_mana(amount)
+	return true
+
+
 func is_dead() -> bool:
 	return _dead
 
@@ -212,7 +291,7 @@ func _handle_input(delta: float) -> void:
 	if is_zero_approx(axis):
 		velocity.x = move_toward(velocity.x, 0.0, friction * delta)
 	else:
-		var top_speed: float = speed
+		var top_speed: float = speed * (BUFF_SPEED if buff_left > 0.0 else 1.0)
 		if Game.action_pressed("sprint") and not _exhausted:
 			top_speed *= sprint_multiplier
 			_drain_stamina(sprint_drain * delta)
@@ -236,6 +315,47 @@ func _handle_input(delta: float) -> void:
 			_start_attack()
 	if Game.action_just_pressed("spell"):
 		_try_cast()
+	if Game.action_just_pressed("throw"):
+		throw_dynamite()
+	if Game.action_just_pressed("charm"):
+		try_charm()
+
+
+func throw_dynamite() -> bool:
+	if _dead or _throw_cooldown > 0.0 or not Explosives.consume_one():
+		return false
+	_throw_cooldown = THROW_COOLDOWN
+	var stick: Node2D = DYNAMITE.instantiate() as Node2D
+	get_parent().add_child(stick)
+	var power: Vector2 = Vector2(float(facing) * 170.0 + velocity.x * 0.5, -170.0)
+	stick.call("launch", global_position + Vector2(float(facing) * 8.0, -30.0), power)
+	return true
+
+
+## Donut's charm (#55): the nearest enemy in front of Carl, if it can be charmed, turns neutral.
+## Returns true when a charm landed. Bosses and engineers have no charm method and are immune.
+func try_charm() -> bool:
+	if not spell_enabled or _dead or _charm_cooldown > 0.0:
+		return false
+	var candidates: Array = get_tree().get_nodes_in_group("enemies")
+	var target: Node2D = Targeting.nearest(global_position, Vector2(float(facing), 0.0), candidates, CHARM_RANGE, CHARM_ARC)
+	if target == null:
+		return false
+	if not target.has_method("charm") or not bool(target.call("can_be_charmed")):
+		Game.set_hint("Immune to charm.")
+		_charm_cooldown = 0.5
+		return false
+	if bool(target.call("is_charmed")):
+		return false
+	if not _spend_mana(CHARM_COST):
+		return false
+	_charm_cooldown = CHARM_COOLDOWN
+	var seconds: float = CHARM_BASE_SECONDS + CHARM_PER_CHARISMA * float(PlayerStats.get_stat("charisma"))
+	var landed: bool = bool(target.call("charm", seconds))
+	if landed:
+		SystemVoice.fire("first_charm")
+		Game.set_hint("Charmed.")
+	return landed
 
 
 func enable_spell() -> void:
@@ -288,8 +408,22 @@ func _spend_mana(cost: float) -> bool:
 	return true
 
 
+func _regen_health(delta: float) -> void:
+	var interval: float = PlayerStats.health_regen_interval()
+	if interval <= 0.0 or _dead or health >= max_health:
+		_health_regen_acc = 0.0
+		return
+	_health_regen_acc += delta
+	if _health_regen_acc >= interval:
+		_health_regen_acc = 0.0
+		health += 1
+		Game.report_player_health(health, max_health)
+
+
 func _regen_mana(delta: float) -> void:
 	_spell_cooldown = maxf(_spell_cooldown - delta, 0.0)
+	_charm_cooldown = maxf(_charm_cooldown - delta, 0.0)
+	_throw_cooldown = maxf(_throw_cooldown - delta, 0.0)
 	if not spell_enabled:
 		return
 	if Game.god_mode:
@@ -438,7 +572,7 @@ func _try_hit(body: Node2D) -> void:
 	if not body.has_method("take_damage"):
 		return
 	_hit_bodies.append(body)
-	body.call("take_damage", attack_damage + PlayerStats.damage_bonus(), global_position)
+	body.call("take_damage", attack_damage + PlayerStats.damage_bonus() + (BUFF_DAMAGE if buff_left > 0.0 else 0), global_position)
 	_spawn_fx(HIT_SPARK, _visual.to_global(Vector2(24.0, -22.0)))
 
 
@@ -522,6 +656,7 @@ func _die() -> void:
 	if _dead:
 		return
 	_dead = true
+	SystemVoice.count("death")
 	control_enabled = false
 	_stop_blink()
 	_end_attack()

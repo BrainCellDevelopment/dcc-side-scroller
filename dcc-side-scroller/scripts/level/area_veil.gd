@@ -5,6 +5,7 @@ const TOP: float = -4000.0
 const BOTTOM: float = 6000.0
 
 @export var edge_x: float = 0.0
+@export var direction: float = 1.0
 @export var feather: float = 96.0
 @export var fade_from: float = 10.0
 @export var fade_to: float = 120.0
@@ -32,7 +33,7 @@ func _refresh(force: bool) -> void:
 	if player == null:
 		return
 	var x: float = player.global_position.x
-	var behind: float = smoothstep(edge_x + fade_from, edge_x + fade_to, x)
+	var behind: float = smoothstep(fade_from, fade_to, (x - edge_x) * direction)
 	if not force and is_equal_approx(behind, _behind):
 		return
 	_behind = behind
@@ -40,8 +41,8 @@ func _refresh(force: bool) -> void:
 
 
 func _draw() -> void:
-	_draw_side(1.0, 1.0 - reveal)
-	_draw_side(-1.0, _behind)
+	_draw_side(direction, 1.0 - reveal)
+	_draw_side(-direction, _behind)
 
 
 func _draw_side(direction: float, amount: float) -> void:

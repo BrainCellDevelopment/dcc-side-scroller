@@ -27,13 +27,13 @@ def main():
     cs, ds = make_carl_donut.build()
     cs.save(os.path.join(OUTDIR, "carl.png"))
     ds.save(os.path.join(OUTDIR, "donut.png"))
-    for kind, name in (("grunt", "goblin.png"), ("thrower", "goblin_thrower.png")):
+    for kind, name in (("grunt", "goblin.png"), ("thrower", "goblin_thrower.png"), ("bard", "goblin_bard.png"), ("shamanka", "goblin_shamanka.png")):
         R = [[goblin.build(p, kind)[0] for p in r] for r in goblin.frames(kind)]
         sheet(R, 32, 32, 6).save(os.path.join(OUTDIR, name))
     R = [[engineer.build(p) for p in r] for r in engineer.frames()]
     sheet(R, 40, 40, 6).save(os.path.join(OUTDIR, "engineer.png"))
     sheet([[rock_frame(k) for k in range(4)]], 8, 8, 4).save(os.path.join(OUTDIR, "rock.png"))
-    for n in ("carl", "donut", "goblin", "goblin_thrower", "engineer", "rock"):
+    for n in ("carl", "donut", "goblin", "goblin_thrower", "goblin_bard", "goblin_shamanka", "engineer", "rock"):
         im = Image.open(os.path.join(OUTDIR, n + ".png"))
         print(n, im.size, count_colors(im))
 

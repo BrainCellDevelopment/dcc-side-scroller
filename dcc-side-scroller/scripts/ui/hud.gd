@@ -7,6 +7,8 @@ const STAMINA_DENIED_COLOR: Color = Color(0.9, 0.2, 0.2)
 const MANA_BAR_WIDTH: float = 80.0
 const MANA_COLOR: Color = Color(0.55, 0.35, 0.95)
 const MANA_DENIED_COLOR: Color = Color(0.95, 0.9, 1.0)
+const XP_BAR_WIDTH: float = 80.0
+const XP_COLOR: Color = Color(0.45, 0.85, 0.55)
 const BOSS_BAR_WIDTH: float = 240.0
 const POPUP_SECONDS: float = 3.5
 const POPUP_FADE: float = 0.25
@@ -16,6 +18,9 @@ var _current_popup: Dictionary = {}
 var _popup_showing: bool = false
 var _popup_tween: Tween = null
 var _banner_token: int = 0
+var _announce_queue: Array[Dictionary] = []
+var _announce_busy: bool = false
+var _survivor_label: Label = null
 var _item_queue: Array[String] = []
 var _item_busy: bool = false
 var _item_label: Label = null
@@ -24,6 +29,10 @@ var _countdown_label: Label = null
 var _flash_rect: ColorRect = null
 var _mana_bg: ColorRect = null
 var _mana_fill: ColorRect = null
+var _xp_bg: ColorRect = null
+var _xp_fill: ColorRect = null
+var _level_label: Label = null
+var _charm_label: Label = null
 
 @onready var health_fill: ColorRect = $HealthBarBg/HealthFill
 @onready var stamina_fill: ColorRect = $StaminaBarBg/StaminaFill
@@ -58,12 +67,42 @@ func _ready() -> void:
 	_build_item_label()
 	_build_god_label()
 	_build_mana_bar()
+	_build_xp_bar()
+	_build_charm_label()
 	_build_countdown()
+	_build_survivors()
+	SystemVoice.announced.connect(_on_announced)
 	_update_timer()
 
 
 func _process(_delta: float) -> void:
 	_update_timer()
+	_update_charm_label()
+
+
+func _build_charm_label() -> void:
+	_charm_label = Label.new()
+	_charm_label.name = "CharmLabel"
+	_charm_label.position = Vector2(8.0, 33.0)
+	_charm_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_charm_label.add_theme_font_size_override("font_size", 8)
+	_charm_label.add_theme_color_override("font_color", Color(1.0, 0.55, 0.75))
+	_charm_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_charm_label.add_theme_constant_override("outline_size", 3)
+	_charm_label.visible = false
+	add_child(_charm_label)
+
+
+## Shows how many goblins are currently charmed and whether the Goblin Pass is held.
+func _update_charm_label() -> void:
+	var charmed: int = get_tree().get_nodes_in_group("charmed").size()
+	var parts: PackedStringArray = PackedStringArray()
+	if charmed > 0:
+		parts.append("Charmed: %d" % charmed)
+	if Inventory.has_item("goblin_pass"):
+		parts.append("Goblin Pass")
+	_charm_label.text = "  ".join(parts)
+	_charm_label.visible = not parts.is_empty()
 
 
 func _build_countdown() -> void:
@@ -89,6 +128,50 @@ func _build_countdown() -> void:
 	_flash_rect.color = Color.WHITE
 	_flash_rect.modulate.a = 0.0
 	add_child(_flash_rect)
+
+
+func _build_survivors() -> void:
+	_survivor_label = Label.new()
+	_survivor_label.name = "SurvivorLabel"
+	_survivor_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_survivor_label.anchor_left = 1.0
+	_survivor_label.anchor_right = 1.0
+	_survivor_label.offset_left = -200.0
+	_survivor_label.offset_right = -8.0
+	_survivor_label.offset_top = 19.0
+	_survivor_label.offset_bottom = 31.0
+	_survivor_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_survivor_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_survivor_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_survivor_label.add_theme_font_size_override("font_size", 8)
+	_survivor_label.add_theme_color_override("font_color", Color(0.95, 0.55, 0.5))
+	_survivor_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_survivor_label.add_theme_constant_override("outline_size", 3)
+	add_child(_survivor_label)
+	SystemVoice.survivors_changed.connect(_refresh_survivors)
+	SystemVoice.survivors_visibility_changed.connect(func(_shown: bool) -> void: _refresh_survivors(SystemVoice.survivors))
+	_refresh_survivors(SystemVoice.survivors)
+
+
+func _refresh_survivors(count: int) -> void:
+	_survivor_label.visible = SystemVoice.survivors_visible and SystemVoice.floor_active
+	_survivor_label.text = "Survivors: %s" % SystemVoice.format_count(count)
+
+
+func _on_announced(title: String, body: String, seconds: float) -> void:
+	_announce_queue.append({"title": title, "body": body, "seconds": seconds})
+	_show_next_announcement()
+
+
+func _show_next_announcement() -> void:
+	if _announce_busy or _announce_queue.is_empty():
+		return
+	_announce_busy = true
+	var next: Dictionary = _announce_queue.pop_front()
+	show_system_message(str(next["title"]), str(next["body"]), float(next["seconds"]))
+	await get_tree().create_timer(float(next["seconds"]) + 0.3).timeout
+	_announce_busy = false
+	_show_next_announcement()
 
 
 func show_countdown(seconds: float) -> void:
@@ -268,6 +351,46 @@ func _build_mana_bar() -> void:
 	_mana_fill.size = Vector2(MANA_BAR_WIDTH, 4.0)
 	_mana_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_mana_bg.add_child(_mana_fill)
+
+
+func _build_xp_bar() -> void:
+	_xp_bg = ColorRect.new()
+	_xp_bg.name = "XpBarBg"
+	_xp_bg.color = Color(0.08, 0.06, 0.08, 0.9)
+	_xp_bg.position = Vector2(8.0, 28.0)
+	_xp_bg.size = Vector2(XP_BAR_WIDTH, 3.0)
+	_xp_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_xp_bg)
+	_xp_fill = ColorRect.new()
+	_xp_fill.name = "XpFill"
+	_xp_fill.color = XP_COLOR
+	_xp_fill.size = Vector2(0.0, 3.0)
+	_xp_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_xp_bg.add_child(_xp_fill)
+	_level_label = Label.new()
+	_level_label.name = "LevelLabel"
+	_level_label.position = Vector2(92.0, 24.0)
+	_level_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_level_label.add_theme_font_size_override("font_size", 8)
+	_level_label.add_theme_color_override("font_color", XP_COLOR)
+	_level_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_level_label.add_theme_constant_override("outline_size", 3)
+	add_child(_level_label)
+	PlayerStats.stats_changed.connect(_refresh_xp)
+	_refresh_xp()
+
+
+func _refresh_xp() -> void:
+	var shown: bool = PlayerStats.active
+	_xp_bg.visible = shown
+	_level_label.visible = shown
+	if not shown:
+		return
+	var need: int = PlayerStats.xp_to_next()
+	_xp_fill.size.x = XP_BAR_WIDTH * clampf(float(PlayerStats.xp) / float(maxi(need, 1)), 0.0, 1.0)
+	_level_label.text = "LV %d  %d/%d" % [PlayerStats.character_level, PlayerStats.xp, need]
+
+
 
 
 func _on_player_mana_changed(current: int, maximum: int) -> void:
