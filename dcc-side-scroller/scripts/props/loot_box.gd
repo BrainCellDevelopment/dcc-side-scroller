@@ -21,14 +21,14 @@ const ACHIEVEMENTS: Dictionary = {
 	"Bronze": ["Participation Trophy, Boxed", "You opened a Bronze box. The contents are worth slightly less than the box."],
 	"Silver": ["Aggressively Mediocre", "A Silver box. Not good, not bad, exactly like your odds of surviving."],
 	"Gold": ["Shiny Object Syndrome", "A Gold box! Try not to get stabbed while you admire it."],
-	"Legendary": ["Peaked Early", "A Legendary box this soon. Statistically, it is all downhill from here."],
+	"Legendary": ["Peaked Early", "A Legendary box this soon, and it holds a biscuit. Donut approves. Statistically, it is all downhill from here."],
 }
 
 const ITEMS: Dictionary = {
 	"Bronze": {"id": "bandages", "name": "Slightly Used Bandages"},
 	"Silver": {"id": "knuckle_wraps", "name": "Spiked Knuckle Wraps"},
 	"Gold": {"id": "lucky_boxers", "name": "Lucky Boxers"},
-	"Legendary": {"id": "cat_treats", "name": "Premium Cat Treats"},
+	"Legendary": {"id": "legendary_pet_biscuit", "name": "Legendary Pet Biscuit"},
 }
 const FACE_HEIGHT: float = 24.0
 const FIRST_DISTANCE: float = 34.0

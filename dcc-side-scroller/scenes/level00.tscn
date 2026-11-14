@@ -1212,7 +1212,7 @@ index = 7
 stage = 1
 
 [node name="CP8" parent="Checkpoints" instance=ExtResource("19_checkpoint")]
-position = Vector2(19384, 912)
+position = Vector2(19496, 912)
 index = 8
 stage = 2
 
@@ -1736,9 +1736,9 @@ shape = SubResource("shape_880x140")
 [node name="LootBoxBronze" parent="Guildhall/LootBoxes" instance=ExtResource("31_lootbox")]
 position = Vector2(20, 0)
 
-[node name="LootBoxSilver" parent="Guildhall/LootBoxes" instance=ExtResource("31_lootbox")]
+[node name="LootBoxLegendary" parent="Guildhall/LootBoxes" instance=ExtResource("31_lootbox")]
 position = Vector2(80, 0)
-tier = "Silver"
+tier = "Legendary"
 slot = 1
 
 [node name="Camera2D" type="Camera2D" parent="."]

@@ -431,7 +431,7 @@ def build():
     start_section(6, "Guildhall", 3, "GUILDHALL", WOOD, 972)
     g0 = cur["x"]
     flat(896)
-    cp(8, g0 + 56, 2)
+    cp(8, g0 + 168, 2)
     gx = g0 + 448
     markers.append({"name": "GuildCenter", "x": gx, "y": 912})
     doors.append({"name": "GuildEntryDoor", "x": g0 + 48, "y": 912, "locked": True, "range": 170,
@@ -600,7 +600,7 @@ def write_tscn(info):
     raw("CollisionShape2D", "CollisionShape2D", "Guildhall/SafeZone", ['shape = SubResource("%s")' % w.shape(880, 140)])
     raw("LootBoxes", "Node2D", "Guildhall", [])
     inst("LootBoxBronze", "Guildhall/LootBoxes", "lootbox", position=vec(20, 0))
-    inst("LootBoxSilver", "Guildhall/LootBoxes", "lootbox", position=vec(80, 0), tier=qstr("Silver"), slot="1")
+    inst("LootBoxLegendary", "Guildhall/LootBoxes", "lootbox", position=vec(80, 0), tier=qstr("Legendary"), slot="1")
 
     raw("Camera2D", "Camera2D", ".", [
         "position = Vector2(320, 184)", "limit_left = 0", "limit_top = -116", "limit_right = 4820",

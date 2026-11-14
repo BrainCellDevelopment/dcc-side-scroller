@@ -33,6 +33,8 @@ var _last_health: int = BOT_HEALTH
 var _best_x: float = 0.0
 var _stuck_time: float = 0.0
 var _finished: bool = false
+var _hit_log_time: float = -1.0
+var _boom_frame: int = -1
 var _shot_dir: String = OS.get_environment("DCC_SHOT_DIR")
 var _shots: Dictionary = {}
 
@@ -43,8 +45,8 @@ func _ready() -> void:
 	if Game.has_meta("bot_elapsed"):
 		_elapsed = float(Game.get_meta("bot_elapsed"))
 	var start: String = OS.get_environment("DCC_START")
-	if start == "fight" or start == "fight2":
-		Game.set_checkpoint(7, Vector2(float(DOZER_ARENA_X) + 56.0, 912.0), 3 if start == "fight2" else 1)
+	if start.begins_with("fight"):
+		Game.set_checkpoint(7, Vector2(float(DOZER_ARENA_X) + 56.0, 912.0), {"fight": 1, "fight2": 3, "fight3": 4}[start])
 	_level = LEVEL.instantiate()
 	add_child(_level)
 	_player = _level.get_node("Player") as CharacterBody2D
@@ -69,6 +71,9 @@ func _on_died() -> void:
 	Game.set_meta("bot_elapsed", _elapsed)
 	var pos: Vector2 = _player.global_position
 	_log("DIED #%d at (%.0f, %.0f) section %d phase %d" % [_deaths(), pos.x, pos.y, _section, _phase])
+	if OS.get_environment("DCC_STAY") == "out":
+		_finish(true, "died at zero outside the door as expected")
+		return
 	if _deaths() > MAX_DEATHS:
 		_finish(false, "too many deaths")
 
@@ -286,6 +291,9 @@ func _fight(pos: Vector2) -> void:
 	var flying: int = get_tree().get_nodes_in_group("projectiles").size()
 	if flying > 0:
 		_shot("pineapple_%d" % (Engine.get_physics_frames() / 8))
+	if int(_dozer.get("round_index")) >= 2:
+		_shelter(pos)
+		return
 	var direction: int = int(_dozer.get("direction"))
 	var speeds: Array = (_dozer.get_script() as GDScript).get_script_constant_map()["PATROL_SPEEDS"]
 	var vx: float = float(direction) * float(speeds[int(_dozer.get("round_index"))]) if int(_dozer.get("state")) == STATE_PATROL else 0.0
@@ -303,6 +311,40 @@ func _fight(pos: Vector2) -> void:
 	var aligned: float = absf(deck + vx * JUMP_LEAD - (pos.x + float(toward) * PLAYER_SPEED * JUMP_LEAD))
 	if aligned < 12.0:
 		_jump(0.45)
+
+
+func _shelter(pos: Vector2) -> void:
+	if OS.get_environment("DCC_STAY") == "out":
+		_move(0)
+		return
+	var door_x: float = float(_level.get_node("Doors/GuildEntryDoor").global_position.x)
+	if _hit_log_time < 0.0:
+		_hit_log_time = _elapsed
+		_log("phase 3: running for the door at %.0f" % door_x)
+	_shot_countdown(pos, door_x)
+	var ahead: float = _dozer.global_position.x - pos.x
+	_hold(&"sprint", pos.x < door_x + 60.0)
+	_move(1 if pos.x < door_x + 90.0 else 0)
+	if _player.is_on_floor() and _jump_hold <= 0.0 and ahead > 0.0 and ahead < 100.0 and absf(_dozer.global_position.y - pos.y) < 30.0:
+		_jump(0.45)
+	elif _player.is_on_floor() and _jump_hold <= 0.0 and _wall_ahead(pos) and pos.x < door_x:
+		_jump()
+
+
+func _shot_countdown(pos: Vector2, door_x: float) -> void:
+	var left: float = float(_level.get("_countdown"))
+	if left > 13.0:
+		_shot("cd_start")
+	if pos.x > door_x + 50.0 and left > 0.0:
+		_shot("cd_inside")
+	if left > 0.0 and left < 0.15:
+		_shot("cd_pre")
+	if int(_dozer.get("state")) == 4:
+		if _boom_frame < 0:
+			_boom_frame = Engine.get_physics_frames()
+		var step: int = (Engine.get_physics_frames() - _boom_frame) / 10
+		if step < 4:
+			_shot("cd_boom_%d" % step)
 
 
 func _walk_to(pos: Vector2, x: float, tolerance: float = 5.0) -> bool:

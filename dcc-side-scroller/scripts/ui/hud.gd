@@ -17,6 +17,8 @@ var _item_queue: Array[String] = []
 var _item_busy: bool = false
 var _item_label: Label = null
 var _god_label: Label = null
+var _countdown_label: Label = null
+var _flash_rect: ColorRect = null
 
 @onready var health_fill: ColorRect = $HealthBarBg/HealthFill
 @onready var stamina_fill: ColorRect = $StaminaBarBg/StaminaFill
@@ -48,11 +50,57 @@ func _ready() -> void:
 	Game.item_added.connect(_on_item_added)
 	_build_item_label()
 	_build_god_label()
+	_build_countdown()
 	_update_timer()
 
 
 func _process(_delta: float) -> void:
 	_update_timer()
+
+
+func _build_countdown() -> void:
+	_countdown_label = Label.new()
+	_countdown_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_countdown_label.anchor_left = 0.5
+	_countdown_label.anchor_right = 0.5
+	_countdown_label.offset_left = -120.0
+	_countdown_label.offset_right = 120.0
+	_countdown_label.offset_top = 22.0
+	_countdown_label.offset_bottom = 70.0
+	_countdown_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_countdown_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_countdown_label.add_theme_font_size_override("font_size", 40)
+	_countdown_label.add_theme_color_override("font_color", Color(1.0, 0.25, 0.2))
+	_countdown_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_countdown_label.add_theme_constant_override("outline_size", 8)
+	_countdown_label.visible = false
+	add_child(_countdown_label)
+	_flash_rect = ColorRect.new()
+	_flash_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_flash_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_flash_rect.color = Color.WHITE
+	_flash_rect.modulate.a = 0.0
+	add_child(_flash_rect)
+
+
+func show_countdown(seconds: float) -> void:
+	_countdown_label.visible = true
+	_countdown_label.text = "%.1f" % maxf(seconds, 0.0)
+	var pulse: float = 0.5 + 0.5 * sin(seconds * lerpf(6.0, 20.0, clampf(1.0 - seconds / 15.0, 0.0, 1.0)))
+	_countdown_label.modulate = Color.WHITE.lerp(Color(1.0, 0.7, 0.6), pulse)
+	_countdown_label.scale = Vector2.ONE * (1.0 + 0.12 * pulse)
+	_countdown_label.pivot_offset = _countdown_label.size * 0.5
+
+
+func hide_countdown() -> void:
+	_countdown_label.visible = false
+
+
+func flash_screen() -> void:
+	_flash_rect.modulate.a = 1.0
+	var tween: Tween = create_tween()
+	tween.tween_interval(0.12)
+	tween.tween_property(_flash_rect, "modulate:a", 0.0, 0.7)
 
 
 func _build_god_label() -> void:
