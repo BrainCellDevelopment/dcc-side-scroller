@@ -4,10 +4,12 @@ Forward coordinates (u grows with play, mirrored on write by levelkit). Layout, 
   96        checkpoint
   0..220    yard: coal heap, conveyor, pineapple crates, two grunts, funpowder barrels at 200 and 212
   256       steam vent A
-  304..400  parked dozer 1, a Bomb Bard on its cab roof (u 352..400)
+  264       Bomb Bard on the yard floor, before the first dozer
+  304..400  parked dozer 1 (its body is a hidden 96x32 block under the dozer art)
   424       grunt in the gap, barrel at 416
-  448..544  parked dozer 2, a Bomb Bard on its cab roof (u 496..544)
+  448..544  parked dozer 2
   560       steam vent B
+  584       Bomb Bard on the floor behind the second dozer
   612       grunt
   640..660  funpowder barrels, then the boiler at 680 and the Shamanka at 712 behind the steam engine
 
@@ -28,7 +30,7 @@ RES = {
 }
 
 GRUNT_XS = (190, 232, 424, 612)
-BARDS = ((376, 80), (520, 80))
+BARDS = ((264, 0), (584, 0))
 SHAMANKA_X = 712
 BARDS_LEVEL = 5
 SHAMANKA_LEVEL = 7
@@ -57,7 +59,6 @@ def build(kit, x0, floor, furnish):
 
     for u in DOZERS:
         kit.block(x0 + u, 96, 32, style=PLANK)["hide"] = True
-        kit.add_plat(x0 + u + 48, floor - 80, 48, 16, PLANK, kind="upper", one_way=True)["hide"] = True
         _prop("dozer", x0 + u, floor, 96)
 
     for u, ph in VENTS:
