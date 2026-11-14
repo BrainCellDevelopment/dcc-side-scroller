@@ -2,7 +2,7 @@ extends RefCounted
 
 const ITEM_ID: String = "dynamite"
 const ITEM_NAME: String = "Goblin Dynamite"
-const BOOM_ACHIEVEMENT: String = "explosives_boom"
+const BOOM_ACHIEVEMENT: String = "boom"
 const BOOM_HITS: int = 3
 const BODY_CENTER: Vector2 = Vector2(0.0, -12.0)
 
@@ -60,7 +60,7 @@ static func blast(tree: SceneTree, center: Vector2, radius: float, damage: int, 
 	if enemy_or_prop_hits > 0:
 		handling += 1
 	if enemy_or_prop_hits >= BOOM_HITS:
-		Game.unlock_achievement(BOOM_ACHIEVEMENT, "Boom!", "Explosives Handling: you blew up a bunch of things at once.")
+		SystemVoice.fire(BOOM_ACHIEVEMENT)
 	return hit
 
 

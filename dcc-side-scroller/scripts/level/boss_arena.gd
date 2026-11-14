@@ -57,6 +57,8 @@ func start() -> void:
 	intro_started.emit()
 	if hud != null and announcement != "":
 		hud.call("show_banner", announcement, 2.0)
+	if announcement != "":
+		SystemVoice.announce_boss_intro(announcement)
 	_show_card()
 	if intro_seconds > 0.0:
 		await get_tree().create_timer(intro_seconds).timeout

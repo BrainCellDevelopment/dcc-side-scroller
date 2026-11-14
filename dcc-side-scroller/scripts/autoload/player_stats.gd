@@ -82,6 +82,12 @@ func enter_floor(floor_index: int) -> void:
 		class_chosen = true
 	if active and not was_active:
 		mana = max_mana()
+	var voice: Node = get_node_or_null("/root/SystemVoice")
+	if voice != null:
+		if active:
+			voice.begin_floor(floor_index)
+		else:
+			voice.end_floor()
 	stats_changed.emit()
 
 
@@ -139,6 +145,11 @@ func award_kill(enemy: Node) -> int:
 	if not key.is_empty():
 		_awarded[key] = true
 	add_xp(amount)
+	var voice: Node = get_node_or_null("/root/SystemVoice")
+	if voice != null:
+		voice.count("kill")
+		if enemy.get("is_boss") != null and bool(enemy.get("is_boss")):
+			voice.count("boss_kill")
 	return amount
 
 
