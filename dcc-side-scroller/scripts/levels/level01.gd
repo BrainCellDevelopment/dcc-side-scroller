@@ -210,7 +210,7 @@ func _on_screen_shake(strength: float, duration: float) -> void:
 
 func _update_hint() -> void:
 	var show: bool = false
-	if not _spell_used and not complete and Targeting.is_valid(_intro_thrower):
+	if not _spell_used and not complete and is_instance_valid(_intro_thrower) and Targeting.is_valid(_intro_thrower):
 		show = absf(_player.global_position.x - _intro_thrower.global_position.x) < HINT_RANGE
 	if show == _hint_shown:
 		return

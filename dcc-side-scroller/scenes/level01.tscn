@@ -156,8 +156,8 @@ size = Vector2(448, 64)
 style = 2
 
 [node name="P002" parent="Platforms" instance=ExtResource("5_platform")]
-position = Vector2(5840, 224)
-size = Vector2(80, 16)
+position = Vector2(5856, 224)
+size = Vector2(64, 16)
 style = 2
 
 [node name="P003" parent="Platforms" instance=ExtResource("5_platform")]
@@ -279,7 +279,7 @@ collision_mask = 0
 shape = SubResource("shape_16x720")
 
 [node name="IntroThrower" parent="Goblins" instance=ExtResource("9_goblin")]
-position = Vector2(5880, 222)
+position = Vector2(5888, 222)
 variant = 1
 
 [node name="G02" parent="Goblins" instance=ExtResource("9_goblin")]

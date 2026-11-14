@@ -73,8 +73,8 @@ def furnish(x0, x1, crates=()):
 def section_tunnel(x0):
     # Arterial tunnel and llama alley (#57). Stub: intro rock thrower on a shelf, a spike strip, a pit.
     flat(448)
-    shelf = kit.add_plat(x0 + 288, FLOOR - 80, 80, 16, STONE, kind="upper")
-    thrower(shelf["x"] + 40, shelf["y"])
+    shelf = kit.add_plat(x0 + 288, FLOOR - 80, 64, 16, STONE, kind="upper")
+    thrower(shelf["x"] + 32, shelf["y"])
     kit.enemies[-1]["name"] = "IntroThrower"
     grunt(x0 + 380)
     cp(0, x0 + 232, 0)
