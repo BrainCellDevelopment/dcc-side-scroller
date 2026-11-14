@@ -22,6 +22,10 @@ const RUN_CHECKPOINT: int = 7
 const STAGE_RUN: int = 1
 const STAGE_AFTERMATH: int = 2
 const STAGE_ROUND2: int = 3
+const STAGE_ROUND3: int = 4
+const COUNTDOWN_SECONDS: float = 6.5
+const DOOR_CLOSE_PAD: float = 30.0
+const SHELTER_PAD: float = 12.0
 const NEW_LOOK_TITLE: String = "NEW LOOK UNLOCKED"
 const NEW_LOOK_QUIP: String = "Congratulations, crawler. You are now dressed for the occasion."
 const NEW_LOOK_SECONDS: float = 3.5
@@ -66,6 +70,9 @@ var _rounds_cleared: int = 0
 var _reinforced: bool = false
 var _engineer_fleeing: bool = false
 var _start_round: int = 0
+var _countdown: float = -1.0
+var _door_shut: bool = false
+var _shake_tick: float = 0.0
 var _focus_y: float = 0.0
 var _bg_section: int = -1
 var _hint_owner: Area2D = null
@@ -106,6 +113,7 @@ func _ready() -> void:
 	_player.connect("died", _on_player_died)
 	_engineer.connect("defeated", _on_engineer_defeated)
 	_dozer.connect("round_cleared", _on_dozer_round_cleared)
+	_dozer.connect("round_started", _on_dozer_round_started)
 	_dozer.connect("destroyed", _on_dozer_destroyed)
 	if _dozer.has_signal("vulnerable_changed"):
 		_dozer.connect("vulnerable_changed", _on_vulnerable_changed)
@@ -151,6 +159,7 @@ func _physics_process(delta: float) -> void:
 		_finish_engineer_exit()
 	_camera.global_position = target
 	_update_shake(delta)
+	_countdown_step(delta)
 	_update_player_z()
 
 
@@ -254,10 +263,9 @@ func _begin() -> void:
 	_seen[_section_at(pos.x)] = true
 	_enter_section(_section_at(pos.x))
 	match Game.checkpoint_stage:
-		STAGE_RUN, STAGE_ROUND2:
+		STAGE_RUN, STAGE_ROUND2, STAGE_ROUND3:
 			_engineer.queue_free()
-			if Game.checkpoint_stage == STAGE_ROUND2:
-				_start_round = 1
+			_start_round = {STAGE_RUN: 0, STAGE_ROUND2: 1, STAGE_ROUND3: 2}[Game.checkpoint_stage]
 		STAGE_AFTERMATH:
 			_engineer.queue_free()
 			_dozer.queue_free()
@@ -469,17 +477,64 @@ func _on_dozer_round_cleared(round_number: int) -> void:
 	Game.set_hint("")
 	if round_number == 1:
 		_unlock("dozer_stomp")
-	if round_number < DOZER_ROUNDS:
+	if round_number < DOZER_ROUNDS - 1:
 		_hud.call("show_banner", "ROUND %d" % (round_number + 1), 1.2)
 
 
+func _on_dozer_round_started(round_number: int) -> void:
+	if round_number != DOZER_ROUNDS or _phase != Phase.FIGHT:
+		return
+	_countdown = COUNTDOWN_SECONDS
+	_door_shut = false
+	Game.set_hint("")
+	_hud.call("show_banner", "IT'S GONNA BLOW!\nGET TO MORDECAI'S DOOR!", 3.0)
+	_guild_entry_door.call("unlock")
+	_guild_entry_door.call("open")
+
+
+func _countdown_step(delta: float) -> void:
+	if _countdown < 0.0 or _phase != Phase.FIGHT:
+		return
+	_countdown -= delta
+	var progress: float = clampf(1.0 - _countdown / COUNTDOWN_SECONDS, 0.0, 1.0)
+	_dozer.set("alarm", maxf(progress, 0.05))
+	_hud.call("show_countdown", _countdown)
+	_shake_tick -= delta
+	if _shake_tick <= 0.0:
+		_shake_tick = 0.25
+		Game.shake(0.6 + 3.0 * progress, 0.25)
+	var door_x: float = _guild_entry_door.global_position.x
+	if not _door_shut and _player.global_position.x > door_x + DOOR_CLOSE_PAD:
+		_shut_door()
+	if _countdown <= 0.0:
+		_detonate()
+
+
+func _shut_door() -> void:
+	_door_shut = true
+	_guild_entry_door.call("close")
+	_camera.limit_right = int((_section_areas[6] as Area2D).get_meta("r"))
+
+
+func _detonate() -> void:
+	_countdown = -1.0
+	_hud.call("hide_countdown")
+	_hud.call("flash_screen")
+	Game.shake(10.0, 0.8)
+	var sheltered: bool = _player.global_position.x > _guild_entry_door.global_position.x + SHELTER_PAD
+	if sheltered and not _door_shut:
+		_shut_door()
+	elif not sheltered:
+		_player.call("kill", true)
+	_dozer.call("detonate")
+
+
 func _on_dozer_destroyed() -> void:
-	if _phase != Phase.FIGHT:
+	if _phase != Phase.FIGHT or bool(_player.call("is_dead")):
 		return
 	_phase = Phase.AFTERMATH
 	_dozer_wall.set_deferred("disabled", true)
 	_camera.limit_right = int((_section_areas[6] as Area2D).get_meta("r"))
-	Game.set_checkpoint(8, _guild_entry_door.global_position + Vector2(8.0, 0.0), STAGE_AFTERMATH)
 	Game.set_hint("Head right.")
 	_unlock("dozer_down")
 	_guild_entry_door.call("unlock")
@@ -568,6 +623,11 @@ func dev_goto(target: String) -> bool:
 			index = 8
 		"dozerfight", "chase":
 			index = 7
+		"dozerfight3":
+			Game.clear_checkpoint()
+			Game.set_checkpoint(RUN_CHECKPOINT, _arena_checkpoint(), STAGE_ROUND3)
+			Game.reset_run()
+			return true
 		"dozerfight2":
 			Game.clear_checkpoint()
 			Game.set_checkpoint(RUN_CHECKPOINT, _arena_checkpoint(), STAGE_ROUND2)
