@@ -6,6 +6,8 @@ signal attacked
 const COYOTE_TIME: float = 0.1
 const JUMP_BUFFER_TIME: float = 0.1
 const HURT_STUN_TIME: float = 0.2
+const BUFF_SPEED: float = 1.2
+const BUFF_DAMAGE: int = 1
 const JUMP_CUT: float = 0.45
 const SpriteUtil: GDScript = preload("res://scripts/util/sprite_util.gd")
 const HIT_SPARK: PackedScene = preload("res://scenes/fx/hit_spark.tscn")
@@ -65,6 +67,8 @@ const Targeting: GDScript = preload("res://scripts/combat/targeting.gd")
 var health: int = 0
 var stamina: float = 0.0
 var control_enabled: bool = true
+var buff_left: float = 0.0
+var buff_name: String = ""
 var facing: int = 1
 
 var _dead: bool = false
@@ -135,6 +139,10 @@ func _physics_process(delta: float) -> void:
 	if velocity.y >= 0.0:
 		_jumping = false
 
+	if buff_left > 0.0:
+		buff_left = maxf(buff_left - delta, 0.0)
+		if buff_left <= 0.0:
+			buff_name = ""
 	_hurt_left = maxf(_hurt_left - delta, 0.0)
 	_cooldown_left = maxf(_cooldown_left - delta, 0.0)
 	_jump_buffer_left = maxf(_jump_buffer_left - delta, 0.0)
@@ -248,6 +256,12 @@ func _on_stats_changed() -> void:
 	Game.report_player_health(health, max_health)
 
 
+## Short timed buff (Tally's meal): faster and hits harder until it runs out.
+func apply_buff(buff: String, seconds: float) -> void:
+	buff_name = buff
+	buff_left = seconds
+
+
 ## Item effect: returns false (nothing spent) when already at full health.
 func heal(amount: int) -> bool:
 	if _dead or health >= max_health:
@@ -277,7 +291,7 @@ func _handle_input(delta: float) -> void:
 	if is_zero_approx(axis):
 		velocity.x = move_toward(velocity.x, 0.0, friction * delta)
 	else:
-		var top_speed: float = speed
+		var top_speed: float = speed * (BUFF_SPEED if buff_left > 0.0 else 1.0)
 		if Game.action_pressed("sprint") and not _exhausted:
 			top_speed *= sprint_multiplier
 			_drain_stamina(sprint_drain * delta)
@@ -558,7 +572,7 @@ func _try_hit(body: Node2D) -> void:
 	if not body.has_method("take_damage"):
 		return
 	_hit_bodies.append(body)
-	body.call("take_damage", attack_damage + PlayerStats.damage_bonus(), global_position)
+	body.call("take_damage", attack_damage + PlayerStats.damage_bonus() + (BUFF_DAMAGE if buff_left > 0.0 else 0), global_position)
 	_spawn_fx(HIT_SPARK, _visual.to_global(Vector2(24.0, -22.0)))
 
 

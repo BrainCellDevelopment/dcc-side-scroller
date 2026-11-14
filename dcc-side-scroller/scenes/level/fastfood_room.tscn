@@ -1,0 +1,117 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://scripts/level/safe_room.gd" id="1_room"]
+[ext_resource type="PackedScene" path="res://scenes/props/gate_door.tscn" id="2_door"]
+[ext_resource type="PackedScene" path="res://scenes/level/checkpoint.tscn" id="3_cp"]
+[ext_resource type="PackedScene" path="res://scenes/props/tally.tscn" id="4_tally"]
+[ext_resource type="PackedScene" path="res://scenes/level/platform.tscn" id="5_plat"]
+[ext_resource type="PackedScene" path="res://scenes/props/ff_ballpit.tscn" id="6_ff_ballpit"]
+[ext_resource type="PackedScene" path="res://scenes/props/ff_booth.tscn" id="7_ff_booth"]
+[ext_resource type="PackedScene" path="res://scenes/props/ff_counter.tscn" id="8_ff_counter"]
+[ext_resource type="PackedScene" path="res://scenes/props/ff_cubicle.tscn" id="9_ff_cubicle"]
+[ext_resource type="PackedScene" path="res://scenes/props/ff_menu.tscn" id="10_ff_menu"]
+[ext_resource type="PackedScene" path="res://scenes/props/ff_playtower.tscn" id="11_ff_playtower"]
+[ext_resource type="PackedScene" path="res://scenes/props/ff_slide.tscn" id="12_ff_slide"]
+[ext_resource type="PackedScene" path="res://scenes/props/ff_soda.tscn" id="13_ff_soda"]
+
+[node name="FastFoodRoom" type="Node2D"]
+script = ExtResource("1_room")
+width = 640.0
+checkpoint_index = 2
+hall_depth = 56.0
+box_tiers = PackedStringArray("Bronze", "Silver")
+box_kit = "floor1"
+
+[node name="Zone" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Zone"]
+
+[node name="HallEntry" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HallEntry"]
+
+[node name="HallExit" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HallExit"]
+
+[node name="PropSlots" type="Node2D" parent="."]
+
+[node name="Back" type="Marker2D" parent="PropSlots"]
+position = Vector2(0, -40)
+
+[node name="Left" type="Marker2D" parent="PropSlots"]
+position = Vector2(-150, 0)
+
+[node name="Mid" type="Marker2D" parent="PropSlots"]
+position = Vector2(-40, 0)
+
+[node name="Right" type="Marker2D" parent="PropSlots"]
+position = Vector2(150, 0)
+
+[node name="Dressing" type="Node2D" parent="."]
+
+[node name="Soda" parent="Dressing" instance=ExtResource("13_ff_soda")]
+position = Vector2(272, 0)
+z_index = -1
+
+[node name="Counter" parent="Dressing" instance=ExtResource("8_ff_counter")]
+position = Vector2(196, 0)
+z_index = -1
+
+[node name="Menu" parent="Dressing" instance=ExtResource("10_ff_menu")]
+position = Vector2(196, -74)
+z_index = -2
+
+[node name="Booth1" parent="Dressing" instance=ExtResource("7_ff_booth")]
+position = Vector2(6, 0)
+z_index = -1
+
+[node name="Booth2" parent="Dressing" instance=ExtResource("7_ff_booth")]
+position = Vector2(-34, 0)
+z_index = -1
+scale = Vector2(-1, 1)
+
+[node name="Slide" parent="Dressing" instance=ExtResource("12_ff_slide")]
+position = Vector2(-80, 0)
+z_index = -1
+
+[node name="Tower" parent="Dressing" instance=ExtResource("11_ff_playtower")]
+position = Vector2(-125, 0)
+z_index = -1
+
+[node name="BallPit" parent="Dressing" instance=ExtResource("6_ff_ballpit")]
+position = Vector2(-190, 0)
+z_index = 1
+
+[node name="Cubicle1" parent="Dressing" instance=ExtResource("9_ff_cubicle")]
+position = Vector2(-258, 0)
+z_index = -1
+
+[node name="Cubicle2" parent="Dressing" instance=ExtResource("9_ff_cubicle")]
+position = Vector2(-306, 0)
+z_index = -1
+
+[node name="PlayDeck" parent="." instance=ExtResource("5_plat")]
+position = Vector2(-145, -72)
+size = Vector2(40, 6)
+style = 3
+one_way = true
+
+[node name="PlayStep" parent="." instance=ExtResource("5_plat")]
+position = Vector2(-178, -38)
+size = Vector2(28, 6)
+style = 3
+one_way = true
+
+[node name="Checkpoint" parent="." instance=ExtResource("3_cp")]
+position = Vector2(48, 0)
+
+[node name="Caretaker" parent="." instance=ExtResource("4_tally")]
+position = Vector2(104, 0)
+
+[node name="BoxSpot" type="Marker2D" parent="."]
+position = Vector2(20, -20)
+
+[node name="EntryDoor" parent="." instance=ExtResource("2_door")]
+
+[node name="ExitDoor" parent="." instance=ExtResource("2_door")]

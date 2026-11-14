@@ -9,7 +9,6 @@ signal enemy_neutralised(enemy: Node)
 
 const LOOT_BOX: PackedScene = preload("res://scenes/props/loot_box.tscn")
 const ZONE_HEIGHT: float = 120.0
-const HALL_DEPTH: float = 160.0
 const DOOR_OPEN_RANGE: float = 70.0
 const DOOR_CLOSE_RANGE: float = 48.0
 const DOOR_STAND_CLEAR: float = 20.0
@@ -18,6 +17,8 @@ const ENEMY_MASK: int = 12
 const PLAYER_MASK: int = 2
 
 @export var width: float = 480.0
+## How far outside each door counts as the hallway. Keep it inside any gate that seals the room.
+@export var hall_depth: float = 160.0
 @export var checkpoint_index: int = 0
 @export var checkpoint_stage: int = 0
 @export var box_tiers: PackedStringArray = PackedStringArray()
@@ -43,8 +44,8 @@ var _boxes_given: bool = false
 func _ready() -> void:
 	var half: float = width * 0.5
 	_set_box(zone, Vector2(width - 16.0, ZONE_HEIGHT), Vector2(0.0, -ZONE_HEIGHT * 0.5), PLAYER_MASK | ENEMY_MASK)
-	_set_box(hall_entry, Vector2(HALL_DEPTH, ZONE_HEIGHT), Vector2(half + HALL_DEPTH * 0.5, -ZONE_HEIGHT * 0.5), ENEMY_MASK)
-	_set_box(hall_exit, Vector2(HALL_DEPTH, ZONE_HEIGHT), Vector2(-half - HALL_DEPTH * 0.5, -ZONE_HEIGHT * 0.5), ENEMY_MASK)
+	_set_box(hall_entry, Vector2(hall_depth, ZONE_HEIGHT), Vector2(half + hall_depth * 0.5, -ZONE_HEIGHT * 0.5), ENEMY_MASK)
+	_set_box(hall_exit, Vector2(hall_depth, ZONE_HEIGHT), Vector2(-half - hall_depth * 0.5, -ZONE_HEIGHT * 0.5), ENEMY_MASK)
 	entry_door.position = Vector2(half, 0.0)
 	entry_door.scale.x = -1.0
 	exit_door.position = Vector2(-half, 0.0)
@@ -127,7 +128,8 @@ func _on_zone_entered(body: Node2D) -> void:
 	if not _boxes_given:
 		_boxes_given = true
 		for tier: String in box_tiers:
-			add_box(tier)
+			add_box.call_deferred(tier)
+	SystemVoice.fire("first_safe_room")
 	entered.emit()
 
 

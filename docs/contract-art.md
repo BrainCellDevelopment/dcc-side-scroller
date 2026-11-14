@@ -134,3 +134,11 @@ Art generator: `art-src/characters/llama.py` (Pillow only; writes `assets/charac
 | `scenes/enemies/lava_ball.tscn` | `scripts/enemies/lava_ball.gd` | Extends `rock.gd` (same `launch(velocity, damage)`); `lava_ball.png` 10x10, 4 frames. Leaves a short-lived puddle where it lands on a platform top. |
 | `scenes/level/lava_puddle.tscn` | `scripts/level/lava_puddle.gd` | Area2D hazard, group `hazards`, origin bottom-left like spikes, `width` (multiple of 16), `damage` 1, `lifetime` (0 = permanent). `lava_puddle.png` 32x10, 4 frames, stretched to `width`. |
 Weak point: the throat. A hit while the llama telegraphs a spit (`throat_open`, the head rears back and the gland glows), or a head-height hit from its front (attacker 20 px or more above its feet and 14 px or more in front), ruptures the gland and kills it for a bonus; any other hit is normal damage.
+
+## Safe room #1: fast-food restaurant (#59)
+Art generators: `art-src/floor1/gen_props_fastfood.py` (props, Pillow and numpy) and `art-src/floor1/make_fastfood_room.py` (the room scene). All decor is static, no collision, original blue and white pixel art.
+| Scene | Notes |
+|---|---|
+| `scenes/level/fastfood_room.tscn` | The SafeRoom kit (`safe_room.gd`, width 640, checkpoint index 2, `box_tiers` Bronze and Silver, kit `floor1`) with a `Dressing` node, one-way play-structure platforms (`PlayDeck`, `PlayStep`), the checkpoint, Tally and the box spot. Instanced by the Level 1 generator in the saferoom section. |
+| `scenes/props/tally.tscn` | Caretaker NPC (`scripts/props/tally.gd`): talk, take the paper hat, then eat (full heal plus the 90 s "Well Fed" buff, salmon for Donut). |
+| `ff_counter` 96x40, `ff_booth` 44x34, `ff_slide` 72x64, `ff_ballpit` 72x24, `ff_soda` 28x52 (Hoop Cola), `ff_cubicle` 48x56, `ff_menu` 56x24 (centre origin), `ff_playtower` 40x80 | Static props under `scenes/props/`, origin bottom-centre unless noted. |

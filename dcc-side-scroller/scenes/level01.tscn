@@ -1,4 +1,4 @@
-[gd_scene load_steps=38 format=3 uid="uid://dl1fndtn48xq"]
+[gd_scene load_steps=39 format=3 uid="uid://dl1fndtn48xq"]
 
 [ext_resource type="Script" path="res://scripts/levels/level01.gd" id="1_level"]
 [ext_resource type="PackedScene" path="res://scenes/level/background.tscn" id="2_background"]
@@ -23,9 +23,10 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/rat.tscn" id="21_rat"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/scatterer.tscn" id="22_scatterer"]
 [ext_resource type="PackedScene" path="res://scenes/props/bathroom_door.tscn" id="23_bathroom_door"]
-[ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="24_door"]
-[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="25_player"]
-[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="26_hud"]
+[ext_resource type="PackedScene" path="res://scenes/level/fastfood_room.tscn" id="24_fastfood_room"]
+[ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="25_door"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="26_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="27_hud"]
 
 [sub_resource type="RectangleShape2D" id="shape_720x420"]
 size = Vector2(720, 420)
@@ -222,57 +223,54 @@ position = Vector2(4226, 172)
 position = Vector2(4188, 154)
 
 [node name="D046" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(3976, 194)
+position = Vector2(4056, 194)
 
 [node name="D047" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(3736, 194)
+position = Vector2(3368, 194)
 
 [node name="D048" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(3496, 194)
-
-[node name="D049" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(3208, 194)
 
-[node name="D050" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D049" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(2968, 194)
 
-[node name="D051" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D050" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(2728, 194)
 
-[node name="D052" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D051" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(2488, 194)
 
-[node name="D053" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D052" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(2312, 194)
 
-[node name="D054" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D053" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(2072, 194)
 
-[node name="D055" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D054" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(1832, 194)
 
-[node name="D056" parent="Deco" instance=ExtResource("4_p_crate")]
+[node name="D055" parent="Deco" instance=ExtResource("4_p_crate")]
 position = Vector2(2232, 304)
 
-[node name="D057" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D056" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(1544, 194)
 
-[node name="D058" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D057" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(1304, 194)
 
-[node name="D059" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D058" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(1064, 194)
 
-[node name="D060" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D059" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(824, 194)
 
-[node name="D061" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D060" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(520, 194)
 
-[node name="D062" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D061" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(280, 194)
 
-[node name="D063" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D062" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(40, 194)
 
 [node name="P001" parent="Platforms" instance=ExtResource("14_platform")]
@@ -393,7 +391,8 @@ index = 1
 stage = 1
 
 [node name="CP2" parent="Checkpoints" instance=ExtResource("17_checkpoint")]
-position = Vector2(4000, 304)
+visible = false
+position = Vector2(3760, 304)
 index = 2
 stage = 2
 
@@ -547,14 +546,17 @@ position = Vector2(4160, 208)
 hidden_item_id = "soap_travel"
 hidden_item_name = "Travel-Size Soap"
 
-[node name="EntryDoor" parent="Doors" instance=ExtResource("24_door")]
+[node name="FastFoodRoom" parent="." instance=ExtResource("24_fastfood_room")]
+position = Vector2(3712, 304)
+
+[node name="EntryDoor" parent="Doors" instance=ExtResource("25_door")]
 position = Vector2(6904, 304)
 start_open = true
 close_behind = true
 close_side = -1.0
 sealed_text = "Locked. No way back."
 
-[node name="Player" parent="." instance=ExtResource("25_player")]
+[node name="Player" parent="." instance=ExtResource("26_player")]
 position = Vector2(6848, 302)
 
 [node name="Camera2D" type="Camera2D" parent="."]
@@ -567,7 +569,7 @@ limit_smoothed = true
 position_smoothing_enabled = true
 position_smoothing_speed = 6.0
 
-[node name="HUD" parent="." instance=ExtResource("26_hud")]
+[node name="HUD" parent="." instance=ExtResource("27_hud")]
 
 [node name="Sec0" type="Area2D" parent="Triggers"]
 position = Vector2(6000, 550)

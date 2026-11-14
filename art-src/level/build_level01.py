@@ -59,6 +59,7 @@ RES.update({
     "prop_spray_x": "res://scenes/props/spray_x.tscn",
     "prop_grate": "res://scenes/props/grate.tscn",
     "prop_pipe_h": "res://scenes/props/pipe_h.tscn",
+    "fastfood_room": "res://scenes/level/fastfood_room.tscn",
 })
 RES.update(section_rats.RES)
 EXISTING = ["player", "goblin", "hud"] + list(section_rats.RES)
@@ -164,11 +165,34 @@ def section_rats_corridor(x0):
     section_rats.build(kit, x0, FLOOR, furnish)
 
 
+SAFEROOM = {}
+
+
 def section_saferoom(x0):
-    # Fast-food safe room (#59). The only room whose checkpoint matters for the boss run.
+    # Fast-food safe room (#59): the SafeRoom kit dressed as a Polish fast-food restaurant with a playground, Tally
+    # and two loot boxes. The room instance (scenes/level/fastfood_room.tscn) owns its doors, zone, checkpoint and
+    # props; this section only lays the floor and puts the room in the middle. The level checkpoint sits under the
+    # room's own one (hidden) so goto and respawn land in the room.
     flat(768)
-    cp(2, x0 + 96, 2)
-    furnish(x0, x0 + 768)
+    SAFEROOM["center"] = x0 + 384
+    cp(2, x0 + 384 - 48, 2)
+    kit.add_prop("prop_torch", x0 + 40, FLOOR - 110)
+    kit.add_prop("prop_torch", x0 + 728, FLOOR - 110)
+
+
+def emit_saferoom(w):
+    w.inst("FastFoodRoom", ".", "fastfood_room", position=vec(kit.mx(SAFEROOM["center"]), FLOOR))
+
+
+def saferoom_fixup(text):
+    # the room draws its own checkpoint; the level one stays as the respawn and goto anchor but is hidden
+    return text.replace('[node name="CP2" parent="Checkpoints" instance=ExtResource("%s")]\n' % CP_ID(text),
+                        '[node name="CP2" parent="Checkpoints" instance=ExtResource("%s")]\nvisible = false\n' % CP_ID(text), 1)
+
+
+def CP_ID(text):
+    import re
+    return re.search(r'\[ext_resource [^\]]*checkpoint.tscn" id="([^"]+)"', text).group(1)
 
 
 def section_hoarder(x0):
@@ -239,6 +263,7 @@ def write_tscn():
     kit.emit_enemies(w)
     emit_llama_alley(w)
     section_rats.emit(kit, w)
+    emit_saferoom(w)
     inst("EntryDoor", "Doors", "door", position=vec(kit.mx(DOOR_U), FLOOR), start_open="true",
          close_behind="true", close_side="-1.0", sealed_text='"Locked. No way back."')
     inst("Player", ".", "player", position=vec(kit.mx(START_U), FLOOR - 2))
@@ -249,7 +274,7 @@ def write_tscn():
     inst("HUD", ".", "hud")
     kit.emit_section_triggers(w, lambda s: {"key": s["name"], "gate": 1 if s["gate"] else 0,
                                             "edge": kit.mx(s["x0"]), "floor_y": FLOOR})
-    text = w.render(RES, "res://scripts/levels/level01.gd", UID)
+    text = saferoom_fixup(w.render(RES, "res://scripts/levels/level01.gd", UID))
     with open(OUT, "w") as f:
         f.write(text)
     return text

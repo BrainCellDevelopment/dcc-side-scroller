@@ -100,13 +100,20 @@ func _process(delta: float) -> void:
 	var dist: float = FIRST_DISTANCE + layout.x * LINE_SPACING + START_EXTRA * (1.0 - progress)
 	var desired: Vector2 = _target.global_position + Vector2(facing * dist, -FACE_HEIGHT)
 	global_position = global_position.lerp(desired, 1.0 - exp(-FOLLOW_RATE * delta))
-	var focused: bool = _is_focused() and global_position.distance_to(_target.global_position) <= INTERACT_RANGE
+	var focused: bool = _is_focused() and global_position.distance_to(_target.global_position) <= INTERACT_RANGE and not _caretaker_busy()
 	prompt.visible = focused
 	if not focused:
 		return
 	prompt.text = "E: open" if Game.in_safe_zone else "Safe zones only"
 	if Game.in_safe_zone and _age > ARM_SECONDS and _last_open_frame != Engine.get_process_frames() and Game.action_just_pressed("interact"):
 		_open()
+
+
+func _caretaker_busy() -> bool:
+	for node: Node in get_tree().get_nodes_in_group("caretakers"):
+		if bool(node.get("_inside")):
+			return true
+	return false
 
 
 func _layout() -> Vector2:
