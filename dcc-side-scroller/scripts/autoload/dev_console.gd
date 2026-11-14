@@ -84,13 +84,25 @@ func _on_submitted(text: String) -> void:
 	var argument: String = parts[1].to_lower() if parts.size() > 1 else ""
 	match command:
 		"help":
-			_print("goto <section>  list  heal  help  (` or esc closes)")
+			_print("goto <section>  list  heal  skins  skin <default|derpy>  unlockskin <id>  resetprofile  help  (` or esc closes)")
 		"list":
 			_print("sections: " + ", ".join(SECTIONS) + ", cp<N>")
 		"heal":
 			_heal()
 		"goto":
 			_goto(argument)
+		"skins":
+			_print("unlocked: " + ", ".join(Game.unlocked_skins) + " | selected: " + Game.selected_skin + " | all: " + ", ".join(Game.SKINS.keys()) + " | tutorial death streak: " + str(Game.tutorial_death_streak))
+		"skin":
+			_skin(argument)
+		"unlockskin":
+			if Game.unlock_skin(argument):
+				_print("unlocked " + argument)
+			else:
+				_print("unknown or already unlocked: " + argument)
+		"resetprofile":
+			Game.reset_profile()
+			_print("profile reset")
 		_:
 			_print("unknown command: " + command)
 
@@ -103,6 +115,18 @@ func _heal() -> void:
 	player.set("health", player.get("max_health"))
 	Game.report_player_health(int(player.get("health")), int(player.get("max_health")))
 	_print("healed")
+
+
+func _skin(skin_id: String) -> void:
+	if not Game.SKINS.has(skin_id):
+		_print("unknown skin: " + skin_id + " (" + ", ".join(Game.SKINS.keys()) + ")")
+		return
+	Game.unlock_skin(skin_id)
+	_print("equipped " + skin_id)
+	_panel.visible = false
+	_line.release_focus()
+	get_tree().paused = false
+	get_tree().reload_current_scene()
 
 
 func _goto(target: String) -> void:

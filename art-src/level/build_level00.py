@@ -31,6 +31,8 @@ RES["mordecai"] = "res://scenes/props/mordecai.tscn"
 EXISTING = ["player", "goblin", "engineer", "dozer", "hud", "lootbox"]
 
 RUBBLE, IRON, STONE, WOOD = 0, 1, 2, 3
+ARENA_W = 896
+RUN_W = 416
 JUMP_GAP = 64
 STEP_UP = 48
 
@@ -289,9 +291,6 @@ def build():
     grunt(x0 + 700)
     grunt(x0 + 760)
     ach("A_stairs", "stairs", x0 + 16)
-    ach("A_door", "hall_door", x0 + 1060, w=48)
-    doors.append({"name": "HallDoor", "x": x0 + 1130, "y": 912, "locked": True,
-                  "text": "Locked. Clear the goblins."})
     for i in range(6):
         add_prop("prop_torch", x0 + 120 + i * 200, 912 - 110)
     for i in range(3):
@@ -407,54 +406,29 @@ def build():
     markers.append({"name": "ScrollStart", "x": scroll0, "y": 912})
     trig("T_arena", "arena", "", a0 + 128, a0 + 160, 912 - 300, 912 + 60)
     add_enemy("engineer", a0 + 540, 912)
-    add_enemy("dozer", scroll0 + 10, 912)
     for x in (a0 + 100, a0 + 350, a0 + 600):
         add_prop("prop_torch", x, 912 - 110)
     props_banner = [a0 + 250, a0 + 480]
     end_section()
 
-    # ---------------- Section 5: dozer chase
-    start_section(5, "Dozer chase", 2, "", STONE, 972)
-    c0 = cur["x"]
-    end_x = c0 + 6000
-    raw_obs = [
-        ("block", 400, 32, 16), ("pit", 656, 32), ("spikes", 944, 32), ("block", 1200, 48, 32),
-        ("block", 1456, 32, 32), ("pit", 1712, 32), ("spikes", 2000, 48), ("block", 2256, 96, 32),
-        ("block", 2512, 32, 16), ("block", 2592, 32, 32), ("pit", 2880, 32), ("spikes", 3136, 32),
-        ("block", 3360, 32, 16), ("block", 3584, 128, 48), ("pit", 3856, 32), ("spikes", 4112, 48),
-        ("block", 4368, 32, 32), ("block", 4512, 64, 16), ("pit", 4816, 32), ("spikes", 5072, 32),
-        ("block", 5312, 48, 32),
-    ]
-    obstacles = [(o[0], c0 + o[1]) + tuple(o[2:]) for o in raw_obs]
-    px = c0
-    pending_blocks = []
-    pending_spikes = []
-    segs = []
-    for ob in obstacles:
-        if ob[0] == "pit":
-            segs.append((px, ob[1], pending_blocks, pending_spikes))
-            pending_blocks, pending_spikes = [], []
-            px = ob[1] + ob[2]
-            segs.append(("pit", ob[1], ob[2]))
-        elif ob[0] == "block":
-            pending_blocks.append(ob)
-        else:
-            pending_spikes.append(ob)
-    segs.append((px, end_x, pending_blocks, pending_spikes))
-    for s in segs:
-        if s[0] == "pit":
-            pit(s[2])
-        else:
-            assert cur["x"] == s[0], (cur["x"], s[0])
-            w = s[1] - s[0]
-            flat(w, spk=[(o[1] - s[0], o[2]) for o in s[3]])
-            for o in s[2]:
-                block(o[1], o[2], o[3])
-    for x in range(c0 + 300, end_x, 320):
+    # ---------------- Section 5: short run and dozer arena
+    start_section(5, "Dozer arena", 2, "", STONE, 972)
+    flat(RUN_W)
+    arena_x = cur["x"]
+    for x in (arena_x - 300, arena_x - 120):
         add_prop("prop_torch", x, 912 - 110)
-    for x in range(c0 + 460, end_x, 480):
-        add_prop("prop_lichen", x, 912 - 70)
-    markers.append({"name": "ChaseEnd", "x": end_x, "y": 912})
+    markers.append({"name": "DozerArena", "x": arena_x, "y": 912})
+    cp(7, arena_x + 56, 1)
+    flat(ARENA_W)
+    markers.append({"name": "DozerLeft", "x": arena_x + 100, "y": 912})
+    markers.append({"name": "DozerRight", "x": arena_x + ARENA_W - 26, "y": 912})
+    walls.append({"name": "DozerWall", "x": arena_x + 24, "y": 912 - 250, "kind": "arena"})
+    trig("T_dozer", "dozer", "", arena_x + 96, arena_x + 128, 912 - 300, 912 + 60)
+    add_enemy("dozer", arena_x, 912)
+    add_plat(arena_x + 272, 912 - 48, 112, 16, STONE, kind="refuge", one_way=True)
+    add_plat(arena_x + 608, 912 - 48, 112, 16, STONE, kind="refuge", one_way=True)
+    for x in (arena_x + 200, arena_x + 450, arena_x + 700):
+        add_prop("prop_torch", x, 912 - 110)
     end_section()
 
     # ---------------- Section 6: guildhall
@@ -464,8 +438,8 @@ def build():
     cp(8, g0 + 56, 2)
     gx = g0 + 448
     markers.append({"name": "GuildCenter", "x": gx, "y": 912})
-    doors.append({"name": "GuildEntryDoor", "x": g0 + 48, "y": 912, "locked": False, "range": 170,
-                  "text": ""})
+    doors.append({"name": "GuildEntryDoor", "x": g0 + 48, "y": 912, "locked": True, "range": 170,
+                  "text": "Locked. Finish the dozer."})
     doors.append({"name": "GuildExitDoor", "x": gx + 402, "y": 912, "locked": True,
                   "text": "Locked. Talk to Mordecai and open your boxes."})
     walls.append({"name": "RightBound", "x": g0 + 904, "y": 912 - 250, "kind": "wall"})
@@ -607,6 +581,8 @@ def write_tscn(info):
 
     for d in doors:
         dp = {"position": vec(d["x"], d["y"]), "locked": "true" if d["locked"] else "false"}
+        if d.get("open"):
+            dp["start_open"] = "true"
         if d.get("range"):
             dp["auto_open_range"] = "%d.0" % d["range"]
         if d["text"]:
@@ -817,7 +793,7 @@ def lint(text, w, info):
 
     for r in main:
         for q in plats:
-            if q is r or q["kind"] in ("obstacle", "pitfloor"):
+            if q is r or q["kind"] in ("obstacle", "pitfloor", "refuge"):
                 continue
             ox = min(r["x"] + r["w"], q["x"] + q["w"]) - max(r["x"], q["x"])
             if ox <= 0:
@@ -837,7 +813,7 @@ def lint(text, w, info):
 
     def support(x, y, tol=1):
         for p in plats:
-            if p["kind"] in ("pitfloor", "ceil", "deco"):
+            if p["kind"] in ("pitfloor", "ceil", "deco", "refuge"):
                 continue
             if abs(p["y"] - y) <= tol and p["x"] + 8 <= x <= p["x"] + p["w"] - 8:
                 return p
@@ -849,7 +825,7 @@ def lint(text, w, info):
             continue
         lo, hi = d["x"] - pw / 2, d["x"] + pw / 2
         iv = sorted((max(lo, q["x"]), min(hi, q["x"] + q["w"])) for q in plats
-                    if q["kind"] not in ("pitfloor", "ceil", "deco", "obstacle") and abs(q["y"] - d["y"]) <= 1
+                    if q["kind"] not in ("pitfloor", "ceil", "deco", "refuge", "obstacle") and abs(q["y"] - d["y"]) <= 1
                     and q["x"] < hi and q["x"] + q["w"] > lo)
         cov, end = 0, lo
         for a, b in iv:
@@ -886,13 +862,8 @@ def lint(text, w, info):
         for e in enemies:
             if s["x0"] <= e["x"] < s["x1"] and not (s["top"] <= e["y"] <= s["bottom"]):
                 errs.append("enemy outside limits in section %d" % s["idx"])
-    chase = sections[5]
-    travel = (chase["x1"] - 640) - info["scroll0"]
-    notes.append("chase travel available at 640 wide: %d px (needs about 5300)" % travel)
-    if travel < 5300:
-        errs.append("chase corridor too short")
     for t in trigs:
-        if t["kind"] in ("hint", "ach", "ambush", "arena"):
+        if t["kind"] in ("hint", "ach", "ambush", "arena", "dozer"):
             if not any(s["x0"] - 1 <= t["x0"] and t["x1"] <= s["x1"] + 1 for s in sections):
                 errs.append("trigger %s spans sections" % t["name"])
     ids = [t["name"] for t in trigs]
@@ -937,13 +908,13 @@ def draw_map(info):
         for t in trigs:
             if t["kind"] == "section" or not (x0 <= t["x0"] < x1):
                 continue
-            col = {"hint": (90, 90, 40), "ach": (60, 40, 110), "ambush": (170, 60, 20), "arena": (170, 20, 120)}[t["kind"]]
+            col = {"hint": (90, 90, 40), "ach": (60, 40, 110), "ambush": (170, 60, 20), "arena": (170, 20, 120), "dozer": (170, 20, 120)}[t["kind"]]
             d.rectangle([tx(t["x0"]), ty(t["y0"]), tx(t["x1"]), ty(t["y1"])], outline=col)
         for p in plats:
             if not (p["x"] + p["w"] > x0 and p["x"] < x1):
                 continue
             col = {"route": (150, 150, 160), "obstacle": (180, 150, 110), "upper": (110, 190, 230),
-                   "ceil": (110, 90, 90), "deco": (90, 100, 90), "pitfloor": (70, 70, 70)}[p["kind"]]
+                   "ceil": (110, 90, 90), "deco": (90, 100, 90), "refuge": (90, 100, 90), "pitfloor": (70, 70, 70)}[p["kind"]]
             d.rectangle([tx(p["x"]), ty(p["y"]), tx(p["x"] + p["w"]), ty(p["y"] + p["h"])], fill=col)
         for k in kills:
             if x0 <= k["x"] < x1:

@@ -5,21 +5,12 @@ const LEVEL: PackedScene = preload("res://scenes/level00.tscn")
 var _level: Node2D
 var _fails: int = 0
 var _shot_dir: String = OS.get_environment("DCC_SHOT_DIR")
-var _mode: String = OS.get_environment("DCC_FLOW")
-
-
 func _ready() -> void:
-	if _mode == "hall":
-		Game.set_checkpoint(2, Vector2(8080.0, 912.0), 0)
-	else:
-		Game.set_checkpoint(8, Vector2(24072.0, 912.0), 2)
+	Game.set_checkpoint(8, Vector2(19384.0, 912.0), 2)
 	_level = LEVEL.instantiate() as Node2D
 	add_child(_level)
 	await _frames(30)
-	if _mode == "hall":
-		await _hall()
-	else:
-		await _guild()
+	await _guild()
 	print("RESULT ", "PASS" if _fails == 0 else "FAIL %d" % _fails)
 	get_tree().quit(_fails)
 
@@ -47,27 +38,6 @@ func _shot(name: String) -> void:
 		return
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png("%s/%s.png" % [_shot_dir, name])
-
-
-func _hall() -> void:
-	var door: Node2D = _level.get_node("Doors/HallDoor")
-	var player: CharacterBody2D = _level.get_node("Player")
-	_check(not door.get("is_open") and door.get("locked"), "hall door starts closed and locked")
-	player.global_position = Vector2(door.global_position.x - 60.0, 910.0)
-	await _frames(20)
-	await _shot("hall_closed")
-	Input.action_press("move_right")
-	await _frames(40)
-	_check(player.global_position.x < door.global_position.x - 8.0, "player blocked by closed door")
-	for g: Node in _level.get_node("Goblins").get_children():
-		if g.global_position.x >= 8032.0 and g.global_position.x < 9232.0:
-			g.call("take_damage", 99, Vector2.ZERO)
-	await _frames(90)
-	_check(door.get("is_open"), "hall door opens after hall goblins die")
-	await _shot("hall_open")
-	await _frames(80)
-	Input.action_release("move_right")
-	_check(player.global_position.x > door.global_position.x + 10.0, "player passes open door")
 
 
 func _guild() -> void:
