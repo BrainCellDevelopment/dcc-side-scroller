@@ -1,6 +1,695 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=39 format=3 uid="uid://c4lv2nastyfl2"]
 
 [ext_resource type="Script" path="res://scripts/levels/level02.gd" id="1_level"]
+[ext_resource type="PackedScene" path="res://scenes/level/background.tscn" id="2_background"]
+[ext_resource type="PackedScene" path="res://scenes/props/torch_bracket.tscn" id="3_p_torch"]
+[ext_resource type="PackedScene" path="res://scenes/props/crate.tscn" id="4_p_crate"]
+[ext_resource type="PackedScene" path="res://scenes/props/pipe_h.tscn" id="5_p_pipe_h"]
+[ext_resource type="PackedScene" path="res://scenes/props/grate.tscn" id="6_p_grate"]
+[ext_resource type="PackedScene" path="res://scenes/props/skull_sconce.tscn" id="7_p_skull_sconce"]
+[ext_resource type="PackedScene" path="res://scenes/props/sign_hazard.tscn" id="8_p_sign_hazard"]
+[ext_resource type="PackedScene" path="res://scenes/level/platform.tscn" id="9_platform"]
+[ext_resource type="PackedScene" path="res://scenes/level/spikes.tscn" id="10_spikes"]
+[ext_resource type="PackedScene" path="res://scenes/level/kill_zone.tscn" id="11_killzone"]
+[ext_resource type="PackedScene" path="res://scenes/level/checkpoint.tscn" id="12_checkpoint"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/grub.tscn" id="13_grub"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/dingo.tscn" id="14_dingo"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/goblin.tscn" id="15_goblin"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/kobold_rider.tscn" id="16_kobold_rider"]
+[ext_resource type="PackedScene" path="res://scenes/level/storm_shelter.tscn" id="17_storm_shelter"]
+[ext_resource type="PackedScene" path="res://scenes/props/smoothie_bench.tscn" id="18_smoothie_bench"]
+[ext_resource type="PackedScene" path="res://scenes/level/krakaren_lair.tscn" id="19_krakaren_lair"]
+[ext_resource type="PackedScene" path="res://scenes/level/grub_storm.tscn" id="20_grub_storm"]
+[ext_resource type="PackedScene" path="res://scenes/level/dogpound_lair.tscn" id="21_dogpound_lair"]
+[ext_resource type="PackedScene" path="res://scenes/level/reward_room.tscn" id="22_reward_room"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="23_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="24_hud"]
+
+[sub_resource type="RectangleShape2D" id="shape_1600x420"]
+size = Vector2(1600, 420)
+
+[sub_resource type="RectangleShape2D" id="shape_704x140"]
+size = Vector2(704, 140)
+
+[sub_resource type="RectangleShape2D" id="shape_1536x420"]
+size = Vector2(1536, 420)
+
+[sub_resource type="RectangleShape2D" id="shape_896x420"]
+size = Vector2(896, 420)
+
+[sub_resource type="RectangleShape2D" id="shape_1024x420"]
+size = Vector2(1024, 420)
+
+[sub_resource type="RectangleShape2D" id="shape_40x140"]
+size = Vector2(40, 140)
+
+[sub_resource type="RectangleShape2D" id="shape_640x420"]
+size = Vector2(640, 420)
+
+[sub_resource type="RectangleShape2D" id="shape_16x720"]
+size = Vector2(16, 720)
+
+[sub_resource type="RectangleShape2D" id="shape_1600x1900"]
+size = Vector2(1600, 1900)
+
+[sub_resource type="RectangleShape2D" id="shape_768x1900"]
+size = Vector2(768, 1900)
+
+[sub_resource type="RectangleShape2D" id="shape_1536x1900"]
+size = Vector2(1536, 1900)
+
+[sub_resource type="RectangleShape2D" id="shape_896x1900"]
+size = Vector2(896, 1900)
+
+[sub_resource type="RectangleShape2D" id="shape_1024x1900"]
+size = Vector2(1024, 1900)
+
+[sub_resource type="RectangleShape2D" id="shape_640x1900"]
+size = Vector2(640, 1900)
 
 [node name="Level02" type="Node2D"]
 script = ExtResource("1_level")
+
+[node name="Background" parent="." instance=ExtResource("2_background")]
+initial_style = 9
+
+[node name="Deco" type="Node2D" parent="."]
+z_index = -2
+
+[node name="Platforms" type="Node2D" parent="."]
+
+[node name="Hazards" type="Node2D" parent="."]
+
+[node name="Checkpoints" type="Node2D" parent="."]
+
+[node name="Triggers" type="Node2D" parent="."]
+
+[node name="Walls" type="Node2D" parent="."]
+
+[node name="Doors" type="Node2D" parent="."]
+
+[node name="Goblins" type="Node2D" parent="."]
+
+[node name="D000" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(120, 194)
+
+[node name="D001" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(360, 194)
+
+[node name="D002" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(600, 194)
+
+[node name="D003" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(840, 194)
+
+[node name="D004" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(1080, 194)
+
+[node name="D005" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(1320, 194)
+
+[node name="D006" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(1560, 194)
+
+[node name="D007" parent="Deco" instance=ExtResource("4_p_crate")]
+position = Vector2(200, 304)
+
+[node name="D008" parent="Deco" instance=ExtResource("4_p_crate")]
+position = Vector2(980, 304)
+
+[node name="D009" parent="Deco" instance=ExtResource("5_p_pipe_h")]
+position = Vector2(700, 172)
+
+[node name="D010" parent="Deco" instance=ExtResource("6_p_grate")]
+position = Vector2(1040, 240)
+
+[node name="D011" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(2488, 194)
+
+[node name="D012" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(2728, 194)
+
+[node name="D013" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(2968, 194)
+
+[node name="D014" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(3208, 194)
+
+[node name="D015" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(3448, 194)
+
+[node name="D016" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(3688, 194)
+
+[node name="D017" parent="Deco" instance=ExtResource("4_p_crate")]
+position = Vector2(2608, 304)
+
+[node name="D018" parent="Deco" instance=ExtResource("4_p_crate")]
+position = Vector2(3528, 304)
+
+[node name="D019" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(3944, 194)
+
+[node name="D020" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(4920, 194)
+
+[node name="D021" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(5160, 194)
+
+[node name="D022" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(5400, 194)
+
+[node name="D023" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(5640, 194)
+
+[node name="D024" parent="Deco" instance=ExtResource("4_p_crate")]
+position = Vector2(5300, 304)
+
+[node name="D025" parent="Deco" instance=ExtResource("7_p_skull_sconce")]
+position = Vector2(6024, 186)
+
+[node name="D026" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(6968, 194)
+
+[node name="D027" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(7208, 194)
+
+[node name="D028" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(7448, 194)
+
+[node name="D029" parent="Deco" instance=ExtResource("8_p_sign_hazard")]
+position = Vector2(7368, 304)
+
+[node name="P001" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(0, 304)
+size = Vector2(448, 64)
+style = 8
+
+[node name="P002" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(448, 304)
+size = Vector2(320, 64)
+style = 8
+
+[node name="P003" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(512, 224)
+size = Vector2(96, 16)
+style = 8
+one_way = true
+
+[node name="P004" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(768, 400)
+size = Vector2(48, 16)
+style = 2
+
+[node name="P005" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(816, 304)
+size = Vector2(352, 64)
+style = 8
+
+[node name="P006" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(1120, 272)
+size = Vector2(32, 32)
+style = 8
+
+[node name="P007" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(1168, 304)
+size = Vector2(432, 64)
+style = 8
+
+[node name="P008" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(1600, 304)
+size = Vector2(768, 64)
+style = 8
+
+[node name="P009" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(2368, 304)
+size = Vector2(384, 64)
+style = 7
+
+[node name="P010" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(2752, 400)
+size = Vector2(48, 16)
+style = 2
+
+[node name="P011" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(2800, 304)
+size = Vector2(320, 64)
+style = 7
+
+[node name="P012" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(2880, 224)
+size = Vector2(96, 16)
+style = 7
+one_way = true
+
+[node name="P013" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(3120, 304)
+size = Vector2(384, 64)
+style = 7
+
+[node name="P014" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(3264, 272)
+size = Vector2(32, 32)
+style = 7
+
+[node name="P015" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(3504, 304)
+size = Vector2(400, 64)
+style = 7
+
+[node name="P016" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(3904, 304)
+size = Vector2(256, 64)
+style = 7
+
+[node name="P017" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(4160, 304)
+size = Vector2(640, 64)
+style = 7
+
+[node name="P018" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(4800, 304)
+size = Vector2(384, 64)
+style = 9
+
+[node name="P019" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(5184, 400)
+size = Vector2(48, 16)
+style = 2
+
+[node name="P020" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(5232, 304)
+size = Vector2(320, 64)
+style = 9
+
+[node name="P021" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(5552, 304)
+size = Vector2(272, 64)
+style = 9
+
+[node name="P022" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(5824, 304)
+size = Vector2(384, 64)
+style = 7
+
+[node name="P023" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(6016, 240)
+size = Vector2(96, 16)
+style = 7
+one_way = true
+
+[node name="P024" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(6208, 304)
+size = Vector2(640, 64)
+style = 7
+
+[node name="P025" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(6848, 304)
+size = Vector2(640, 64)
+style = 8
+
+[node name="S000" parent="Hazards" instance=ExtResource("10_spikes")]
+position = Vector2(768, 400)
+width = 48.0
+
+[node name="S001" parent="Hazards" instance=ExtResource("10_spikes")]
+position = Vector2(2752, 400)
+width = 48.0
+
+[node name="S002" parent="Hazards" instance=ExtResource("10_spikes")]
+position = Vector2(5184, 400)
+width = 48.0
+
+[node name="K000" parent="Hazards" instance=ExtResource("11_killzone")]
+position = Vector2(768, 380)
+size = Vector2(48, 108)
+
+[node name="K001" parent="Hazards" instance=ExtResource("11_killzone")]
+position = Vector2(2752, 380)
+size = Vector2(48, 108)
+
+[node name="K002" parent="Hazards" instance=ExtResource("11_killzone")]
+position = Vector2(5184, 380)
+size = Vector2(48, 108)
+
+[node name="CP0" parent="Checkpoints" instance=ExtResource("12_checkpoint")]
+position = Vector2(96, 304)
+index = 0
+stage = 0
+
+[node name="CP1" parent="Checkpoints" instance=ExtResource("12_checkpoint")]
+position = Vector2(1696, 304)
+index = 1
+stage = 1
+
+[node name="CP2" parent="Checkpoints" instance=ExtResource("12_checkpoint")]
+position = Vector2(2464, 304)
+index = 2
+stage = 2
+
+[node name="CP3" parent="Checkpoints" instance=ExtResource("12_checkpoint")]
+position = Vector2(4000, 304)
+index = 3
+stage = 3
+
+[node name="CP4" parent="Checkpoints" instance=ExtResource("12_checkpoint")]
+position = Vector2(4896, 304)
+index = 4
+stage = 4
+
+[node name="CP5" parent="Checkpoints" instance=ExtResource("12_checkpoint")]
+position = Vector2(5920, 304)
+index = 5
+stage = 5
+
+[node name="CP6" parent="Checkpoints" instance=ExtResource("12_checkpoint")]
+position = Vector2(6944, 304)
+index = 6
+stage = 6
+
+[node name="BgArrival" type="Area2D" parent="Triggers"]
+position = Vector2(800, 214)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "bg"
+metadata/arg = "9"
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/BgArrival"]
+shape = SubResource("shape_1600x420")
+
+[node name="Shelter" type="Area2D" parent="Triggers"]
+position = Vector2(1984, 254)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "heal"
+metadata/arg = ""
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/Shelter"]
+shape = SubResource("shape_704x140")
+
+[node name="BgClurichaun" type="Area2D" parent="Triggers"]
+position = Vector2(3136, 214)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "bg"
+metadata/arg = "9"
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/BgClurichaun"]
+shape = SubResource("shape_1536x420")
+
+[node name="BgKrakaren" type="Area2D" parent="Triggers"]
+position = Vector2(4352, 214)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "bg"
+metadata/arg = "8"
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/BgKrakaren"]
+shape = SubResource("shape_896x420")
+
+[node name="BgGrubStorm" type="Area2D" parent="Triggers"]
+position = Vector2(5312, 214)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "bg"
+metadata/arg = "9"
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/BgGrubStorm"]
+shape = SubResource("shape_1024x420")
+
+[node name="BgDogPound" type="Area2D" parent="Triggers"]
+position = Vector2(6336, 214)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "bg"
+metadata/arg = "8"
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/BgDogPound"]
+shape = SubResource("shape_1024x420")
+
+[node name="EndZone" type="Area2D" parent="Triggers"]
+position = Vector2(7444, 254)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "end"
+metadata/arg = ""
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/EndZone"]
+shape = SubResource("shape_40x140")
+
+[node name="BgStairwell" type="Area2D" parent="Triggers"]
+position = Vector2(7168, 214)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "bg"
+metadata/arg = "7"
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/BgStairwell"]
+shape = SubResource("shape_640x420")
+
+[node name="LeftBound" type="StaticBody2D" parent="Walls"]
+position = Vector2(-8, 54)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/LeftBound"]
+shape = SubResource("shape_16x720")
+
+[node name="RightBound" type="StaticBody2D" parent="Walls"]
+position = Vector2(7496, 54)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/RightBound"]
+shape = SubResource("shape_16x720")
+
+[node name="Grub01" parent="Goblins" instance=ExtResource("13_grub")]
+position = Vector2(340, 302)
+
+[node name="Grub02" parent="Goblins" instance=ExtResource("13_grub")]
+position = Vector2(392, 302)
+
+[node name="Grub03" parent="Goblins" instance=ExtResource("13_grub")]
+position = Vector2(560, 222)
+
+[node name="Grub04" parent="Goblins" instance=ExtResource("13_grub")]
+position = Vector2(600, 302)
+
+[node name="Dingo01" parent="Goblins" instance=ExtResource("14_dingo")]
+position = Vector2(1000, 302)
+
+[node name="Grub05" parent="Goblins" instance=ExtResource("13_grub")]
+position = Vector2(1210, 302)
+
+[node name="Dingo02" parent="Goblins" instance=ExtResource("14_dingo")]
+position = Vector2(1500, 302)
+
+[node name="Clurichaun01" parent="Goblins" instance=ExtResource("15_goblin")]
+position = Vector2(2668, 302)
+variant = 4
+
+[node name="Clurichaun02" parent="Goblins" instance=ExtResource("15_goblin")]
+position = Vector2(2928, 222)
+variant = 4
+
+[node name="Clurichaun03" parent="Goblins" instance=ExtResource("15_goblin")]
+position = Vector2(3368, 302)
+variant = 4
+
+[node name="Clurichaun04" parent="Goblins" instance=ExtResource("15_goblin")]
+position = Vector2(3608, 302)
+variant = 4
+
+[node name="Kobold_rider01" parent="Goblins" instance=ExtResource("16_kobold_rider")]
+position = Vector2(6084, 302)
+
+[node name="Kobold_rider02" parent="Goblins" instance=ExtResource("16_kobold_rider")]
+position = Vector2(6244, 302)
+
+[node name="StormShelter" parent="." instance=ExtResource("17_storm_shelter")]
+position = Vector2(1984, 304)
+
+[node name="SmoothieBench" parent="." instance=ExtResource("18_smoothie_bench")]
+position = Vector2(3712, 304)
+
+[node name="KrakarenLair" parent="." instance=ExtResource("19_krakaren_lair")]
+position = Vector2(4480, 304)
+
+[node name="GrubStorm" parent="." instance=ExtResource("20_grub_storm")]
+position = Vector2(4800, 304)
+zone_length = 1024.0
+
+[node name="DogPoundLair" parent="." instance=ExtResource("21_dogpound_lair")]
+position = Vector2(6528, 304)
+
+[node name="RewardRoom" parent="." instance=ExtResource("22_reward_room")]
+position = Vector2(7108, 304)
+
+[node name="Player" parent="." instance=ExtResource("23_player")]
+position = Vector2(96, 302)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(96, 184)
+limit_left = 0
+limit_top = -116
+limit_right = 7488
+limit_bottom = 364
+limit_smoothed = true
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0
+
+[node name="HUD" parent="." instance=ExtResource("24_hud")]
+
+[node name="Sec0" type="Area2D" parent="Triggers"]
+position = Vector2(800, 550)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "section"
+metadata/arg = "0"
+metadata/l = 0
+metadata/r = 1920
+metadata/t = -116
+metadata/b = 364
+metadata/bg = 9
+metadata/x0 = 0
+metadata/x1 = 1600
+metadata/title = "BRINDLE GRUB CORRIDORS"
+metadata/key = "arrival"
+metadata/gate = 0
+metadata/edge = 0
+metadata/floor_y = 304
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/Sec0"]
+shape = SubResource("shape_1600x1900")
+
+[node name="Sec1" type="Area2D" parent="Triggers"]
+position = Vector2(1984, 550)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "section"
+metadata/arg = "1"
+metadata/l = 1280
+metadata/r = 2688
+metadata/t = -116
+metadata/b = 364
+metadata/bg = 7
+metadata/x0 = 1600
+metadata/x1 = 2368
+metadata/title = "STORM SHELTER"
+metadata/key = "shelter"
+metadata/gate = 1
+metadata/edge = 1600
+metadata/floor_y = 304
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/Sec1"]
+shape = SubResource("shape_768x1900")
+
+[node name="Sec2" type="Area2D" parent="Triggers"]
+position = Vector2(3136, 550)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "section"
+metadata/arg = "2"
+metadata/l = 2048
+metadata/r = 4224
+metadata/t = -116
+metadata/b = 364
+metadata/bg = 9
+metadata/x0 = 2368
+metadata/x1 = 3904
+metadata/title = "CLURICHAUN QUADRANT"
+metadata/key = "clurichaun"
+metadata/gate = 1
+metadata/edge = 2368
+metadata/floor_y = 304
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/Sec2"]
+shape = SubResource("shape_1536x1900")
+
+[node name="Sec3" type="Area2D" parent="Triggers"]
+position = Vector2(4352, 550)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "section"
+metadata/arg = "3"
+metadata/l = 3584
+metadata/r = 5120
+metadata/t = -116
+metadata/b = 364
+metadata/bg = 8
+metadata/x0 = 3904
+metadata/x1 = 4800
+metadata/title = "KRAKAREN LAIR"
+metadata/key = "krakaren"
+metadata/gate = 1
+metadata/edge = 3904
+metadata/floor_y = 304
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/Sec3"]
+shape = SubResource("shape_896x1900")
+
+[node name="Sec4" type="Area2D" parent="Triggers"]
+position = Vector2(5312, 550)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "section"
+metadata/arg = "4"
+metadata/l = 4480
+metadata/r = 6144
+metadata/t = -116
+metadata/b = 364
+metadata/bg = 9
+metadata/x0 = 4800
+metadata/x1 = 5824
+metadata/title = "GRUB STORM"
+metadata/key = "grubstorm"
+metadata/gate = 1
+metadata/edge = 4800
+metadata/floor_y = 304
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/Sec4"]
+shape = SubResource("shape_1024x1900")
+
+[node name="Sec5" type="Area2D" parent="Triggers"]
+position = Vector2(6336, 550)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "section"
+metadata/arg = "5"
+metadata/l = 5504
+metadata/r = 7168
+metadata/t = -116
+metadata/b = 364
+metadata/bg = 8
+metadata/x0 = 5824
+metadata/x1 = 6848
+metadata/title = "DOG POUND"
+metadata/key = "dogpound"
+metadata/gate = 1
+metadata/edge = 5824
+metadata/floor_y = 304
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/Sec5"]
+shape = SubResource("shape_1024x1900")
+
+[node name="Sec6" type="Area2D" parent="Triggers"]
+position = Vector2(7168, 550)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "section"
+metadata/arg = "6"
+metadata/l = 6528
+metadata/r = 7488
+metadata/t = -116
+metadata/b = 364
+metadata/bg = 7
+metadata/x0 = 6848
+metadata/x1 = 7488
+metadata/title = "THE STAIRWELL"
+metadata/key = "stairwell"
+metadata/gate = 1
+metadata/edge = 6848
+metadata/floor_y = 304
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/Sec6"]
+shape = SubResource("shape_640x1900")

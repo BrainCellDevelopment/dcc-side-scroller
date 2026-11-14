@@ -6,6 +6,8 @@ const FLAG_NAMES: Dictionary = {
 	"neighborhood_map": "Neighborhood Map",
 	"desperado_pass": "Desperado Pass",
 	"borough_field_guide": "Borough Field Guide",
+	"pet_mongo": "Mongo",
+	"second_chance": "Second Chance",
 }
 const HEADING: String = "LEVEL 1 COMPLETE"
 const PROMPT: String = "Press E to take the stairs down"

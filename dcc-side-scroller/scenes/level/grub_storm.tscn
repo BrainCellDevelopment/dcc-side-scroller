@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/level/grub_storm.gd" id="1_storm"]
+
+[node name="GrubStorm" type="Node2D"]
+script = ExtResource("1_storm")

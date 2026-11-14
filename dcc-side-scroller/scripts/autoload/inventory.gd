@@ -9,6 +9,7 @@ const ItemEffects: GDScript = preload("res://scripts/combat/item_effects.gd")
 
 var slots: Array[Dictionary] = []
 var equipped: Dictionary = {}
+var tattoos: Dictionary = {}
 var hotbar: Array[String] = []
 
 
@@ -19,6 +20,15 @@ func _ready() -> void:
 func add_item(id: String, item_name: String, tier: String = "", count: int = 1, extra: Dictionary = {}) -> bool:
 	if count <= 0:
 		return false
+	if bool(extra.get("tattoo", false)):
+		if tattoos.has(id):
+			return false
+		var mark: Dictionary = {"id": id, "name": item_name, "tier": tier, "count": 1}
+		for key: Variant in extra:
+			mark[key] = extra[key].duplicate() if extra[key] is Dictionary else extra[key]
+		tattoos[id] = mark
+		changed.emit()
+		return true
 	for slot: Dictionary in slots:
 		if not slot.is_empty() and str(slot["id"]) == id:
 			slot["count"] = int(slot["count"]) + count
@@ -71,6 +81,8 @@ func consume_item(id: String) -> int:
 
 
 func has_item(id: String) -> bool:
+	if tattoos.has(id):
+		return true
 	for slot: Dictionary in slots:
 		if not slot.is_empty() and str(slot["id"]) == id:
 			return true
@@ -133,8 +145,14 @@ func equipment_value(key: String) -> float:
 	return total
 
 
+func tattoo_item() -> Dictionary:
+	for id: Variant in tattoos:
+		return tattoos[id]
+	return {}
+
+
 func count_of(id: String) -> int:
-	var total: int = 0
+	var total: int = 1 if tattoos.has(id) else 0
 	for slot: Dictionary in slots:
 		if not slot.is_empty() and str(slot["id"]) == id:
 			total += int(slot["count"])
@@ -214,6 +232,7 @@ func use_hotbar(index: int) -> bool:
 
 
 func clear() -> void:
+	tattoos.clear()
 	_fill_empty()
 	changed.emit()
 
