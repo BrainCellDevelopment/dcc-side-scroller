@@ -27,6 +27,9 @@ var _room_seen: bool = Game.has_meta("bot_room_seen")
 var _keys: PackedStringArray = PackedStringArray()
 var _swine_logged: bool = false
 var _swine_tick: int = -1
+var _stage: int = 0
+var _stage_time: float = 0.0
+var _carry_health: int = 0
 
 
 func _ready() -> void:
@@ -47,6 +50,7 @@ func _ready() -> void:
 		_level.free()
 		_level = LEVEL.instantiate()
 		add_child(_level)
+	FloorHandoff.scene_changer = Callable(self, "_swap")
 	_player = _level.get_node("Player") as CharacterBody2D
 	_player.set("health", BOT_HEALTH)
 	_player.connect("died", _on_died)
@@ -132,6 +136,9 @@ func _physics_process(delta: float) -> void:
 	_release.clear()
 	if _jump_hold > 0.0:
 		_jump_hold -= delta
+	if _stage > 0:
+		_hand_off(delta)
+		return
 	var pos: Vector2 = _player.global_position
 	var section: int = int(_level.get("section"))
 	if section != _section:
@@ -156,7 +163,8 @@ func _physics_process(delta: float) -> void:
 		return
 	if bool(_level.get("complete")):
 		_move(0)
-		_finish(true, "reached the end of the stub, damage taken %d, level %d xp %d, smush %d" % [BOT_HEALTH - int(_player.get("health")), PlayerStats.character_level, PlayerStats.xp, PlayerStats.smush_count])
+		_log("Floor 1 complete: collapse beat running, damage taken %d, level %d xp %d, smush %d" % [BOT_HEALTH - int(_player.get("health")), PlayerStats.character_level, PlayerStats.xp, PlayerStats.smush_count])
+		_stage = 1
 		return
 	_track_progress(delta, pos)
 	_navigate(pos)
@@ -195,6 +203,46 @@ func _blast_door_step(pos: Vector2) -> bool:
 			_tap(&"throw")
 		return true
 	return false
+
+
+# Stand-in for SceneTree.change_scene_to_file: the bot lives in this scene, so the next scene is swapped in as a child.
+func _swap(path: String) -> void:
+	remove_child(_level)
+	_level.queue_free()
+	_level = (load(path) as PackedScene).instantiate()
+	add_child(_level)
+	_stage_time = 0.0
+	if path == FloorHandoff.CABIN_SCENE:
+		_stage = 2
+		_log("yacht cabin: interview")
+	else:
+		_stage = 3
+		_carry_health = int(FloorHandoff.carried.get("health", -1))
+		_player = _level.get_node("Player") as CharacterBody2D
+		_player.connect("died", _on_died)
+		_log("Level 2 stub reached: health %d, level %d xp %d, flags map %s pass %s" % [int(_player.get("health")), PlayerStats.character_level, PlayerStats.xp, str(Game.get_meta("neighborhood_map", false)), str(Game.get_meta("desperado_pass", false))])
+
+
+func _hand_off(delta: float) -> void:
+	_stage_time += delta
+	_stuck_time = 0.0
+	if _stage_time > 60.0:
+		_finish(false, "hand-off stalled in stage %d" % _stage)
+		return
+	if _stage == 2:
+		if fmod(_stage_time, 0.4) < delta:
+			_level.call("advance")
+		return
+	if _stage == 3:
+		if bool(_level.get("complete")):
+			_move(0)
+			var carried_ok: bool = int(_player.get("health")) > 0 and _carry_health > 0 and PlayerStats.floor_number == 2
+			_finish(carried_ok, "reached the Level 2 stub, health %d (carried %d), level %d xp %d, damage taken %d" % [int(_player.get("health")), _carry_health, PlayerStats.character_level, PlayerStats.xp, BOT_HEALTH - int(_player.get("health"))])
+			return
+		_move(1)
+		if _player.is_on_floor() and _jump_hold <= 0.0 and _ray(_player.global_position + Vector2(0.0, -8.0), _player.global_position + Vector2(22.0, -8.0)):
+			_jump_hold = 0.4
+		_hold(&"jump", _jump_hold > 0.0)
 
 
 func _track_progress(delta: float, pos: Vector2) -> void:

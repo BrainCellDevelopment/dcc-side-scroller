@@ -236,12 +236,32 @@ def emit_swine(w):
     w.inst("SwineArena", ".", "swine_arena", position=vec(kit.mx(SWINE["center"]), FLOOR))
 
 
+COLLAPSE_BOTTOM = 416
+STAIR_STEPS = 4
+STAIR_DROP = 16
+
+
 def section_collapse(x0):
-    # Collapse beat and hand-off to Level 2 (#68). The end zone is the stub exit.
-    flat(640)
+    # Stairwell, collapse beat and hand-off to Level 2 (#68). A 224 px landing with the checkpoint and the last
+    # cigarette spot, four 32 px steps down (16 px each), then a 288 px stairwell floor. Triggers (level01.gd):
+    # "cigarette" starts the text beat, "heal" restores health at the foot of the stairs, "end" starts the collapse.
+    RES["prop_stair_rail"] = "res://scenes/props/stair_rail.tscn"
+    kit.sections[-1]["bottom"] = COLLAPSE_BOTTOM
+    kit.cur["gh"] = COLLAPSE_BOTTOM - FLOOR
+    flat(224)
     cp(6, x0 + 96, 6)
+    for _ in range(STAIR_STEPS):
+        kit.cur["y"] += STAIR_DROP
+        flat(32, h=COLLAPSE_BOTTOM - kit.cur["y"])
+    low = kit.cur["y"]
+    flat(288, h=COLLAPSE_BOTTOM - low)
     furnish(x0, x0 + 640)
-    trig("EndZone", "end", "", x0 + 640 - 100, x0 + 640 - 60, FLOOR - 120, FLOOR + 20)
+    for i in range(STAIR_STEPS):
+        kit.add_prop("prop_stair_rail", x0 + 224 + 32 * i + 16, FLOOR + STAIR_DROP * (i + 1) - 4, free=True)
+    kit.trig("BgStairs", "bg", "1", x0, x0 + 640, FLOOR - 300, low + 120)
+    kit.trig("Cigarette", "cigarette", "", x0 + 150, x0 + 190, FLOOR - 120, FLOOR + 20)
+    kit.trig("Landing", "heal", "", x0 + 400, x0 + 432, low - 120, low + 20)
+    trig("EndZone", "end", "", x0 + 540, x0 + 580, low - 120, low + 20)
 
 
 BUILDERS = [section_tunnel, section_rats_corridor, section_saferoom, section_hoarder, section_workshop, section_swine, section_collapse]
