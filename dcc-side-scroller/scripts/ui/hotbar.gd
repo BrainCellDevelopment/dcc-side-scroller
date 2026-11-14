@@ -1,5 +1,7 @@
 extends CanvasLayer
 
+const ItemIcon: GDScript = preload("res://scripts/util/item_icon.gd")
+
 const SLOT_SIZE: Vector2 = Vector2(50, 38)
 const GAP: float = 3.0
 const BOTTOM_MARGIN: float = 6.0
@@ -39,6 +41,15 @@ func _ready() -> void:
 		key.add_theme_font_size_override("font_size", 7)
 		key.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		box.add_child(key)
+		var icon: TextureRect = TextureRect.new()
+		icon.name = "Icon"
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		icon.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon.visible = false
+		box.add_child(icon)
 		var title: Label = Label.new()
 		title.name = "Name"
 		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -46,6 +57,12 @@ func _ready() -> void:
 		title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		title.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		box.add_child(title)
+		var count: Label = Label.new()
+		count.name = "Count"
+		count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		count.add_theme_font_size_override("font_size", 7)
+		count.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_child(count)
 		_root.add_child(cell)
 		_cells.append(cell)
 	get_viewport().size_changed.connect(_layout)
@@ -79,7 +96,15 @@ func _refresh() -> void:
 		var item: Dictionary = Inventory.hotbar_item(i)
 		var filled: bool = not item.is_empty()
 		var worn: bool = filled and Inventory.is_equipped(str(item["id"]))
+		var count_label: Label = _cells[i].get_node("Box/Count") as Label
+		var stack: int = Inventory.count_of(str(item["id"])) if filled else 0
+		count_label.text = "x%d" % stack if stack > 1 else " "
 		var name_label: Label = _cells[i].get_node("Box/Name") as Label
+		var icon_rect: TextureRect = _cells[i].get_node("Box/Icon") as TextureRect
+		var icon: Texture2D = ItemIcon.get_icon(str(item.get("id", ""))) if filled else null
+		icon_rect.texture = icon
+		icon_rect.visible = icon != null
+		name_label.visible = icon == null
 		name_label.text = str(item["name"]) if filled else ""
 		var border: Color = EMPTY_BORDER
 		if filled:

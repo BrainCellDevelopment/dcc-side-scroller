@@ -1,5 +1,7 @@
 extends CanvasLayer
 
+const ItemIcon: GDScript = preload("res://scripts/util/item_icon.gd")
+
 const LABELS: Dictionary = {
 	"strength": "Strength",
 	"intelligence": "Intelligence",
@@ -101,6 +103,15 @@ func _ready() -> void:
 		box.add_theme_constant_override("separation", 0)
 		box.name = "Box"
 		cell.add_child(box)
+		var icon: TextureRect = TextureRect.new()
+		icon.name = "Icon"
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		icon.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon.visible = false
+		box.add_child(icon)
 		var label: Label = _make_label("", 8, Color.WHITE)
 		label.name = "Name"
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -449,6 +460,11 @@ func _refresh() -> void:
 		var border: Color = EMPTY_BORDER
 		var name_label: Label = _cells[i].get_node("Box/Name") as Label
 		var count_label: Label = _cells[i].get_node("Box/Count") as Label
+		var icon_rect: TextureRect = _cells[i].get_node("Box/Icon") as TextureRect
+		var icon: Texture2D = ItemIcon.get_icon(str(item.get("id", ""))) if filled else null
+		icon_rect.texture = icon
+		icon_rect.visible = icon != null
+		name_label.visible = icon == null
 		if filled:
 			border = _tier_color(item)
 			_fit_name(name_label, str(item.get("name", "?")), name_avail, 8)
