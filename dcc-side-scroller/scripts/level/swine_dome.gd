@@ -18,8 +18,8 @@ const BEAT_HZ: float = 2.0
 
 @export var layer: int = 0
 @export var half_width: float = 352.0
-@export var stairs_left: float = -368.0
-@export var stairs_length: float = 160.0
+@export var corridor_left: float = -368.0
+@export var corridor_length: float = 160.0
 
 var reveal: float = 0.0
 var boss_lane_y: float = 0.0
@@ -52,7 +52,7 @@ func _draw() -> void:
 
 
 func _draw_back() -> void:
-	var left: float = stairs_left - stairs_length
+	var left: float = corridor_left - corridor_length
 	var right: float = half_width + 20.0
 	var height: float = BACK_BOTTOM - BACK_TOP
 	if reveal > 0.0:
@@ -70,7 +70,6 @@ func _draw_back() -> void:
 			x += 28.0
 		y += 14.0
 		row += 1
-	_draw_stairs(left)
 
 
 func _draw_dome(left: float, right: float) -> void:
@@ -97,17 +96,6 @@ func _draw_dome(left: float, right: float) -> void:
 	var wall_glow: float = 0.15 + 0.25 * pulse
 	draw_rect(Rect2(left, -300.0, 4.0, 300.0), Color(NEON_CYAN, wall_glow * reveal))
 	draw_rect(Rect2(right - 4.0, -300.0, 4.0, 300.0), Color(NEON_CYAN, wall_glow * reveal))
-
-
-func _draw_stairs(left: float) -> void:
-	var run: float = 18.0
-	for i: int in 7:
-		var x: float = left + 12.0 + float(i) * run
-		var h: float = 8.0 + float(i) * 8.0
-		draw_rect(Rect2(x, -h, run, h), Color(0.22, 0.12, 0.14))
-		draw_line(Vector2(x, -h), Vector2(x + run, -h), Color(0.56, 0.4, 0.36), 2.0)
-	draw_rect(Rect2(left + 6.0, -96.0, 40.0, 14.0), Color(0.05, 0.03, 0.06))
-	draw_string(ThemeDB.fallback_font, Vector2(left + 8.0, -86.0), "STAIRS", HORIZONTAL_ALIGNMENT_LEFT, 40.0, 8, Color(0.4, 1.0, 0.5))
 
 
 func _draw_floor() -> void:
