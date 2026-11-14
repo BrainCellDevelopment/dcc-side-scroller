@@ -5,14 +5,17 @@ const TIME_LIMIT: float = 1500.0
 const BOT_HEALTH: int = 999
 const STUCK_LIMIT: float = 25.0
 const MAX_DEATHS: int = 12
-const SECTION_NAMES: Array[String] = ["Surface", "Staircase", "Entrance", "Tunnels", "Arena", "Chase", "Guildhall", "Complete"]
+const SECTION_NAMES: Array[String] = ["Surface", "Staircase", "Entrance", "Tunnels", "Arena", "Dozer arena", "Guildhall", "Complete"]
 const PHASE_PLAY: int = 0
 const PHASE_ARENA: int = 1
-const PHASE_HANDOFF: int = 2
-const PHASE_CHASE: int = 3
-const PHASE_AFTERMATH: int = 4
-const PHASE_COMPLETE: int = 5
+const PHASE_FIGHT: int = 2
+const PHASE_AFTERMATH: int = 3
+const PHASE_COMPLETE: int = 4
+const STATE_PATROL: int = 1
+const JUMP_LEAD: float = 0.55
+const PLAYER_SPEED: float = 130.0
 const DECK_TOP: float = 30.0
+const DOZER_ARENA_X: int = 18432
 
 var _level: Node
 var _player: CharacterBody2D
@@ -39,6 +42,9 @@ func _ready() -> void:
 	Engine.time_scale = 1.0 if speed_text.is_empty() else float(speed_text)
 	if Game.has_meta("bot_elapsed"):
 		_elapsed = float(Game.get_meta("bot_elapsed"))
+	var start: String = OS.get_environment("DCC_START")
+	if start == "fight":
+		Game.set_checkpoint(7, Vector2(float(DOZER_ARENA_X) + 56.0, 912.0), 1)
 	_level = LEVEL.instantiate()
 	add_child(_level)
 	_player = _level.get_node("Player") as CharacterBody2D
@@ -153,11 +159,8 @@ func _physics_process(delta: float) -> void:
 			_navigate(pos)
 		PHASE_ARENA:
 			_fight_arena(pos)
-		PHASE_HANDOFF:
-			_move(0)
-			_shot("intro_%d" % int(_elapsed))
-		PHASE_CHASE:
-			_chase(pos)
+		PHASE_FIGHT:
+			_fight(pos)
 		PHASE_AFTERMATH:
 			if section >= 6:
 				_loot(pos)
@@ -274,36 +277,29 @@ func _fight_arena(pos: Vector2) -> void:
 	_punch(pos, target)
 
 
-func _chase(pos: Vector2) -> void:
-	if Engine.get_physics_frames() % 60 == 0:
-		_log("chase pos (%.0f, %.0f) vel %s floor %s scroll %.0f state %s open %s" % [pos.x, pos.y, _player.velocity, _player.is_on_floor(), float(_dozer.get("scroll_x")), _dozer.get("state"), _dozer.get("vulnerable")])
-	var origin: Vector2 = _dozer.global_position
-	var open: bool = bool(_dozer.get("vulnerable"))
-	var dx: float = pos.x - origin.x
-	var airborne: bool = not _player.is_on_floor()
-	if open and dx > -60.0 and dx < 100.0 and (airborne or dx < 76.0):
-		var aim: float = origin.x - 6.0
-		_move(1 if pos.x < aim - 8.0 else (-1 if pos.x > aim + 8.0 else 0))
-		if not airborne and _jump_hold <= 0.0 and dx < 76.0:
-			_jump(0.4)
-		_shot("chase_open")
+func _fight(pos: Vector2) -> void:
+	if not _dozer.visible or int(_dozer.get("state")) == 0:
+		_move(0)
 		return
-	_shot("chase")
-	var target: float = origin.x + 60.0 if open else float(_dozer.get("scroll_x")) + 340.0
-	var direction: int = 0
-	if pos.x < target - 20.0:
-		direction = 1
-	elif pos.x > target + 20.0:
-		direction = -1
-	if airborne and open and _player.velocity.x > 0.0:
-		direction = 1
-	_move(direction)
+	if Engine.get_physics_frames() % 60 == 0:
+		_log("fight pos (%.0f, %.0f) dozer %.0f dir %d state %s open %s round %d" % [pos.x, pos.y, _dozer.global_position.x, int(_dozer.get("direction")), _dozer.get("state"), _dozer.get("vulnerable"), int(_dozer.get("round_index"))])
+	var direction: int = int(_dozer.get("direction"))
+	var speeds: Array = (_dozer.get_script() as GDScript).get_script_constant_map()["PATROL_SPEEDS"]
+	var vx: float = float(direction) * float(speeds[int(_dozer.get("round_index"))]) if int(_dozer.get("state")) == STATE_PATROL else 0.0
+	var deck: float = _dozer.global_position.x - 10.0 * float(direction)
+	var on_deck: bool = _player.is_on_floor() and pos.y < _dozer.global_position.y - 20.0 and absf(pos.x - deck) < 34.0
+	if on_deck:
+		_move(0)
+		if _jump_hold <= 0.0:
+			_jump(0.3)
+		return
+	var toward: int = 1 if deck > pos.x else -1
+	_move(toward)
 	if not _player.is_on_floor() or _jump_hold > 0.0:
 		return
-	if direction != 0 and (_wall_ahead(pos, direction) or _gap_ahead(pos, direction) or _hazard_ahead(pos, direction)):
-		_jump()
-	elif direction == 0 and (_gap_ahead(pos, 1) or _hazard_ahead(pos, 1)):
-		_move(-1)
+	var aligned: float = absf(deck + vx * JUMP_LEAD - (pos.x + float(toward) * PLAYER_SPEED * JUMP_LEAD))
+	if aligned < 12.0:
+		_jump(0.45)
 
 
 func _walk_to(pos: Vector2, x: float, tolerance: float = 5.0) -> bool:

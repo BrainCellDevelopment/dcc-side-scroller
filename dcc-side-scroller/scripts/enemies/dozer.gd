@@ -1,12 +1,11 @@
 extends AnimatableBody2D
 
+signal round_started(round_number: int)
 signal round_cleared(round_number: int)
 signal destroyed
 signal vulnerable_changed(is_vulnerable: bool)
-signal pass_finished
-signal turn_finished
 
-enum State { PARKED, IDLE, TELEGRAPH, LUNGE, HOLD, RETREAT, STALLED, DESTROYED, VENT, PASS, TURN }
+enum State { PARKED, PATROL, PIVOT, STALLED, DESTROYED }
 
 const SpriteUtil: GDScript = preload("res://scripts/util/sprite_util.gd")
 const TRACKS_TEX: Texture2D = preload("res://assets/boss/dozer_tracks.png")
@@ -41,47 +40,39 @@ const BLAST_POINTS: Array[Vector2] = [Vector2(-40.0, -32.0), Vector2(20.0, -40.0
 
 const BOSS_NAME: String = "Goblin Murder Dozer"
 const ROUNDS: int = 3
-const LUNGES: Array[int] = [2, 3, 4]
 const HATCH_TIMES: Array[float] = [4.5, 4.0, 3.5]
-const SCROLL_SPEEDS: Array[float] = [60.0, 80.0, 100.0]
-const IDLE_TIMES: Array[float] = [2.2, 1.8, 1.4]
-const HOLD_TIMES: Array[float] = [1.1, 0.9, 0.7]
-const LUNGE_OFFSETS: Array[float] = [190.0, 220.0, 250.0]
-const IDLE_OFFSET: float = 10.0
-const STALL_OFFSET: float = -90.0
-const TELEGRAPH_TIME: float = 0.6
+const PATROL_SPEEDS: Array[float] = [90.0, 120.0, 150.0]
+const CLOSED_TIMES: Array[float] = [3.0, 2.5, 2.0]
 const STALL_TIME: float = 1.6
 const STOMP_MIN_HEIGHT: float = 26.0
 const LAND_WINDOW: float = 0.12
-const PASS_SPEED: float = 560.0
-const CREEP_SPEED: float = 150.0
 const TURN_PAUSE: float = 0.7
 const TURN_WARN: float = 1.0
+const ENTRY_WARN: float = 1.4
 const BEAM_POLYGON: PackedVector2Array = [Vector2(54.0, -30.0), Vector2(190.0, -62.0), Vector2(190.0, -2.0)]
 
 @export var contact_damage: int = 2
-@export var max_scroll_x: float = 14000.0
+@export var closed_hatch_damage: int = 1
+@export var patrol_min_x: float = 0.0
+@export var patrol_max_x: float = 0.0
 
-var scroll_x: float = 0.0
 var state: State = State.PARKED
 var round_index: int = 0
 var vulnerable: bool = false
+var direction: int = 1
 
-var _offset: float = IDLE_OFFSET
 var _timer: float = 0.0
 var _base_y: float = 0.0
-var _lunges_done: int = 0
-var _driver_present: bool = false
+var _hatch_timer: float = 0.0
+var _pivot_stage: int = 0
+var _engaged: bool = false
 var _was_on_floor: bool = false
 var _land_timer: float = 0.0
 var _bounce_cooldown: float = 0.0
 var _steam_timer: float = 0.3
 var _vent_timer: float = 0.0
 var _dust_timer: float = 0.1
-var _pass_to: float = 0.0
-var _stop_x: float = 0.0
-var _turn_stage: int = 0
-var _rumble_timer: float = 0.0
+var _mirror_x: Dictionary = {}
 var _beam: Polygon2D
 var _player: CharacterBody2D
 var _tracks: AnimatedSprite2D
@@ -101,7 +92,7 @@ func _ready() -> void:
 	_hatch = _add_sprite("Hatch", HATCH_TEX, HATCH_FRAME, HATCH_ANIMS, HATCH_POS)
 	_driver = _add_sprite("Driver", DRIVER_TEX, DRIVER_FRAME, DRIVER_ANIMS, DRIVER_POS)
 	_wheel = _add_sprite("Wheel", WHEEL_TEX, WHEEL_FRAME, WHEEL_ANIMS, WHEEL_POS)
-	_driver.visible = _driver_present
+	_driver.visible = false
 	_beam = Polygon2D.new()
 	_beam.polygon = BEAM_POLYGON
 	_beam.color = Color(1.0, 0.95, 0.55, 0.4)
@@ -113,158 +104,106 @@ func _ready() -> void:
 	_driver.play("idle")
 	_wheel.play("spin")
 	_hatch.animation_finished.connect(_on_hatch_animation_finished)
+	for node: Node2D in [_deck, _wheel_area, _grinder_area, _stomp_zone]:
+		_mirror_x[node] = node.position.x
 
 
-func set_driver(present: bool) -> void:
-	_driver_present = present
-	if _driver != null:
-		_driver.visible = present
-
-
-func roar_pass(from_x: float, to_x: float, player: CharacterBody2D) -> void:
+func begin_patrol(player: CharacterBody2D, floor_y: float) -> void:
 	_player = player
-	_base_y = global_position.y
-	global_position.x = from_x
-	_pass_to = to_x
-	_rumble_timer = 0.0
-	_visual.scale.x = -1.0 if to_x < from_x else 1.0
-	_visual.modulate = Color(0.78, 0.78, 0.86)
-	z_index = -1
-	visible = true
-	state = State.PASS
-
-
-func turn_around(stop_x: float) -> void:
-	_stop_x = stop_x
-	_turn_stage = 0
-	_timer = TURN_PAUSE
-	state = State.TURN
-	Game.shake(3.0, TURN_PAUSE)
-
-
-func start(player: CharacterBody2D, start_scroll_x: float) -> void:
-	z_index = 0
-	_visual.scale.x = 1.0
-	_visual.modulate = Color.WHITE
-	_beam.visible = false
-	_deck.set_deferred("disabled", false)
-	_player = player
-	scroll_x = start_scroll_x
-	_base_y = global_position.y
-	_offset = global_position.x - scroll_x
+	_base_y = floor_y
 	round_index = 0
-	_lunges_done = 0
-	state = State.IDLE
-	_timer = IDLE_TIMES[0]
-	Game.enemy_engaged()
+	_face(-1)
+	z_index = 0
+	_visual.position.x = 0.0
+	_visual.modulate = Color.WHITE
+	_wheel.modulate = Color(1.0, 0.4, 0.4)
+	_hatch.play("closed")
+	_set_vulnerable(false)
+	global_position = Vector2(patrol_max_x, floor_y)
+	_deck.set_deferred("disabled", false)
+	visible = true
+	_driver.visible = true
+	_hatch_timer = CLOSED_TIMES[0]
+	_pivot_stage = 1
+	_timer = ENTRY_WARN
+	state = State.PIVOT
+	_engage()
 	Game.report_boss_health(BOSS_NAME, ROUNDS, ROUNDS)
+	Game.shake(4.0, ENTRY_WARN)
+	round_started.emit(1)
+
+
+func _engage() -> void:
+	if _engaged:
+		return
+	_engaged = true
+	Game.enemy_engaged()
 
 
 func _physics_process(delta: float) -> void:
 	if state == State.PARKED or state == State.DESTROYED:
 		return
-	if state == State.PASS or state == State.TURN:
-		_scripted_step(delta)
-		return
-	scroll_x = minf(scroll_x + SCROLL_SPEEDS[round_index] * delta, max_scroll_x)
-	_timer -= delta
 	_bounce_cooldown = maxf(_bounce_cooldown - delta, 0.0)
+	_patrol_step(delta)
+
+
+func _patrol_step(delta: float) -> void:
 	match state:
-		State.IDLE:
-			_offset = move_toward(_offset, IDLE_OFFSET, 200.0 * delta)
-			if _timer <= 0.0:
-				state = State.TELEGRAPH
-				_timer = TELEGRAPH_TIME
-				_wheel.modulate = Color(1.0, 0.4, 0.4)
-		State.TELEGRAPH:
-			_visual.position.x = randf_range(-1.5, 1.5)
-			if _timer <= 0.0:
-				_visual.position.x = 0.0
-				_wheel.modulate = Color.WHITE
-				state = State.LUNGE
-		State.LUNGE:
-			_offset = move_toward(_offset, LUNGE_OFFSETS[round_index], 320.0 * delta)
-			if is_equal_approx(_offset, LUNGE_OFFSETS[round_index]):
-				state = State.HOLD
-				_timer = HOLD_TIMES[round_index]
-		State.HOLD:
-			if _timer <= 0.0:
-				state = State.RETREAT
-		State.RETREAT:
-			_offset = move_toward(_offset, IDLE_OFFSET, 220.0 * delta)
-			if is_equal_approx(_offset, IDLE_OFFSET):
-				_lunges_done += 1
-				if _lunges_done >= LUNGES[round_index]:
-					_open_hatch()
-				else:
-					state = State.IDLE
-					_timer = IDLE_TIMES[round_index]
-		State.VENT:
-			_offset = move_toward(_offset, IDLE_OFFSET, 200.0 * delta)
-			if _timer <= 0.0:
-				_close_hatch()
-				_lunges_done = 0
-				state = State.IDLE
-				_timer = IDLE_TIMES[round_index]
+		State.PATROL:
+			_run_hatch(delta)
+			var x: float = clampf(global_position.x + float(direction) * PATROL_SPEEDS[round_index] * delta, patrol_min_x, patrol_max_x)
+			global_position.x = x
+			if (direction < 0 and x <= patrol_min_x) or (direction > 0 and x >= patrol_max_x):
+				state = State.PIVOT
+				_pivot_stage = 0
+				_timer = TURN_PAUSE
+				Game.shake(3.0, TURN_PAUSE)
+		State.PIVOT:
+			_run_hatch(delta)
+			_pivot_step(delta)
 		State.STALLED:
-			_offset = move_toward(_offset, STALL_OFFSET, 260.0 * delta)
+			_timer -= delta
 			if _timer <= 0.0:
-				state = State.IDLE
-				_timer = IDLE_TIMES[round_index]
-	global_position = Vector2(scroll_x + _offset, _base_y)
+				state = State.PATROL
 	_update_effects(delta)
 	_track_player(delta)
 	if state == State.STALLED:
 		return
 	_check_stomp()
-	if state != State.STALLED and state != State.DESTROYED:
+	if state != State.DESTROYED:
 		_check_contact()
 
 
-func _scripted_step(delta: float) -> void:
-	_rumble_timer -= delta
-	if state == State.PASS:
-		global_position.x = move_toward(global_position.x, _pass_to, PASS_SPEED * delta)
-		if _rumble_timer <= 0.0:
-			_rumble_timer = 0.2
-			var near: bool = _has_player() and absf(_player.global_position.x - global_position.x) < 140.0
-			Game.shake(5.0 if near else 2.5, 0.3)
-		if is_equal_approx(global_position.x, _pass_to):
-			state = State.TURN
-			_turn_stage = -1
-			_timer = 0.0
-			pass_finished.emit()
-	else:
-		_turn_step(delta)
-	_update_effects(delta)
-
-
-func _turn_step(delta: float) -> void:
-	if _turn_stage < 0:
-		return
+func _pivot_step(delta: float) -> void:
 	_timer -= delta
-	match _turn_stage:
-		0:
-			if _timer <= 0.0:
-				_turn_stage = 1
-				_visual.scale.x = 1.0
-				_spawn_fx(DUST_FX, to_global(DUST_POINT))
-		1:
-			global_position.x = move_toward(global_position.x, _stop_x, CREEP_SPEED * delta)
-			if is_equal_approx(global_position.x, _stop_x):
-				_turn_stage = 2
-				_timer = TURN_WARN
-				_wheel.modulate = Color(1.0, 0.4, 0.4)
-				Game.shake(2.5, TURN_WARN)
-		2:
-			_visual.position.x = randf_range(-1.5, 1.5)
-			_beam.visible = int(_timer * 8.0) % 2 == 0
-			if _timer <= 0.0:
-				_visual.position.x = 0.0
-				_wheel.modulate = Color.WHITE
-				_beam.visible = false
-				_turn_stage = 3
-				turn_finished.emit()
+	if _pivot_stage == 0:
+		if _timer <= 0.0:
+			_face(-direction)
+			_pivot_stage = 1
+			_timer = TURN_WARN
+			_wheel.modulate = Color(1.0, 0.4, 0.4)
+			_spawn_fx(DUST_FX, _fx_point(DUST_POINT))
+			Game.shake(2.5, TURN_WARN)
+		return
+	_visual.position.x = randf_range(-1.5, 1.5)
+	_beam.visible = int(_timer * 8.0) % 2 == 0
+	if _timer <= 0.0:
+		_visual.position.x = 0.0
+		_wheel.modulate = Color.WHITE
+		_beam.visible = false
+		state = State.PATROL
+
+
+func _run_hatch(delta: float) -> void:
+	_hatch_timer -= delta
+	if _hatch_timer > 0.0:
+		return
+	if vulnerable:
+		_close_hatch()
+		_hatch_timer = CLOSED_TIMES[round_index]
+	else:
+		_open_hatch()
+		_hatch_timer = HATCH_TIMES[round_index]
 
 
 func _add_sprite(sprite_name: String, texture: Texture2D, frame: Vector2i, anims: Dictionary, pos: Vector2) -> AnimatedSprite2D:
@@ -275,27 +214,37 @@ func _add_sprite(sprite_name: String, texture: Texture2D, frame: Vector2i, anims
 	return sprite
 
 
+func _face(dir: int) -> void:
+	direction = dir
+	_visual.scale.x = float(dir)
+	for node: Node2D in _mirror_x.keys():
+		node.position.x = float(_mirror_x[node]) * float(dir)
+
+
+func _fx_point(point: Vector2) -> Vector2:
+	return to_global(Vector2(point.x * _visual.scale.x, point.y))
+
+
 func _has_player() -> bool:
 	return is_instance_valid(_player)
 
 
 func _update_effects(delta: float) -> void:
-	var fast: bool = state == State.TELEGRAPH or state == State.LUNGE or state == State.PASS or (state == State.TURN and _turn_stage == 2)
-	_wheel.speed_scale = 2.4 if fast else 1.0
-	_tracks.speed_scale = 4.0 if state == State.PASS else SCROLL_SPEEDS[round_index] / 60.0
+	_wheel.speed_scale = 2.4 if state == State.PIVOT and _pivot_stage == 1 else 1.0
+	_tracks.speed_scale = PATROL_SPEEDS[round_index] / 60.0 if state == State.PATROL else 0.2
 	_steam_timer -= delta
 	if _steam_timer <= 0.0:
 		_steam_timer = randf_range(0.35, 0.6)
-		_spawn_fx(STEAM_FX, to_global(STACK_TOP))
+		_spawn_fx(STEAM_FX, _fx_point(STACK_TOP))
 	if vulnerable:
 		_vent_timer -= delta
 		if _vent_timer <= 0.0:
 			_vent_timer = randf_range(0.12, 0.2)
-			_spawn_fx(STEAM_FX, to_global(VENT_POINT + Vector2(randf_range(-8.0, 8.0), 0.0)))
+			_spawn_fx(STEAM_FX, _fx_point(VENT_POINT + Vector2(randf_range(-8.0, 8.0), 0.0)))
 	_dust_timer -= delta
 	if _dust_timer <= 0.0:
-		_dust_timer = 0.14 if state == State.LUNGE else randf_range(0.2, 0.32)
-		_spawn_fx(DUST_FX, to_global(DUST_POINT + Vector2(randf_range(-3.0, 3.0), 0.0)))
+		_dust_timer = randf_range(0.2, 0.32)
+		_spawn_fx(DUST_FX, _fx_point(DUST_POINT + Vector2(randf_range(-3.0, 3.0), 0.0)))
 
 
 func _spawn_fx(scene: PackedScene, world_pos: Vector2) -> void:
@@ -322,7 +271,7 @@ func _check_contact() -> void:
 		return
 	for area: Area2D in [_wheel_area, _grinder_area]:
 		if area.overlaps_body(_player):
-			_player.call("take_damage", contact_damage, global_position + Vector2(-40.0, 0.0))
+			_player.call("take_damage", contact_damage, _fx_point(Vector2(-40.0, 0.0)))
 			return
 
 
@@ -345,12 +294,12 @@ func _check_stomp() -> void:
 func _bounce() -> void:
 	_bounce_cooldown = 0.25
 	_player.velocity = Vector2(_player.velocity.x, -230.0)
+	if closed_hatch_damage > 0:
+		_player.call("take_damage", closed_hatch_damage, global_position)
 	_spawn_fx(SPARK_FX, _player.global_position + Vector2(0.0, -2.0))
 
 
 func _open_hatch() -> void:
-	state = State.VENT
-	_timer = HATCH_TIMES[round_index]
 	_vent_timer = 0.0
 	_set_vulnerable(true)
 	_hatch.play("opening")
@@ -359,7 +308,7 @@ func _open_hatch() -> void:
 func _close_hatch() -> void:
 	_set_vulnerable(false)
 	_hatch.play("closed")
-	_spawn_fx(STEAM_FX, to_global(VENT_POINT))
+	_spawn_fx(STEAM_FX, _fx_point(VENT_POINT))
 
 
 func _set_vulnerable(value: bool) -> void:
@@ -377,7 +326,8 @@ func _on_hatch_animation_finished() -> void:
 func _hit() -> void:
 	var cleared: int = round_index + 1
 	Game.report_boss_health(BOSS_NAME, ROUNDS - cleared, ROUNDS)
-	_player.velocity = Vector2(240.0, -300.0)
+	_player.velocity = Vector2(240.0 if _player.global_position.x >= global_position.x else -240.0, -300.0)
+	_beam.visible = false
 	_visual.position.x = 0.0
 	_wheel.modulate = Color.WHITE
 	_set_vulnerable(false)
@@ -389,9 +339,10 @@ func _hit() -> void:
 		_explode()
 		return
 	round_index = cleared
-	_lunges_done = 0
+	_hatch_timer = CLOSED_TIMES[round_index]
 	state = State.STALLED
 	_timer = STALL_TIME
+	round_started.emit(cleared + 1)
 	_visual.modulate = Color(3.0, 3.0, 3.0)
 	var flash: Tween = create_tween()
 	flash.tween_property(_visual, "modulate", Color.WHITE, 0.25)

@@ -90,6 +90,19 @@ func open(animated: bool = true) -> void:
 	opened.emit()
 
 
+func close(animated: bool = true) -> void:
+	if not is_open:
+		return
+	is_open = false
+	locked = true
+	_body_shape.set_deferred("disabled", false)
+	if animated:
+		_sprite.play_backwards("open")
+		Game.shake(2.0, 0.4)
+	else:
+		_sprite.play("closed")
+
+
 func _on_body_entered(body: Node2D) -> void:
 	if body.is_in_group("player"):
 		_player_inside = true
