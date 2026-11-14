@@ -526,6 +526,46 @@ func _on_hall_goblin_died(_enemy: Node) -> void:
 	_hall_door.call("open")
 
 
+func dev_goto(target: String) -> bool:
+	var index: int = -1
+	match target:
+		"surface":
+			Game.clear_checkpoint()
+			Game.reset_run()
+			return true
+		"stairs":
+			index = 1
+		"hall":
+			index = 2
+		"tunnels":
+			index = 3
+		"tunnels2":
+			index = 4
+		"tunnels3":
+			index = 5
+		"arena":
+			index = 6
+		"guildhall":
+			index = 8
+		"chase":
+			Game.clear_checkpoint()
+			Game.set_checkpoint(CHASE_CHECKPOINT, Vector2(_scroll_start.global_position.x + CHASE_PLAYER_OFFSET, _scroll_start.global_position.y), STAGE_CHASE)
+			Game.reset_run()
+			return true
+		_:
+			if target.begins_with("cp") and target.substr(2).is_valid_int():
+				index = target.substr(2).to_int()
+	if index < 0:
+		return false
+	for node: Node in $Checkpoints.get_children():
+		if int(node.get("index")) == index:
+			Game.clear_checkpoint()
+			Game.set_checkpoint(index, (node as Node2D).global_position, int(node.get("stage")))
+			Game.reset_run()
+			return true
+	return false
+
+
 func _on_player_died() -> void:
 	_hud.call("show_banner", "YOU DIED", 0.0)
 	await get_tree().create_timer(1.8).timeout

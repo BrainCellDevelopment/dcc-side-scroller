@@ -48,6 +48,7 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if not _inside:
 		return
+	_face_player()
 	if talking:
 		if Input.is_action_just_pressed("interact"):
 			_advance()
@@ -66,6 +67,14 @@ func _boxes_busy() -> bool:
 		if bool(node.get("summoned")) and not bool(node.get("is_open")):
 			return true
 	return false
+
+
+func _face_player() -> void:
+	if _player == null or not is_instance_valid(_player):
+		return
+	var dx: float = _player.global_position.x - global_position.x
+	if absf(dx) > 2.0:
+		$Visual.scale.x = 1.0 if dx > 0.0 else -1.0
 
 
 func _start() -> void:
