@@ -27,11 +27,16 @@ func _ready() -> void:
 	var arena: Node2D = BOSS_ARENA.new() as Node2D
 	arena.set("boss_name", "Test Boss")
 	arena.set("tooltip", "A test.")
-	arena.set("announcement", "TEST BOSS")
 	arena.set("intro_seconds", 0.3)
 	arena.set("drop_tier", "Gold")
 	arena.set("map_reward", true)
 	world.add_child(arena)
+	var hud_stub: Node = Node.new()
+	hud_stub.set_script(preload("res://tests/boss_hud_stub.gd"))
+	add_child(hud_stub)
+	arena.set("hud", hud_stub)
+	var announcements: Array[String] = []
+	SystemVoice.announced.connect(func(t: String, _b: String, _s: float) -> void: announcements.append(t))
 	var cues: Array[StringName] = []
 	arena.connect("audio_cue", func(c: StringName) -> void: cues.append(c))
 	var locks: Array[CollisionShape2D] = [shape]
@@ -45,6 +50,8 @@ func _ready() -> void:
 	_check(not shape.disabled, "arena locked at intro")
 	_check(not bool(boss.get("active")), "boss frozen during intro")
 	_check(arena.get_child_count() >= 1, "VS card built")
+	_check(announcements.is_empty(), "no System announcement duplicates the VS card (%s)" % str(announcements))
+	_check((hud_stub.get("banners") as Array).is_empty(), "no HUD banner duplicates the VS card")
 	await get_tree().create_timer(0.5).timeout
 	_check(bool(boss.get("active")), "boss active after intro")
 	_check(seen.has("Goblin Engineer"), "boss health bar reported")

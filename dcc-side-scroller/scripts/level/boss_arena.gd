@@ -1,6 +1,6 @@
 extends Node2D
-## Reusable neighborhood boss framework: arena lock, intro (audio cue, System
-## announcement, VS card), boss bar via Game.report_boss_health, defeat flow and
+## Reusable neighborhood boss framework: arena lock, intro (audio cue and the
+## "Carl vs <Boss>" VS card, which is the only intro text), boss bar via Game.report_boss_health, defeat flow and
 ## the boss box drop. The boss scene needs `activate()` and a `defeated` signal.
 
 signal intro_started
@@ -14,7 +14,6 @@ const CARD_FADE: float = 0.3
 
 @export var boss_name: String = "Boss"
 @export var tooltip: String = ""
-@export var announcement: String = ""
 @export var player_name: String = "CARL"
 @export var mugshot: Texture2D = null
 @export var intro_seconds: float = 0.0
@@ -57,10 +56,6 @@ func start() -> void:
 	set_lock(true)
 	audio_cue.emit(&"boss_intro")
 	intro_started.emit()
-	if hud != null and announcement != "":
-		hud.call("show_banner", announcement, 2.0)
-	if announcement != "":
-		SystemVoice.announce_boss_intro(announcement)
 	_show_card()
 	if intro_seconds > 0.0:
 		await get_tree().create_timer(intro_seconds).timeout

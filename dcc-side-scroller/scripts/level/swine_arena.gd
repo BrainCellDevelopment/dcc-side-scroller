@@ -144,7 +144,6 @@ func _build_boss_arena() -> void:
 	boss_arena.name = "BossArena"
 	boss_arena.set("boss_name", "Ball of Swine")
 	boss_arena.set("tooltip", "Seven hundred pounds of nobles in one very rude ball.")
-	boss_arena.set("announcement", "BALL OF SWINE")
 	boss_arena.set("intro_seconds", 2.2)
 	boss_arena.set("card_seconds", 2.2)
 	boss_arena.set("drop_tier", "Boss")

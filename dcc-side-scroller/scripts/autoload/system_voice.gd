@@ -5,7 +5,7 @@ extends Node
 ## Hooks for other scripts:
 ##   SystemVoice.fire("hook_id")            unlock a registry achievement
 ##   SystemVoice.count("stomp")             bump a counter (fires "stomp_<n>")
-##   SystemVoice.announce(title, body, s, major)   corner toast; major = centre-screen banner (boss intro, floor close)
+##   SystemVoice.announce(title, body, s, major)   corner toast; major = centre-screen banner (floor close, patch notes)
 ##   SystemVoice.drop_survivors(n)          the collapse beat uses this
 ##   SystemVoice.time_left() / begin_floor(n, seconds)
 ## See docs/achievement-hooks.md for the list of hooks and owners.
@@ -122,10 +122,6 @@ func next_line(pool_name: String, pool: Array) -> String:
 	var index: int = int(_pool_next.get(pool_name, 0)) % pool.size()
 	_pool_next[pool_name] = index + 1
 	return str(pool[index])
-
-
-func announce_boss_intro(boss_name: String) -> void:
-	announce(boss_name, next_line("boss_intro", Achievements.BOSS_INTRO_LINES), 3.0, true)
 
 
 func announce_patch_notes() -> void:

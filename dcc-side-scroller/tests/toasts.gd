@@ -1,6 +1,6 @@
 extends Node
 ## Notifications (#106): level-ups and achievements are small corner toasts that queue and stay up long
-## enough to read; only major announcements (boss intro, floor close) use the centre-screen treatment.
+## enough to read; only major announcements (floor close, patch notes) use the centre-screen treatment.
 
 const HUD: PackedScene = preload("res://scenes/ui/hud.tscn")
 

@@ -8,7 +8,7 @@ All text is original. Style: short rude title, one mocking sentence, a little hi
 - `SystemVoice.fire("hook")` unlocks the achievement once (popup queues during combat).
 - `SystemVoice.count("name")` bumps a counter and fires `<name>_<n>` (plus `first_blood` / `first_smush` / `first_death` at 1). Counts only while a floor is active.
 - `SystemVoice.announce(title, body, seconds)` queues a centered System box in the HUD.
-- `announce_boss_intro(name)`, `announce_patch_notes()`, `announce_survivors()` (4:00 AM manager voice).
+- `announce_patch_notes()`, `announce_survivors()` (4:00 AM manager voice).
 - Survivors: `drop_survivors(n)`, `survivors`, `set_survivors_visible(bool)`; the player toggles with `V`. Ticks down slowly while a floor is active.
 - Floor timer: `Game.floor_time_left` (5 days) is shown by the HUD; `SystemVoice.time_left()`, `begin_floor(floor, seconds)`. "Time to Level Collapse" boxes fire at 24h, 6h, 1h, 10min. #68 should call `begin_floor` / `drop_survivors` and fire `collapse_survived`.
 
