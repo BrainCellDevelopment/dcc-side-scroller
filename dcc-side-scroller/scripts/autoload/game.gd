@@ -19,6 +19,7 @@ const ACTION_DEADZONE: float = 0.5
 const SAVE_PATH: String = "user://profile.cfg"
 const TUTORIAL_DEATHS_FOR_SKIN: int = 5
 const DEFAULT_SKIN: String = "default"
+const TUTORIAL_SKIN: String = "day_one"
 const ANIMS_8: Dictionary = {
 	"idle": {"row": 0, "count": 8, "fps": 10.0, "loop": true},
 	"run": {"row": 1, "count": 8, "fps": 16.0, "loop": true},
@@ -175,26 +176,38 @@ func skin_anims() -> Dictionary:
 	return SKINS[selected_skin]["anims"] as Dictionary
 
 
-func register_tutorial_death() -> void:
+func register_tutorial_death() -> bool:
+	if selected_skin != DEFAULT_SKIN:
+		selected_skin = DEFAULT_SKIN
+		tutorial_death_streak = 1
+		_save_profile()
+		return false
 	tutorial_death_streak += 1
-	if tutorial_death_streak >= TUTORIAL_DEATHS_FOR_SKIN:
-		unlock_skin("day_one")
-	_save_profile()
+	if tutorial_death_streak < TUTORIAL_DEATHS_FOR_SKIN:
+		_save_profile()
+		return false
+	tutorial_death_streak = 0
+	unlock_skin(TUTORIAL_SKIN)
+	return true
 
 
 func register_tutorial_complete() -> void:
+	selected_skin = DEFAULT_SKIN
 	tutorial_death_streak = 0
 	_save_profile()
 
 
 func unlock_skin(skin_id: String) -> bool:
-	if not SKINS.has(skin_id) or unlocked_skins.has(skin_id):
+	if not SKINS.has(skin_id):
 		return false
-	unlocked_skins.append(skin_id)
+	var first_time: bool = not unlocked_skins.has(skin_id)
+	if first_time:
+		unlocked_skins.append(skin_id)
 	selected_skin = skin_id
 	_save_profile()
 	skin_unlocked.emit(skin_id)
-	unlock_achievement("skin_" + skin_id, "Slow Learner", "Five deaths in a row in the tutorial. Unlocked skin: %s." % str(SKINS[skin_id]["name"]))
+	if first_time:
+		unlock_achievement("skin_" + skin_id, "Slow Learner", "Five deaths in a row in the tutorial. Unlocked look: %s." % str(SKINS[skin_id]["name"]))
 	return true
 
 
@@ -222,9 +235,6 @@ func _load_profile() -> void:
 	for skin_id: Variant in config.get_value("skins", "unlocked", [DEFAULT_SKIN]):
 		if SKINS.has(str(skin_id)) and not unlocked_skins.has(str(skin_id)):
 			unlocked_skins.append(str(skin_id))
-	var chosen: String = str(config.get_value("skins", "selected", DEFAULT_SKIN))
-	if unlocked_skins.has(chosen):
-		selected_skin = chosen
 	tutorial_death_streak = int(config.get_value("progress", "tutorial_death_streak", 0))
 
 
@@ -233,7 +243,6 @@ func _save_profile() -> void:
 		return
 	var config: ConfigFile = ConfigFile.new()
 	config.set_value("skins", "unlocked", unlocked_skins)
-	config.set_value("skins", "selected", selected_skin)
 	config.set_value("progress", "tutorial_death_streak", tutorial_death_streak)
 	config.save(SAVE_PATH)
 

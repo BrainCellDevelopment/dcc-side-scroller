@@ -7,6 +7,9 @@ const ENGINEER_NAME: String = "Goblin Engineer"
 const RUN_CHECKPOINT: int = 7
 const STAGE_RUN: int = 1
 const STAGE_AFTERMATH: int = 2
+const NEW_LOOK_TITLE: String = "NEW LOOK UNLOCKED"
+const NEW_LOOK_QUIP: String = "Congratulations, crawler. You are now dressed for the occasion."
+const NEW_LOOK_SECONDS: float = 3.5
 const ENGINEER_RUN_SPEED: float = 170.0
 const ENGINEER_RUN_DISTANCE: float = 1600.0
 const ENGINEER_EXIT_PAD: float = 60.0
@@ -505,8 +508,14 @@ func dev_goto(target: String) -> bool:
 
 
 func _on_player_died() -> void:
-	Game.register_tutorial_death()
+	var switched: bool = Game.register_tutorial_death()
 	_hud.call("show_banner", "YOU DIED", 0.0)
-	await get_tree().create_timer(1.8).timeout
+	if switched:
+		await get_tree().create_timer(0.9).timeout
+		_hud.call("hide_banner")
+		_hud.call("show_system_message", NEW_LOOK_TITLE, NEW_LOOK_QUIP, NEW_LOOK_SECONDS)
+		await get_tree().create_timer(NEW_LOOK_SECONDS + 0.3).timeout
+	else:
+		await get_tree().create_timer(1.8).timeout
 	Game.reset_run()
 	get_tree().reload_current_scene()

@@ -107,6 +107,43 @@ func show_banner(text: String, seconds: float = 2.0) -> void:
 		banner.visible = false
 
 
+func show_system_message(title: String, body: String, seconds: float = 3.0) -> void:
+	var box: VBoxContainer = VBoxContainer.new()
+	box.set_anchors_preset(Control.PRESET_CENTER)
+	box.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	box.grow_vertical = Control.GROW_DIRECTION_BOTH
+	box.custom_minimum_size = Vector2(520.0, 0.0)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_theme_constant_override("separation", 6)
+	var heading: Label = Label.new()
+	heading.text = title
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 34)
+	heading.add_theme_color_override("font_color", Color(1.0, 0.82, 0.25))
+	heading.add_theme_color_override("font_outline_color", Color(0.1, 0.0, 0.0))
+	heading.add_theme_constant_override("outline_size", 8)
+	var text: Label = Label.new()
+	text.text = body
+	text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text.add_theme_font_size_override("font_size", 16)
+	text.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0))
+	text.add_theme_constant_override("outline_size", 5)
+	box.add_child(heading)
+	box.add_child(text)
+	box.modulate.a = 0.0
+	add_child(box)
+	box.pivot_offset = box.custom_minimum_size * 0.5
+	box.scale = Vector2.ONE * 1.4
+	var tween: Tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(box, "modulate:a", 1.0, 0.2)
+	tween.tween_property(box, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.chain().tween_interval(maxf(seconds - 0.7, 0.1))
+	tween.chain().tween_property(box, "modulate:a", 0.0, 0.5)
+	tween.chain().tween_callback(box.queue_free)
+
+
 func hide_banner() -> void:
 	_banner_token += 1
 	banner.visible = false
