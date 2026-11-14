@@ -32,6 +32,7 @@ var _mana_fill: ColorRect = null
 var _xp_bg: ColorRect = null
 var _xp_fill: ColorRect = null
 var _level_label: Label = null
+var _charm_label: Label = null
 
 @onready var health_fill: ColorRect = $HealthBarBg/HealthFill
 @onready var stamina_fill: ColorRect = $StaminaBarBg/StaminaFill
@@ -67,6 +68,7 @@ func _ready() -> void:
 	_build_god_label()
 	_build_mana_bar()
 	_build_xp_bar()
+	_build_charm_label()
 	_build_countdown()
 	_build_survivors()
 	SystemVoice.announced.connect(_on_announced)
@@ -75,6 +77,32 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_update_timer()
+	_update_charm_label()
+
+
+func _build_charm_label() -> void:
+	_charm_label = Label.new()
+	_charm_label.name = "CharmLabel"
+	_charm_label.position = Vector2(8.0, 33.0)
+	_charm_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_charm_label.add_theme_font_size_override("font_size", 8)
+	_charm_label.add_theme_color_override("font_color", Color(1.0, 0.55, 0.75))
+	_charm_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_charm_label.add_theme_constant_override("outline_size", 3)
+	_charm_label.visible = false
+	add_child(_charm_label)
+
+
+## Shows how many goblins are currently charmed and whether the Goblin Pass is held.
+func _update_charm_label() -> void:
+	var charmed: int = get_tree().get_nodes_in_group("charmed").size()
+	var parts: PackedStringArray = PackedStringArray()
+	if charmed > 0:
+		parts.append("Charmed: %d" % charmed)
+	if Inventory.has_item("goblin_pass"):
+		parts.append("Goblin Pass")
+	_charm_label.text = "  ".join(parts)
+	_charm_label.visible = not parts.is_empty()
 
 
 func _build_countdown() -> void:
