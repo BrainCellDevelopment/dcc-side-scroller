@@ -39,7 +39,7 @@ def build():
         out.append('[ext_resource type="PackedScene" path="res://scenes/props/%s.tscn" id="%s"]' % (p, ids[p]))
     out[0] = '[gd_scene load_steps=%d format=3]\n' % (len(ids) + 1)
     out.append('')
-    out.append('[node name="FastFoodRoom" type="Node2D"]\nscript = ExtResource("%s")\nwidth = %d.0\ncheckpoint_index = 2\n'
+    out.append('[node name="FastFoodRoom" type="Node2D"]\nscript = ExtResource("%s")\nwidth = %d.0\ncheckpoint_index = 2\nhall_depth = 56.0\n'
                'box_tiers = PackedStringArray("Bronze", "Silver")\nbox_kit = "floor1"\n' % (ids["room"], WIDTH))
     for n, p in (("Zone", "."), ("HallEntry", "."), ("HallExit", ".")):
         out.append('[node name="%s" type="Area2D" parent="%s"]\n' % (n, p))

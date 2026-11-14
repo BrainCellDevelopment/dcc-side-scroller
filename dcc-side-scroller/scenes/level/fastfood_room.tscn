@@ -18,6 +18,7 @@
 script = ExtResource("1_room")
 width = 640.0
 checkpoint_index = 2
+hall_depth = 56.0
 box_tiers = PackedStringArray("Bronze", "Silver")
 box_kit = "floor1"
 

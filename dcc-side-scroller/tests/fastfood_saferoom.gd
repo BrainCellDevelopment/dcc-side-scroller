@@ -61,7 +61,7 @@ func _at(dx: float) -> void:
 func _door_denies_enemies() -> void:
 	var door: Node2D = _room.get_node("EntryDoor")
 	var goblin: Node2D = GOBLIN.instantiate() as Node2D
-	goblin.global_position = _room.global_position + Vector2(400.0, -2.0)
+	goblin.global_position = _room.global_position + Vector2(350.0, -2.0)
 	_level.add_child(goblin)
 	await _frames(10)
 	_at(336.0)
