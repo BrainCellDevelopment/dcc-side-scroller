@@ -293,8 +293,6 @@ def build():
     ach("A_stairs", "stairs", x0 + 16)
     for i in range(6):
         add_prop("prop_torch", x0 + 120 + i * 200, 912 - 110)
-    for i in range(3):
-        add_prop("prop_lichen", x0 + 220 + i * 360, 912 - 60)
     add_prop("prop_crate", x0 + 480, 912)
     end_section()
 
@@ -390,8 +388,6 @@ def build():
     t1 = cur["x"]
     for x in range(t0 + 120, t1, 240):
         add_prop("prop_torch", x, 912 - 110)
-    for x in range(t0 + 240, t1, 240):
-        add_prop("prop_lichen", x, 912 - 70)
     end_section()
 
     # ---------------- Section 4: engineer arena

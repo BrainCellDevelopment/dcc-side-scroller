@@ -58,6 +58,7 @@ var _sprite: AnimatedSprite2D
 
 func _ready() -> void:
 	add_to_group("loot_boxes")
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	_sprite = SpriteUtil.make_sprite(SHEET, FRAME, ANIMS)
 	_sprite.name = "Sprite"
 	_visual.add_child(_sprite)

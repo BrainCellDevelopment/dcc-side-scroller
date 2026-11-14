@@ -136,7 +136,7 @@ def ground(art, y_top, col, rim, rng, bumps=0, bump_h=8, bump_w=(12, 30)):
 
 
 EXT = {
-    "street": ("#0a0720", "#190e2a", "#150b26", "#0d0816"),
+    "street": ("#05080f", "#2c4064", "#17233b", "#080d1a"),
     "stairwell": ("#070b16", "#0a1020", "#0a1020", "#070b14"),
     "tunnel": ("#0b0e1b", "#0d1020", "#12172c", "#090c18"),
     "guildhall": ("#150f1c", "#1d110d", "#2a170f", "#140b08"),

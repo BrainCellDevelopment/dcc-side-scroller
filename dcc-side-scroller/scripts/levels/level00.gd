@@ -4,6 +4,7 @@ enum Phase { PLAY, ARENA, FIGHT, AFTERMATH, COMPLETE }
 
 const GOBLIN_SCENE: PackedScene = preload("res://scenes/enemies/goblin.tscn")
 const VEIL_SCRIPT: GDScript = preload("res://scripts/level/area_veil.gd")
+const SNOW_SCRIPT: GDScript = preload("res://scripts/level/snow.gd")
 const GATE_SCENE: PackedScene = preload("res://scenes/props/gate_door.tscn")
 const FRAME_NEAR_SCENE: PackedScene = preload("res://scenes/props/gate_frame_near.tscn")
 const FRAME_FAR_SCENE: PackedScene = preload("res://scenes/props/gate_frame_far.tscn")
@@ -108,6 +109,7 @@ var _gate_edges: Array[float] = []
 
 
 func _ready() -> void:
+	_camera.process_callback = Camera2D.CAMERA2D_PROCESS_PHYSICS
 	_player.connect("died", _on_player_died)
 	_engineer.connect("defeated", _on_engineer_defeated)
 	_dozer.connect("round_cleared", _on_dozer_round_cleared)
@@ -141,6 +143,7 @@ func _ready() -> void:
 	_begin()
 	_setup_doors()
 	_setup_gates()
+	_setup_snow()
 
 
 func _physics_process(delta: float) -> void:
@@ -158,6 +161,19 @@ func _physics_process(delta: float) -> void:
 	_update_shake(delta)
 	_countdown_step(delta)
 	_update_player_z()
+
+
+func _setup_snow() -> void:
+	var snow: CanvasLayer = CanvasLayer.new()
+	snow.set_script(SNOW_SCRIPT)
+	snow.set("edge_x", float((_section_areas[int(GATES[0]["section"])] as Area2D).get_meta("x0")))
+	snow.name = "Snow"
+	add_child(snow)
+	var edge: float = float(snow.get("edge_x"))
+	for node: Node in $Platforms.get_children():
+		var platform: Node2D = node as Node2D
+		if platform != null and platform.global_position.x < edge and platform.get("style") != null:
+			platform.set("snow", true)
 
 
 func _setup_gates() -> void:
@@ -231,6 +247,7 @@ func _snap_camera() -> void:
 	_focus_y = _player.global_position.y - FOCUS_ON_FLOOR
 	_camera.global_position = _follow_target(_view_size())
 	_camera.reset_smoothing()
+	_camera.reset_physics_interpolation()
 
 
 func _begin() -> void:
@@ -241,6 +258,7 @@ func _begin() -> void:
 		return
 	var pos: Vector2 = Game.checkpoint_position
 	_player.global_position = pos + Vector2(0.0, -2.0)
+	_player.reset_physics_interpolation()
 	_prune_before(pos.x)
 	_seen[_section_at(pos.x)] = true
 	_enter_section(_section_at(pos.x))

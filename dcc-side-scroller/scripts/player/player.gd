@@ -267,6 +267,7 @@ func _track_safe_spot(delta: float, on_floor: bool) -> void:
 func _rescue() -> void:
 	if not _safe_spots.is_empty():
 		global_position = _safe_spots[0]
+		reset_physics_interpolation()
 	velocity = Vector2.ZERO
 
 
