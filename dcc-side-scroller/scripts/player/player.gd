@@ -23,11 +23,11 @@ const SAFE_SPOT_COUNT: int = 4
 @export var stamina_regen_delay: float = 0.5
 @export var stamina_exhaust_recover: float = 30.0
 @export var sprint_drain: float = 22.0
-@export var max_mana: float = 60.0
-@export var mana_regen: float = 9.0
+@export var max_mana: float = 10.0
+@export var mana_regen: float = 1.5
 @export var mana_regen_delay: float = 1.0
-@export var spell_cost: float = 20.0
-@export var missile_count: int = 2
+@export var spell_cost: float = 3.0
+@export var missile_count: int = 1
 @export var missile_damage: int = 1
 @export var spell_enabled: bool = false
 @export var jump_cost: float = 10.0
@@ -263,7 +263,9 @@ func _try_cast() -> void:
 	if target != null:
 		aim = (target.global_position + Targeting.AIM_OFFSET - origin).angle()
 	for index: int in missile_count:
-		var fan: float = lerpf(-MISSILE_FAN, MISSILE_FAN, float(index) / maxf(float(missile_count - 1), 1.0))
+		var fan: float = 0.0
+		if missile_count > 1:
+			fan = lerpf(-MISSILE_FAN, MISSILE_FAN, float(index) / float(missile_count - 1))
 		var missile: Area2D = MISSILE_SCENE.instantiate() as Area2D
 		missile.set("damage", missile_damage)
 		missile.set("anchor", self)
