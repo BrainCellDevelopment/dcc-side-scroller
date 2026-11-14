@@ -499,7 +499,7 @@ func _detail_text() -> String:
 
 func _stats_bbcode(focused: bool) -> String:
 	var head: String = "[b]CRAWLER STATS[/b]" if focused else "CRAWLER STATS"
-	var t: String = "%s   Floor %d   Level %d   XP %d / %d\n" % [head, PlayerStats.floor_number, PlayerStats.character_level, PlayerStats.xp, PlayerStats.XP_PER_LEVEL]
+	var t: String = "%s   Floor %d   Level %d   XP %d / %d\n" % [head, PlayerStats.floor_number, PlayerStats.character_level, PlayerStats.xp, PlayerStats.xp_to_next()]
 	t += "[table=9]"
 	var names: Array = PlayerStats.STAT_NAMES
 	var rows: int = ceili(float(names.size()) / STAT_COLS)

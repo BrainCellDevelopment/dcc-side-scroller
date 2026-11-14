@@ -60,6 +60,7 @@ var facing: int = 1
 var _dead: bool = false
 var mana: float = 0.0
 var _mana_delay: float = 0.0
+var _health_regen_acc: float = 0.0
 var _mana_shown: int = -1
 var _spell_cooldown: float = 0.0
 var _exhausted: bool = false
@@ -133,6 +134,7 @@ func _physics_process(delta: float) -> void:
 
 	_regen_stamina(delta)
 	_regen_mana(delta)
+	_regen_health(delta)
 	_track_safe_spot(delta, on_floor)
 	_update_attack(delta)
 	_prev_vy = velocity.y
@@ -286,6 +288,18 @@ func _spend_mana(cost: float) -> bool:
 	_mana_delay = mana_regen_delay
 	_report_mana()
 	return true
+
+
+func _regen_health(delta: float) -> void:
+	var interval: float = PlayerStats.health_regen_interval()
+	if interval <= 0.0 or _dead or health >= max_health:
+		_health_regen_acc = 0.0
+		return
+	_health_regen_acc += delta
+	if _health_regen_acc >= interval:
+		_health_regen_acc = 0.0
+		health += 1
+		Game.report_player_health(health, max_health)
 
 
 func _regen_mana(delta: float) -> void:
