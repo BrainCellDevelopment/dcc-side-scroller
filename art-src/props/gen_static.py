@@ -276,6 +276,97 @@ def stop_sign():
     return cv
 
 
+GATE_JAMB_W = 14
+GATE_OPEN_W = 10
+
+
+def gate_frame():
+    w = GATE_JAMB_W * 2 + GATE_OPEN_W
+    cv = Cv(w, 128)
+    for x0 in (0, GATE_JAMB_W + GATE_OPEN_W):
+        paint(cv, rect(cv, x0, 14, x0 + GATE_JAMB_W - 1, 119), STONE, hl=1, sd=2)
+        for y in (34, 56, 78, 100):
+            flat(cv, rect(cv, x0 + 1, y, x0 + GATE_JAMB_W - 2, y), STONE[1], ol=False)
+            flat(cv, rect(cv, x0 + 1, y + 1, x0 + GATE_JAMB_W - 2, y + 1), STONE[3], ol=False)
+        paint(cv, rect(cv, x0, 118, x0 + GATE_JAMB_W - 1, 127), CHAR, hl=1, sd=1)
+    paint(cv, rect(cv, 0, 3, w - 1, 15), STONE, hl=1, sd=2)
+    paint(cv, rect(cv, 2, 0, w - 3, 3), STONE, hl=1, sd=1)
+    flat(cv, rect(cv, 1, 9, w - 2, 10), BRASS[1], ol=False)
+    flat(cv, rect(cv, w // 2 - 4, 4, w // 2 + 3, 13), BRASS[2], ol=True)
+    flat(cv, rect(cv, w // 2 - 2, 6, w // 2 + 1, 7), BRASS[4], ol=False)
+    for (x, y) in ((4, 50), (w - 6, 66), (6, 90), (w - 5, 30), (7, 20)):
+        cv.px(x, y, RUST[3])
+    speckle(cv, cv.opaque(), STONE[0], 0.12, 7)
+    exterior_outline(cv)
+    return cv
+
+
+DOOR_FRAMES = 8
+DOOR_FRAME_W = 64
+DOOR_H = 112
+DOOR_EDGE_X = 6
+DOOR_EDGE_W = 10
+DOOR_FACE_W = 40
+
+
+def door_face():
+    cv = Cv(DOOR_FACE_W, DOOR_H)
+    flat(cv, rect(cv, 0, 0, DOOR_FACE_W - 1, DOOR_H - 1), WOOD[2], ol=False)
+    for x in range(0, DOOR_FACE_W, 8):
+        flat(cv, rect(cv, x, 0, x, DOOR_H - 1), WOOD[0], ol=False)
+        flat(cv, rect(cv, x + 1, 0, x + 1, DOOR_H - 1), WOOD[3], ol=False)
+    for y in (14, 54, 94):
+        flat(cv, rect(cv, 0, y, DOOR_FACE_W - 1, y + 5), STEEL[1], ol=False)
+        flat(cv, rect(cv, 0, y, DOOR_FACE_W - 1, y), STEEL[3], ol=False)
+        flat(cv, rect(cv, 0, y + 5, DOOR_FACE_W - 1, y + 5), STEEL[0], ol=False)
+        for x in (4, 14, 24, 34):
+            cv.px(x, y + 2, STEEL[4])
+    flat(cv, rect(cv, 0, 0, DOOR_FACE_W - 1, 2), WOOD[1], ol=False)
+    flat(cv, rect(cv, 0, DOOR_H - 3, DOOR_FACE_W - 1, DOOR_H - 1), WOOD[1], ol=False)
+    flat(cv, ell(cv, 30, 56, 36, 62), BRASS[2], ol=True)
+    flat(cv, ell(cv, 32, 58, 34, 60), WOOD[0], ol=False)
+    speckle(cv, cv.opaque(), WOOD[1], 0.1, 4)
+    return cv
+
+
+def door_edge():
+    cv = Cv(DOOR_EDGE_W, DOOR_H)
+    paint(cv, rect(cv, 0, 0, DOOR_EDGE_W - 1, DOOR_H - 1), WOOD, hl=1, sd=2)
+    for y in (14, 54, 94):
+        paint(cv, rect(cv, 0, y, DOOR_EDGE_W - 1, y + 5), STEEL, hl=1, sd=1)
+        paint(cv, ell(cv, 1, y - 1, 8, y + 6), STEEL, hl=1, sd=1)
+    for y in range(8, 108, 14):
+        flat(cv, rect(cv, 1, y, DOOR_EDGE_W - 2, y), WOOD[0], ol=False)
+    speckle(cv, cv.opaque(), WOOD[0], 0.1, 6)
+    return cv
+
+
+def gate_door():
+    face = door_face().a
+    edge = door_edge().a
+    sheet = Cv(DOOR_FRAME_W * DOOR_FRAMES, DOOR_H)
+    for k in range(DOOR_FRAMES):
+        frame = Cv(DOOR_FRAME_W, DOOR_H)
+        frame.a[:, DOOR_EDGE_X:DOOR_EDGE_X + DOOR_EDGE_W] = edge
+        theta = np.radians(86.0 * k / (DOOR_FRAMES - 1))
+        sin_t = np.sin(theta)
+        fw = int(round(DOOR_FACE_W * sin_t))
+        shade = 0.55 + 0.45 * sin_t
+        for i in range(fw):
+            u = min(DOOR_FACE_W - 1, int((i + 0.5) / fw * DOOR_FACE_W))
+            t = i / max(1, fw - 1)
+            sc = 1.0 + 0.1 * sin_t * t
+            for y in range(DOOR_H):
+                src = int(round((DOOR_H - 1) - ((DOOR_H - 1) - y) / sc))
+                if 0 <= src < DOOR_H:
+                    px = face[src, u].copy()
+                    px[:3] = (px[:3].astype(float) * shade).astype(np.uint8)
+                    frame.a[y, DOOR_EDGE_X + DOOR_EDGE_W + i] = px
+        exterior_outline(frame)
+        sheet.a[:, k * DOOR_FRAME_W:(k + 1) * DOOR_FRAME_W] = frame.a
+    return sheet
+
+
 def stair_rail():
     cv = Cv(64, 24)
     paint(cv, rect(cv, 0, 3, 63, 5), STEEL, hl=1, sd=1)
@@ -376,7 +467,7 @@ def bookshelf():
 
 STATIC = {
     "burnt_tree": burnt_tree, "bike_rack": bike_rack, "moped": moped, "rubble": rubble, "big_door": big_door,
-    "rug": rug, "crate": crate, "sign_arrow": sign_arrow, "street_lamp": street_lamp, "street_lamp_bent": street_lamp_bent, "street_sign": street_sign, "stop_sign": stop_sign, "stair_rail": stair_rail, "bed": bed, "desk": desk, "bookshelf": bookshelf,
+    "rug": rug, "crate": crate, "sign_arrow": sign_arrow, "street_lamp": street_lamp, "street_lamp_bent": street_lamp_bent, "street_sign": street_sign, "stop_sign": stop_sign, "gate_frame": gate_frame, "gate_door": gate_door, "stair_rail": stair_rail, "bed": bed, "desk": desk, "bookshelf": bookshelf,
 }
 
 if __name__ == "__main__":

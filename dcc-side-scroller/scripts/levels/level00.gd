@@ -3,6 +3,19 @@ extends Node2D
 enum Phase { PLAY, ARENA, HANDOFF, CHASE, AFTERMATH, COMPLETE }
 
 const GOBLIN_SCENE: PackedScene = preload("res://scenes/enemies/goblin.tscn")
+const VEIL_SCRIPT: GDScript = preload("res://scripts/level/area_veil.gd")
+const GATE_SCENE: PackedScene = preload("res://scenes/props/gate_door.tscn")
+const FRAME_NEAR_SCENE: PackedScene = preload("res://scenes/props/gate_frame_near.tscn")
+const FRAME_FAR_SCENE: PackedScene = preload("res://scenes/props/gate_frame_far.tscn")
+const FRAME_NEAR_Z: int = 38
+const FRAME_FAR_Z: int = 46
+const DOOR_OFFSET: float = -5.0
+const GATES: Array[Dictionary] = [
+	{"section": 1, "floor_y": 304.0},
+	{"section": 2, "floor_y": 912.0},
+]
+const VEIL_PLAYER_Z: int = 41
+const VEIL_NEAR: float = 320.0
 const ENGINEER_NAME: String = "Goblin Engineer"
 const CHASE_CHECKPOINT: int = 7
 const STAGE_CHASE: int = 1
@@ -56,6 +69,7 @@ var _seen: Dictionary = {}
 var _shake_strength: float = 0.0
 var _shake_time: float = 0.0
 var _shake_total: float = 0.01
+var _gate_edges: Array[float] = []
 
 @onready var _player: CharacterBody2D = $Player
 @onready var _camera: Camera2D = $Camera2D
@@ -112,6 +126,7 @@ func _ready() -> void:
 	_dozer.visible = false
 	_begin()
 	_setup_doors()
+	_setup_gates()
 
 
 func _physics_process(delta: float) -> void:
@@ -133,6 +148,41 @@ func _physics_process(delta: float) -> void:
 			target = _follow_target(view)
 	_camera.global_position = target
 	_update_shake(delta)
+	_update_player_z()
+
+
+func _setup_gates() -> void:
+	for gate: Dictionary in GATES:
+		var area: Area2D = _section_areas[int(gate["section"])] as Area2D
+		var edge: float = float(area.get_meta("x0"))
+		_gate_edges.append(edge)
+		var veil: Node2D = Node2D.new()
+		veil.set_script(VEIL_SCRIPT)
+		veil.set("edge_x", edge)
+		veil.name = "Veil%d" % int(gate["section"])
+		add_child(veil)
+		for part: Dictionary in [{"scene": FRAME_NEAR_SCENE, "z": FRAME_NEAR_Z, "tag": "Near"}, {"scene": FRAME_FAR_SCENE, "z": FRAME_FAR_Z, "tag": "Far"}]:
+			var half: Node2D = (part["scene"] as PackedScene).instantiate() as Node2D
+			half.position = Vector2(edge, float(gate["floor_y"]))
+			half.z_index = int(part["z"])
+			half.name = "Frame%s%d" % [str(part["tag"]), int(gate["section"])]
+			add_child(half)
+		var door: Node2D = GATE_SCENE.instantiate() as Node2D
+		door.position = Vector2(edge + DOOR_OFFSET, float(gate["floor_y"]))
+		door.name = "Gate%d" % int(gate["section"])
+		door.set("veil", veil)
+		add_child(door)
+		if _player.global_position.x > edge + DOOR_OFFSET:
+			door.call("start_open")
+
+
+func _update_player_z() -> void:
+	var near: bool = false
+	for edge: float in _gate_edges:
+		if absf(_player.global_position.x - edge) < VEIL_NEAR:
+			near = true
+			break
+	_player.z_index = VEIL_PLAYER_Z if near else 0
 
 
 func _view_size() -> Vector2:
@@ -533,6 +583,8 @@ func dev_goto(target: String) -> bool:
 			Game.clear_checkpoint()
 			Game.reset_run()
 			return true
+		"stairtop":
+			index = 0
 		"stairs":
 			index = 1
 		"hall":
