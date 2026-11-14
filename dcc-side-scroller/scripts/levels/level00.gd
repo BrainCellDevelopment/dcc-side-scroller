@@ -190,7 +190,10 @@ func _setup_gates() -> void:
 		door.name = "Gate%d" % int(gate["section"])
 		door.set("veil", veil)
 		add_child(door)
-		if _player.global_position.x > edge + DOOR_OFFSET:
+		var passed: float = _player.global_position.x - (edge + DOOR_OFFSET)
+		if passed > float(door.get("seal_distance")):
+			door.call("start_sealed")
+		elif passed > 0.0:
 			door.call("start_open")
 
 
@@ -518,6 +521,9 @@ func _check_exit_ready() -> void:
 		return
 	_exit_ready = true
 	Game.set_hint(EXIT_HINT)
+	_guild_entry_door.set("close_behind", false)
+	_guild_entry_door.call("unlock")
+	_guild_entry_door.call("open")
 	_try_exit()
 
 

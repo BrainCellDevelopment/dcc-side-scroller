@@ -17,6 +17,10 @@ const ANIMS: Dictionary = {
 @export var auto_open_range: float = 0.0
 @export var locked_text: String = "Locked"
 @export var open_text: String = "E: open"
+@export var close_behind: bool = false
+@export var close_side: float = 1.0
+@export var close_distance: float = 90.0
+@export var sealed_text: String = "Locked"
 
 var is_open: bool = false
 
@@ -43,6 +47,7 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	if is_open:
+		_close_if_passed()
 		return
 	if auto_open_range > 0.0 and not locked:
 		var player: Node2D = get_tree().get_first_node_in_group("player") as Node2D
@@ -63,6 +68,17 @@ func _process(_delta: float) -> void:
 	_prompt.visible = true
 	if Input.is_action_just_pressed("interact"):
 		open()
+
+
+func _close_if_passed() -> void:
+	if not close_behind:
+		return
+	var player: Node2D = get_tree().get_first_node_in_group("player") as Node2D
+	if player == null:
+		return
+	if (player.global_position.x - global_position.x) * close_side > close_distance:
+		locked_text = sealed_text
+		close()
 
 
 func unlock() -> void:

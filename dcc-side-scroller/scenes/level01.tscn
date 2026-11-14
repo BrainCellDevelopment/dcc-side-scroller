@@ -144,6 +144,9 @@ position = Vector2(400, 302)
 [node name="EntryDoor" parent="Doors" instance=ExtResource("5_door")]
 position = Vector2(3160, 304)
 start_open = true
+close_behind = true
+close_side = -1.0
+sealed_text = "Locked. No way back."
 
 [node name="LeftBound" type="StaticBody2D" parent="Walls"]
 position = Vector2(-8, 54)

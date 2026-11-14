@@ -86,7 +86,8 @@ for i, (x, y, w, h, s) in enumerate(PLATFORMS):
     node("P%03d" % i, "Platforms", None, "platform", position=vec(x, y), size=vec(w, h), style=s)
 for i, x in enumerate(GOBLINS):
     node("G%02d" % i, "Goblins", None, "goblin", position=vec(x, FLOOR - 2))
-node("EntryDoor", "Doors", None, "door", position=vec(DOOR_X, FLOOR), start_open="true")
+node("EntryDoor", "Doors", None, "door", position=vec(DOOR_X, FLOOR), start_open="true",
+     close_behind="true", close_side="-1.0", sealed_text='"Locked. No way back."')
 body("LeftBound", -8, 54, "shape_wall")
 body("RightBound", WIDTH + 8, 54, "shape_wall")
 area("EndZone", 90, FLOOR - 50, "shape_end")

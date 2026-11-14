@@ -1682,6 +1682,8 @@ position = Vector2(19376, 912)
 locked = true
 auto_open_range = 170.0
 locked_text = "Locked. Finish the dozer."
+close_behind = true
+sealed_text = "Locked. Talk to Mordecai and open your boxes."
 
 [node name="Guildhall" type="Node2D" parent="."]
 position = Vector2(19776, 912)

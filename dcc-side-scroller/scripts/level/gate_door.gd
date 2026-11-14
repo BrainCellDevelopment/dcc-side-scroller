@@ -13,11 +13,14 @@ const REVEAL_TIME: float = 0.25
 @export var trigger_range: float = 110.0
 @export var closed_z: int = 45
 @export var open_z: int = 39
+@export var seal_distance: float = 150.0
 
 var is_open: bool = false
+var sealed: bool = false
 var veil: Node2D = null
 
 var _sprite: AnimatedSprite2D = null
+var _swinging: bool = false
 
 @onready var _body_shape: CollisionShape2D = $Body/CollisionShape2D
 
@@ -43,18 +46,42 @@ func start_open() -> void:
 	opened.emit()
 
 
+func start_sealed() -> void:
+	is_open = true
+	sealed = true
+	_sprite.frame = 0
+	_sprite.pause()
+	z_index = closed_z
+	_body_shape.set_deferred("disabled", false)
+	_set_reveal(1.0)
+
+
 func _process(_delta: float) -> void:
-	if is_open:
+	if sealed:
 		return
 	var player: Node2D = get_tree().get_first_node_in_group("player") as Node2D
 	if player == null:
+		return
+	if is_open:
+		if _swinging:
+			return
+		if player.global_position.x > global_position.x + seal_distance:
+			_seal()
 		return
 	if player.global_position.x > global_position.x - trigger_range:
 		_open()
 
 
+func _seal() -> void:
+	sealed = true
+	_swinging = true
+	z_index = closed_z
+	_sprite.play_backwards(&"swing")
+
+
 func _open() -> void:
 	is_open = true
+	_swinging = true
 	_sprite.play(&"swing")
 	var tween: Tween = create_tween()
 	tween.tween_interval(REVEAL_DELAY)
@@ -62,6 +89,11 @@ func _open() -> void:
 
 
 func _on_swing_finished() -> void:
+	_swinging = false
+	if sealed:
+		Game.shake(2.5, 0.2)
+		_body_shape.set_deferred("disabled", false)
+		return
 	Game.shake(3.0, 0.22)
 	z_index = open_z
 	_body_shape.set_deferred("disabled", true)

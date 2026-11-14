@@ -435,7 +435,8 @@ def build():
     gx = g0 + 448
     markers.append({"name": "GuildCenter", "x": gx, "y": 912})
     doors.append({"name": "GuildEntryDoor", "x": g0 + 48, "y": 912, "locked": True, "range": 170,
-                  "text": "Locked. Finish the dozer."})
+                  "text": "Locked. Finish the dozer.", "close_behind": True,
+                  "sealed": "Locked. Talk to Mordecai and open your boxes."})
     walls.append({"name": "RightBound", "x": g0 + 904, "y": 912 - 250, "kind": "wall"})
     end_section()
     return {"gx": gx, "scroll0": scroll0, "a0": a0, "banner": props_banner}
@@ -581,6 +582,9 @@ def write_tscn(info):
             dp["auto_open_range"] = "%d.0" % d["range"]
         if d["text"]:
             dp["locked_text"] = qstr(d["text"])
+        if d.get("close_behind"):
+            dp["close_behind"] = "true"
+            dp["sealed_text"] = qstr(d["sealed"])
         inst(d["name"], "Doors", "door", **dp)
 
     gx = info["gx"]
