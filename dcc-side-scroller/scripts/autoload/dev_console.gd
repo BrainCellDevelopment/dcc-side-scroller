@@ -84,7 +84,7 @@ func _on_submitted(text: String) -> void:
 	var argument: String = parts[1].to_lower() if parts.size() > 1 else ""
 	match command:
 		"help":
-			_print("goto <section>  list  heal  skins  skin <id>  unlockskin <id>  resetprofile  help  (` or esc closes)")
+			_print("goto <section>  list  heal  skins  skin <default|derpy>  unlockskin <id>  resetprofile  help  (` or esc closes)")
 		"list":
 			_print("sections: " + ", ".join(SECTIONS) + ", cp<N>")
 		"heal":
@@ -118,9 +118,10 @@ func _heal() -> void:
 
 
 func _skin(skin_id: String) -> void:
-	if not Game.select_skin(skin_id):
-		_print("skin not available: " + skin_id)
+	if not Game.SKINS.has(skin_id):
+		_print("unknown skin: " + skin_id + " (" + ", ".join(Game.SKINS.keys()) + ")")
 		return
+	Game.unlock_skin(skin_id)
 	_print("equipped " + skin_id)
 	_panel.visible = false
 	_line.release_focus()

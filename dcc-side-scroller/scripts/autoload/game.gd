@@ -19,7 +19,7 @@ const ACTION_DEADZONE: float = 0.5
 const SAVE_PATH: String = "user://profile.cfg"
 const TUTORIAL_DEATHS_FOR_SKIN: int = 5
 const DEFAULT_SKIN: String = "default"
-const TUTORIAL_SKIN: String = "day_one"
+const TUTORIAL_SKIN: String = "derpy"
 const ANIMS_8: Dictionary = {
 	"idle": {"row": 0, "count": 8, "fps": 10.0, "loop": true},
 	"run": {"row": 1, "count": 8, "fps": 16.0, "loop": true},
@@ -40,7 +40,7 @@ const ANIMS_4: Dictionary = {
 }
 const SKINS: Dictionary = {
 	"default": {"name": "Carl", "sheet": "res://assets/characters/carl.png", "frame": Vector2i(136, 136), "scale": 0.5, "anims": ANIMS_8},
-	"day_one": {"name": "Day One Carl", "sheet": "res://assets/characters/skins/carl_day_one.png", "frame": Vector2i(64, 56), "scale": 1.0, "anims": ANIMS_4},
+	"derpy": {"name": "Derpy Carl", "sheet": "res://assets/characters/skins/carl_derpy.png", "frame": Vector2i(64, 56), "scale": 1.0, "anims": ANIMS_4},
 }
 
 var in_combat: bool = false

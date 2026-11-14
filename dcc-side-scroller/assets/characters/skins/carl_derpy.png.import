@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ca1we6m6t8ve7"
-path="res://.godot/imported/carl_day_one.png-42afde4fb86144b737060cec7283480c.ctex"
+uid="uid://cr7mjl3nbvqub"
+path="res://.godot/imported/carl_derpy.png-187b4cbf3154364775a5795e877c07b5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/characters/skins/carl_day_one.png"
-dest_files=["res://.godot/imported/carl_day_one.png-42afde4fb86144b737060cec7283480c.ctex"]
+source_file="res://assets/characters/skins/carl_derpy.png"
+dest_files=["res://.godot/imported/carl_derpy.png-187b4cbf3154364775a5795e877c07b5.ctex"]
 
 [params]
 
