@@ -13,6 +13,8 @@ const DUST: PackedScene = preload("res://scenes/fx/dust.tscn")
 const DUST_COOLDOWN: float = 0.18
 const LAND_SPEED: float = 140.0
 const STOMP_MIN_FALL: float = 40.0
+const SAFE_SPOT_INTERVAL: float = 0.25
+const SAFE_SPOT_COUNT: int = 4
 
 @export var speed: float = 130.0
 @export var sprint_multiplier: float = 1.5
@@ -43,6 +45,8 @@ var _dead: bool = false
 var _exhausted: bool = false
 var _stamina_delay: float = 0.0
 var _stamina_shown: int = -1
+var _safe_spots: Array[Vector2] = []
+var _safe_spot_timer: float = 0.0
 var _jumping: bool = false
 var _attacking: bool = false
 var _coyote_left: float = 0.0
@@ -79,6 +83,7 @@ func _ready() -> void:
 	_attack_shape.disabled = true
 	_attack_area.body_entered.connect(_on_attack_area_body_entered)
 	_invuln_timer.timeout.connect(_on_invuln_timeout)
+	Game.god_mode_changed.connect(_on_god_mode_changed)
 	Game.report_player_health(health, max_health)
 	_report_stamina()
 
@@ -106,6 +111,7 @@ func _physics_process(delta: float) -> void:
 			velocity.x = move_toward(velocity.x, 0.0, friction * delta)
 
 	_regen_stamina(delta)
+	_track_safe_spot(delta, on_floor)
 	_update_attack(delta)
 	_prev_vy = velocity.y
 	move_and_slide()
@@ -139,7 +145,7 @@ func _stomp(enemy: Node2D) -> void:
 
 
 func take_damage(amount: int, from: Vector2) -> void:
-	if _dead or amount <= 0 or not _invuln_timer.is_stopped():
+	if Game.god_mode or _dead or amount <= 0 or not _invuln_timer.is_stopped():
 		return
 	health = maxi(health - amount, 0)
 	Game.report_player_health(health, max_health)
@@ -162,8 +168,11 @@ func bounce(strength: float = 260.0) -> void:
 	_jumping = false
 
 
-func kill() -> void:
+func kill(force: bool = false) -> void:
 	if _dead:
+		return
+	if Game.god_mode and not force:
+		_rescue()
 		return
 	health = 0
 	Game.report_player_health(health, max_health)
@@ -206,6 +215,8 @@ func _handle_input(delta: float) -> void:
 
 
 func _spend_stamina(cost: float) -> bool:
+	if Game.god_mode:
+		return true
 	if stamina < cost:
 		Game.deny_stamina()
 		return false
@@ -216,6 +227,8 @@ func _spend_stamina(cost: float) -> bool:
 
 
 func _drain_stamina(amount: float) -> void:
+	if Game.god_mode:
+		return
 	stamina = maxf(stamina - amount, 0.0)
 	_stamina_delay = stamina_regen_delay
 	if stamina <= 0.0:
@@ -225,12 +238,45 @@ func _drain_stamina(amount: float) -> void:
 
 
 func _regen_stamina(delta: float) -> void:
+	if Game.god_mode:
+		stamina = max_stamina
+		_exhausted = false
+		_report_stamina()
+		return
 	_stamina_delay = maxf(_stamina_delay - delta, 0.0)
 	if _stamina_delay > 0.0 or stamina >= max_stamina:
 		return
 	stamina = minf(stamina + stamina_regen * delta, max_stamina)
 	if _exhausted and stamina >= stamina_exhaust_recover and not Input.is_action_pressed("sprint"):
 		_exhausted = false
+	_report_stamina()
+
+
+func _track_safe_spot(delta: float, on_floor: bool) -> void:
+	if not on_floor or _dead:
+		return
+	_safe_spot_timer -= delta
+	if _safe_spot_timer > 0.0:
+		return
+	_safe_spot_timer = SAFE_SPOT_INTERVAL
+	_safe_spots.append(global_position)
+	if _safe_spots.size() > SAFE_SPOT_COUNT:
+		_safe_spots.remove_at(0)
+
+
+func _rescue() -> void:
+	if not _safe_spots.is_empty():
+		global_position = _safe_spots[0]
+	velocity = Vector2.ZERO
+
+
+func _on_god_mode_changed(active: bool) -> void:
+	if not active:
+		return
+	health = max_health
+	stamina = max_stamina
+	_exhausted = false
+	Game.report_player_health(health, max_health)
 	_report_stamina()
 
 
