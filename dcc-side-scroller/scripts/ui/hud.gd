@@ -4,6 +4,9 @@ const HEALTH_BAR_WIDTH: float = 80.0
 const STAMINA_BAR_WIDTH: float = 80.0
 const STAMINA_COLOR: Color = Color(0.95, 0.78, 0.2)
 const STAMINA_DENIED_COLOR: Color = Color(0.9, 0.2, 0.2)
+const MANA_BAR_WIDTH: float = 80.0
+const MANA_COLOR: Color = Color(0.55, 0.35, 0.95)
+const MANA_DENIED_COLOR: Color = Color(0.95, 0.9, 1.0)
 const BOSS_BAR_WIDTH: float = 240.0
 const POPUP_SECONDS: float = 3.5
 const POPUP_FADE: float = 0.25
@@ -19,6 +22,8 @@ var _item_label: Label = null
 var _god_label: Label = null
 var _countdown_label: Label = null
 var _flash_rect: ColorRect = null
+var _mana_bg: ColorRect = null
+var _mana_fill: ColorRect = null
 
 @onready var health_fill: ColorRect = $HealthBarBg/HealthFill
 @onready var stamina_fill: ColorRect = $StaminaBarBg/StaminaFill
@@ -43,6 +48,8 @@ func _ready() -> void:
 	Game.player_health_changed.connect(_on_player_health_changed)
 	Game.player_stamina_changed.connect(_on_player_stamina_changed)
 	Game.stamina_denied.connect(_on_stamina_denied)
+	Game.player_mana_changed.connect(_on_player_mana_changed)
+	Game.mana_denied.connect(_on_mana_denied)
 	Game.boss_health_changed.connect(_on_boss_health_changed)
 	Game.boss_cleared.connect(_on_boss_cleared)
 	Game.combat_changed.connect(_on_combat_changed)
@@ -50,6 +57,7 @@ func _ready() -> void:
 	Game.item_added.connect(_on_item_added)
 	_build_item_label()
 	_build_god_label()
+	_build_mana_bar()
 	_build_countdown()
 	_update_timer()
 
@@ -241,6 +249,36 @@ func _on_player_stamina_changed(current: int, maximum: int) -> void:
 	if maximum > 0:
 		ratio = clampf(float(current) / float(maximum), 0.0, 1.0)
 	stamina_fill.size.x = STAMINA_BAR_WIDTH * ratio
+
+
+func _build_mana_bar() -> void:
+	_mana_bg = ColorRect.new()
+	_mana_bg.name = "ManaBarBg"
+	_mana_bg.color = Color(0.08, 0.06, 0.08, 0.9)
+	_mana_bg.position = Vector2(8.0, 22.0)
+	_mana_bg.size = Vector2(MANA_BAR_WIDTH, 4.0)
+	_mana_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mana_bg.visible = false
+	add_child(_mana_bg)
+	_mana_fill = ColorRect.new()
+	_mana_fill.name = "ManaFill"
+	_mana_fill.color = MANA_COLOR
+	_mana_fill.size = Vector2(MANA_BAR_WIDTH, 4.0)
+	_mana_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mana_bg.add_child(_mana_fill)
+
+
+func _on_player_mana_changed(current: int, maximum: int) -> void:
+	if maximum <= 0:
+		return
+	_mana_bg.visible = true
+	_mana_fill.size.x = MANA_BAR_WIDTH * clampf(float(current) / float(maximum), 0.0, 1.0)
+
+
+func _on_mana_denied() -> void:
+	_mana_fill.color = MANA_DENIED_COLOR
+	var tween: Tween = create_tween()
+	tween.tween_property(_mana_fill, "color", MANA_COLOR, 0.25)
 
 
 func _on_stamina_denied() -> void:

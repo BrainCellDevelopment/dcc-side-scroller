@@ -23,6 +23,13 @@ const SAFE_SPOT_COUNT: int = 4
 @export var stamina_regen_delay: float = 0.5
 @export var stamina_exhaust_recover: float = 30.0
 @export var sprint_drain: float = 22.0
+@export var max_mana: float = 10.0
+@export var mana_regen: float = 1.5
+@export var mana_regen_delay: float = 1.0
+@export var spell_cost: float = 3.0
+@export var missile_count: int = 1
+@export var missile_damage: int = 1
+@export var spell_enabled: bool = false
 @export var jump_cost: float = 10.0
 @export var attack_cost: float = 12.0
 @export var acceleration: float = 1100.0
@@ -36,12 +43,25 @@ const SAFE_SPOT_COUNT: int = 4
 @export var attack_cooldown: float = 0.42
 @export var knockback: Vector2 = Vector2(160.0, -140.0)
 
+const MISSILE_SCENE: PackedScene = preload("res://scenes/combat/magic_missile.tscn")
+const CAST_FLASH: PackedScene = preload("res://scenes/fx/magic_impact.tscn")
+const SPELL_COOLDOWN: float = 0.35
+const CAST_ORIGIN: Vector2 = Vector2(3.0, -47.0)
+const SPELL_RANGE: float = 280.0
+const SPELL_ARC: float = 75.0
+const MISSILE_FAN: float = 0.3
+const Targeting: GDScript = preload("res://scripts/combat/targeting.gd")
+
 var health: int = 0
 var stamina: float = 0.0
 var control_enabled: bool = true
 var facing: int = 1
 
 var _dead: bool = false
+var mana: float = 0.0
+var _mana_delay: float = 0.0
+var _mana_shown: int = -1
+var _spell_cooldown: float = 0.0
 var _exhausted: bool = false
 var _stamina_delay: float = 0.0
 var _stamina_shown: int = -1
@@ -111,6 +131,7 @@ func _physics_process(delta: float) -> void:
 			velocity.x = move_toward(velocity.x, 0.0, friction * delta)
 
 	_regen_stamina(delta)
+	_regen_mana(delta)
 	_track_safe_spot(delta, on_floor)
 	_update_attack(delta)
 	_prev_vy = velocity.y
@@ -212,6 +233,83 @@ func _handle_input(delta: float) -> void:
 	if Input.is_action_just_pressed("attack") and _cooldown_left <= 0.0 and not _attacking:
 		if _spend_stamina(attack_cost):
 			_start_attack()
+	if Input.is_action_just_pressed("spell"):
+		_try_cast()
+
+
+func enable_spell() -> void:
+	spell_enabled = true
+	mana = max_mana
+	_mana_shown = -1
+	_report_mana()
+
+
+func _try_cast() -> void:
+	if not spell_enabled or _dead or _spell_cooldown > 0.0:
+		return
+	if not _spend_mana(spell_cost):
+		return
+	_spell_cooldown = SPELL_COOLDOWN
+	Game.report_spell_cast()
+	var origin: Vector2 = global_position + Vector2(float(facing) * CAST_ORIGIN.x, CAST_ORIGIN.y)
+	var anchor_offset: Vector2 = Vector2(float(facing) * CAST_ORIGIN.x, CAST_ORIGIN.y)
+	var flash: Node2D = CAST_FLASH.instantiate() as Node2D
+	flash.scale = Vector2.ONE * 0.45
+	flash.position = anchor_offset
+	add_child(flash)
+	var forward: Vector2 = Vector2(float(facing), 0.0)
+	var aim: float = forward.angle()
+	var target: Node2D = Targeting.nearest(origin, forward, get_tree().get_nodes_in_group("enemies"), SPELL_RANGE, SPELL_ARC)
+	if target != null:
+		aim = (target.global_position + Targeting.AIM_OFFSET - origin).angle()
+	for index: int in missile_count:
+		var fan: float = 0.0
+		if missile_count > 1:
+			fan = lerpf(-MISSILE_FAN, MISSILE_FAN, float(index) / float(missile_count - 1))
+		var missile: Area2D = MISSILE_SCENE.instantiate() as Area2D
+		missile.set("damage", missile_damage)
+		missile.set("anchor", self)
+		missile.set("anchor_offset", anchor_offset)
+		missile.position = origin
+		missile.call("fire", Vector2.from_angle(aim + fan))
+		get_parent().add_child(missile)
+
+
+func _spend_mana(cost: float) -> bool:
+	if Game.god_mode:
+		return true
+	if mana < cost:
+		Game.deny_mana()
+		return false
+	mana -= cost
+	_mana_delay = mana_regen_delay
+	_report_mana()
+	return true
+
+
+func _regen_mana(delta: float) -> void:
+	_spell_cooldown = maxf(_spell_cooldown - delta, 0.0)
+	if not spell_enabled:
+		return
+	if Game.god_mode:
+		mana = max_mana
+		_report_mana()
+		return
+	_mana_delay = maxf(_mana_delay - delta, 0.0)
+	if _mana_delay > 0.0 or mana >= max_mana:
+		return
+	mana = minf(mana + mana_regen * delta, max_mana)
+	_report_mana()
+
+
+func _report_mana() -> void:
+	if not spell_enabled:
+		return
+	var shown: int = roundi(mana)
+	if shown == _mana_shown:
+		return
+	_mana_shown = shown
+	Game.report_player_mana(shown, roundi(max_mana))
 
 
 func _spend_stamina(cost: float) -> bool:
@@ -276,9 +374,11 @@ func _on_god_mode_changed(active: bool) -> void:
 		return
 	health = max_health
 	stamina = max_stamina
+	mana = max_mana
 	_exhausted = false
 	Game.report_player_health(health, max_health)
 	_report_stamina()
+	_report_mana()
 
 
 func _report_stamina() -> void:

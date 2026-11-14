@@ -6,6 +6,9 @@ signal boss_health_changed(boss_name: String, current: int, maximum: int)
 signal boss_cleared()
 signal player_stamina_changed(current: int, maximum: int)
 signal stamina_denied()
+signal player_mana_changed(current: int, maximum: int)
+signal mana_denied()
+signal spell_cast()
 signal combat_changed(active: bool)
 signal god_mode_changed(active: bool)
 signal safe_zone_changed(active: bool)
@@ -108,6 +111,18 @@ func report_player_health(current: int, maximum: int) -> void:
 
 func report_player_stamina(current: int, maximum: int) -> void:
 	player_stamina_changed.emit(current, maximum)
+
+
+func report_player_mana(current: int, maximum: int) -> void:
+	player_mana_changed.emit(current, maximum)
+
+
+func deny_mana() -> void:
+	mana_denied.emit()
+
+
+func report_spell_cast() -> void:
+	spell_cast.emit()
 
 
 func deny_stamina() -> void:
@@ -306,6 +321,10 @@ func _register_inputs() -> void:
 		_key(KEY_SHIFT),
 		_joy_button(JOY_BUTTON_RIGHT_SHOULDER),
 	]
+	var spell_events: Array[InputEvent] = [
+		_key(KEY_K),
+		_joy_button(JOY_BUTTON_B),
+	]
 	var interact_events: Array[InputEvent] = [
 		_key(KEY_E),
 		_joy_button(JOY_BUTTON_Y),
@@ -316,6 +335,7 @@ func _register_inputs() -> void:
 	_add_action(&"attack", attack_events)
 	_add_action(&"sprint", sprint_events)
 	_add_action(&"interact", interact_events)
+	_add_action(&"spell", spell_events)
 
 
 func _add_action(action: StringName, events: Array[InputEvent]) -> void:

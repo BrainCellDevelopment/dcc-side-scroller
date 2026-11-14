@@ -23,14 +23,14 @@ RES = [
 ]
 PLATFORMS = [
     (0, FLOOR, WIDTH, 64, STONE),
-    (2500, FLOOR - 40, 160, 16, STONE),
-    (2200, FLOOR - 72, 140, 16, STONE),
+    (2500, FLOOR - 84, 70, 8, STONE),
     (1750, FLOOR - 40, 200, 16, STONE),
     (1350, FLOOR - 72, 160, 16, STONE),
     (900, FLOOR - 40, 180, 16, STONE),
     (520, FLOOR - 72, 150, 16, STONE),
 ]
-GOBLINS = [2700, 2350, 1900, 1500, 1100, 700, 400]
+GOBLINS = [2850, 1900, 1500, 1100, 700, 400]
+INTRO_THROWER_X = 2535
 TORCHES = list(range(3000, 100, -240))
 CRATES = [2900, 2000, 1250, 600]
 
@@ -82,10 +82,13 @@ for i, x in enumerate(TORCHES):
     node("T%02d" % i, "Deco", None, "torch", position=vec(x, FLOOR - 110))
 for i, x in enumerate(CRATES):
     node("C%02d" % i, "Deco", None, "crate", position=vec(x, FLOOR))
-for i, (x, y, w, h, s) in enumerate(PLATFORMS):
-    node("P%03d" % i, "Platforms", None, "platform", position=vec(x, y), size=vec(w, h), style=s)
+for i, plat in enumerate(PLATFORMS):
+    x, y, w, h, s = plat[:5]
+    extra = {"one_way": "true"} if len(plat) > 5 else {}
+    node("P%03d" % i, "Platforms", None, "platform", position=vec(x, y), size=vec(w, h), style=s, **extra)
 for i, x in enumerate(GOBLINS):
     node("G%02d" % i, "Goblins", None, "goblin", position=vec(x, FLOOR - 2))
+node("IntroThrower", "Goblins", None, "goblin", position=vec(INTRO_THROWER_X, FLOOR - 84 - 2), variant=1)
 node("EntryDoor", "Doors", None, "door", position=vec(DOOR_X, FLOOR), start_open="true",
      close_behind="true", close_side="-1.0", sealed_text='"Locked. No way back."')
 body("LeftBound", -8, 54, "shape_wall")
