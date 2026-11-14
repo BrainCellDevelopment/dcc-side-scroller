@@ -31,12 +31,12 @@ const ITEMS: Dictionary = {
 	"Legendary": {"id": "cat_treats", "name": "Premium Cat Treats"},
 }
 const FACE_HEIGHT: float = 24.0
-const START_DISTANCE: float = 80.0
-const END_DISTANCE: float = 26.0
+const FIRST_DISTANCE: float = 34.0
+const LINE_SPACING: float = 32.0
+const START_EXTRA: float = 50.0
 const DRIFT_SECONDS: float = 2.5
-const SLOT_SPACING: float = 24.0
 const FOLLOW_RATE: float = 5.0
-const INTERACT_RANGE: float = 90.0
+const INTERACT_RANGE: float = 160.0
 const ARM_SECONDS: float = 0.5
 
 @export_enum("Bronze", "Silver", "Gold", "Legendary") var tier: String = "Bronze"
@@ -92,7 +92,9 @@ func _process(delta: float) -> void:
 		return
 	var facing: float = float(_target.get("facing")) if _target.get("facing") != null else 1.0
 	var progress: float = clampf(_age / DRIFT_SECONDS, 0.0, 1.0)
-	var dist: float = lerpf(START_DISTANCE, END_DISTANCE, progress) + float(slot) * SLOT_SPACING
+	var layout: Vector2 = _layout()
+	z_index = 12 - mini(int(layout.x), 10)
+	var dist: float = FIRST_DISTANCE + layout.x * LINE_SPACING + START_EXTRA * (1.0 - progress)
 	var desired: Vector2 = _target.global_position + Vector2(facing * dist, -FACE_HEIGHT)
 	global_position = global_position.lerp(desired, 1.0 - exp(-FOLLOW_RATE * delta))
 	var focused: bool = _is_focused() and global_position.distance_to(_target.global_position) <= INTERACT_RANGE
@@ -102,6 +104,18 @@ func _process(delta: float) -> void:
 	prompt.text = "E: open" if Game.in_safe_zone else "Safe zones only"
 	if Game.in_safe_zone and _age > ARM_SECONDS and _last_open_frame != Engine.get_process_frames() and Input.is_action_just_pressed("interact"):
 		_open()
+
+
+func _layout() -> Vector2:
+	var rank: int = 0
+	var count: int = 0
+	for node: Node in get_tree().get_nodes_in_group("loot_boxes"):
+		if bool(node.get("is_open")) or not bool(node.get("summoned")):
+			continue
+		count += 1
+		if int(node.get("slot")) < slot or (int(node.get("slot")) == slot and node.get_instance_id() < get_instance_id()):
+			rank += 1
+	return Vector2(float(rank), float(count))
 
 
 func _is_focused() -> bool:
