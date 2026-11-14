@@ -3,6 +3,8 @@ extends CanvasLayer
 const LEVELS: Dictionary = {
 	"level0": "res://scenes/level00.tscn",
 	"level1": "res://scenes/level01.tscn",
+	"yacht": "res://scenes/yacht_cabin.tscn",
+	"level2": "res://scenes/level02.tscn",
 }
 const SECTIONS: PackedStringArray = ["surface", "stairtop", "stairs", "hall", "tunnels", "tunnels2", "tunnels3", "arena", "chase", "guildhall"]
 
@@ -94,7 +96,11 @@ func _on_submitted(text: String) -> void:
 		"help":
 			_print("goto <section|level0|level1>  list  heal  god [on|off]  kms  stats [floor <n>|xp <n>|spend <stat>|reset]  skins  skin <default|derpy>  intro  unlockskin <id>  resetprofile  help  (` or esc closes)")
 		"list":
-			_print("sections: " + ", ".join(SECTIONS) + ", cp<N>  levels: " + ", ".join(LEVELS.keys()))
+			var names: PackedStringArray = SECTIONS
+			var level: Node = get_tree().current_scene
+			if level != null and level.has_method("dev_sections"):
+				names = level.call("dev_sections")
+			_print("sections: " + ", ".join(names) + ", cp<N>  levels: " + ", ".join(LEVELS.keys()))
 		"heal":
 			_heal()
 		"god":

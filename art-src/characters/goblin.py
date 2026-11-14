@@ -19,7 +19,18 @@ CFG = {
                   head_off=(1.0, 0.0), sw=3.4, hw=2.2, leg_r=1.5, arm_r=1.4, foot=(3.0, 1.7), skin=GREEN),
     "thrower": dict(cx=16, ground=29.3, hip=(16.0, 24.0), tl=6.4, hu=4.5, head=(6.6, 5.4), nose=(6.6, 1.6, 2.3, 2.0),
                     head_off=(1.0, 0.0), sw=3.0, hw=2.0, leg_r=1.3, arm_r=1.3, foot=(2.8, 1.6), skin=OLIVE),
+    "bard": dict(cx=16, ground=29.3, hip=(16.0, 24.0), tl=6.4, hu=4.5, head=(6.8, 5.6), nose=(6.8, 1.6, 2.4, 2.0),
+                 head_off=(1.0, 0.0), sw=3.2, hw=2.1, leg_r=1.4, arm_r=1.4, foot=(2.9, 1.7), skin=GREEN),
+    "shamanka": dict(cx=16, ground=29.3, hip=(16.0, 24.0), tl=6.4, hu=4.5, head=(6.6, 5.4), nose=(6.6, 1.6, 2.3, 2.0),
+                     head_off=(1.0, 0.0), sw=3.0, hw=2.0, leg_r=1.3, arm_r=1.3, foot=(2.8, 1.6), skin=OLIVE),
 }
+RUST = ("#e8905a", "#b0562e", "#6e2e1e")
+STEEL = ("#eef0f6", "#a2acc0", "#5a6478")
+ROBE = ("#5cd0b4", "#2a9088", "#1c4a5a")
+GLASS = ("#d8fff0", "#8ae0c0", "#3a8a78")
+FLUID = ("#ffd060", "#ff7a28", "#b03a18")
+ORB = ("#fff0ff", "#e090ff", "#8a40c8")
+SILVER = "#e8ecf4"
 
 
 def club(c, hand, th):
@@ -45,6 +56,7 @@ def build(p, kind):
     skin = cfg["skin"]
     arms = p["arms"]
     hr = 1.8
+    thr = kind != "grunt"
     if kind == "thrower":
         sx, sy = k["S"][0] - k["rt"][0] * 5.2, k["S"][1] - k["rt"][1] * 5.2 + 2.6
         sk = c.ell(sx, sy, 4.2, 5.0, k["ang"])
@@ -60,7 +72,10 @@ def build(p, kind):
     c.stamp(torso, skin)
     cloth = c.tri(k["hip"][0], k["hip"][1] + 0.5, k["ang"] * 0.6, (-4.6, -2.2), (4.6, -2.2), (0.6, 5.6))
     cloth |= c.tri(k["hip"][0], k["hip"][1] + 0.5, k["ang"] * 0.6, (-4.6, -2.2), (1.0, -2.2), (-2.6, 4.2))
-    c.stamp(cloth, CLOTH if kind == "grunt" else (PURP[1], PURP[2], "#3e2470"))
+    if kind == "shamanka":
+        cloth = c.tri(k["hip"][0], k["hip"][1] - 1.0, k["ang"] * 0.4, (-5.4, -2.0), (5.4, -2.0), (0.0, 7.4))
+        cloth |= c.tri(k["hip"][0], k["hip"][1] - 1.0, k["ang"] * 0.4, (-5.4, -2.0), (0.0, -2.0), (-4.0, 7.0))
+    c.stamp(cloth, CLOTH if kind == "grunt" else ROBE if kind == "shamanka" else RUST if kind == "bard" else (PURP[1], PURP[2], "#3e2470"))
     belt = c.ell(k["hip"][0], k["hip"][1] - 1.6, 4.8, 1.2, k["ang"] * 0.6)
     c.stamp(belt, WOOD)
     if kind == "thrower":
@@ -78,6 +93,19 @@ def build(p, kind):
     lx, ly = c.local(H[0], H[1], hang)
     inner = c.tri(H[0], H[1], hang, (-5.0, -0.2), (-4.4, 1.4), (-8.5, -2.4))
     c.fill(inner & ~hm, "#a8506a")
+    if kind == "bard":
+        cap = hm & (ly < -3.0)
+        for sx in (-3.0, 0.0, 3.0):
+            cap |= c.tri(H[0], H[1], hang, (sx - 1.3, -3.4), (sx + 1.3, -3.4), (sx, -7.4))
+        c.stamp(cap, STEEL)
+        c.fill(hm & (ly > -3.1) & (ly < -2.3) & (lx > -6.5), STEEL[2])
+    if kind == "shamanka":
+        hood = hm & (ly < -2.6)
+        hood |= c.tri(H[0], H[1], hang, (-6.8, -3.0), (5.4, -3.4), (-11.0, 2.0 + p.get("tip", 0.0)))
+        c.stamp(hood, ROBE)
+        for ox, oy in ((-8.4, -2.0), (-9.6, -2.8), (-6.6, 0.6)):
+            gx, gy = tf(H[0], H[1], hang, ox - p.get("ear", 0.0) * 0.5, oy)
+            c.dot(gx, gy, SILVER)
     if kind == "thrower":
         cap = hm & (ly < -3.3)
         cap |= c.tri(H[0], H[1], hang, (-6.5, -3.4), (5.2, -3.6), (-12.0, 0.5 + p.get("tip", 0.0)))
@@ -116,7 +144,15 @@ def build(p, kind):
         club(c, ah, p["club"])
     elif p.get("rock"):
         rd = p["rock"]
-        c.stamp(c.disc(ah[0] + rd[0], ah[1] + rd[1], 2.6), ROCKC)
+        if kind == "bard":
+            bm = c.disc(ah[0] + rd[0], ah[1] + rd[1], 2.8)
+            c.stamp(bm, GLASS)
+            c.dot(ah[0] + rd[0], ah[1] + rd[1] + 0.5, FLUID[1])
+            c.dot(ah[0] + rd[0] + 1, ah[1] + rd[1] - 3, FLUID[0])
+        elif kind == "shamanka":
+            c.stamp(c.disc(ah[0] + rd[0], ah[1] + rd[1] - 1.0, 2.6), ORB)
+        else:
+            c.stamp(c.disc(ah[0] + rd[0], ah[1] + rd[1], 2.6), ROCKC)
     hum.draw_arm(c, cfg, k["sh_a"], ah, hr)
     for s in p.get("streaks", []):
         for i in range(s[2]):

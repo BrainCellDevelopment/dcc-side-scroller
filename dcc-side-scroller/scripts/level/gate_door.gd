@@ -44,6 +44,7 @@ func _ready() -> void:
 	_sprite.frame = 0
 	_sprite.pause()
 	_prompt.visible = false
+	_prompt.scale.x = _side()
 
 
 func unlock() -> void:
@@ -82,7 +83,7 @@ func close(animated: bool = true) -> void:
 	if sealed_text != "":
 		locked_text = sealed_text
 	z_index = closed_z
-	var beyond: bool = _player_x() > global_position.x
+	var beyond: bool = _ahead() > 0.0
 	if animated:
 		_busy = true
 		_sprite.play_backwards(&"swing")
@@ -99,15 +100,23 @@ func _process(_delta: float) -> void:
 		return
 	var px: float = _player_x()
 	if is_open:
-		if close_behind and px - global_position.x > close_distance:
+		if close_behind and _ahead() > close_distance:
 			close()
 		return
-	if not locked and not _shut and auto_open_range > 0.0 and px > global_position.x - auto_open_range:
+	if not locked and not _shut and auto_open_range > 0.0 and _ahead() > -auto_open_range:
 		open()
 		return
 	_prompt.visible = locked and locked_text != "" and absf(px - global_position.x) < PROMPT_RANGE
 	if _prompt.visible:
 		_prompt.text = locked_text
+
+
+func _side() -> float:
+	return -1.0 if scale.x < 0.0 else 1.0
+
+
+func _ahead() -> float:
+	return (_player_x() - global_position.x) * _side()
 
 
 func _player_x() -> float:

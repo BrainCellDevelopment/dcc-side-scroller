@@ -2,17 +2,20 @@ extends Node
 
 signal stats_changed
 signal leveled_up(level: int)
+signal xp_gained(amount: int)
 signal mana_changed(current: int, maximum: int)
 
 const STAT_NAMES: PackedStringArray = ["strength", "intelligence", "constitution", "dexterity", "charisma"]
 const POINTS_PER_LEVEL: int = 3
 const CLASS_SELECT_FLOOR: int = 3
-const XP_PER_LEVEL: int = 100
+const XpTable: GDScript = preload("res://scripts/data/xp_table.gd")
+const REGEN_SECONDS_TIMES_CON: float = 300.0
 const MANA_REGEN_SECONDS: float = 3600.0
 const BASE_VALUE: int = 5
 const BASE_HEALTH: int = 10
 const HEALTH_PER_CON: int = 2
 const STRENGTH_PER_DAMAGE: int = 3
+const SMUSH_MANY: int = 10
 
 var active: bool = false
 var floor_number: int = 0
@@ -21,6 +24,8 @@ var xp: int = 0
 var unspent_points: int = 0
 var class_chosen: bool = false
 var mana: int = 0
+var smush_count: int = 0
+var _awarded: Dictionary = {}
 
 var _base: Dictionary = {}
 var _bonus: Dictionary = {}
@@ -61,7 +66,9 @@ func reset() -> void:
 	xp = 0
 	unspent_points = 0
 	class_chosen = false
+	smush_count = 0
 	_mana_timer = 0.0
+	_awarded.clear()
 	for stat_name: String in STAT_NAMES:
 		_base[stat_name] = BASE_VALUE
 		_bonus[stat_name] = 0
@@ -78,6 +85,12 @@ func enter_floor(floor_index: int) -> void:
 		class_chosen = true
 	if active and not was_active:
 		mana = max_mana()
+	var voice: Node = get_node_or_null("/root/SystemVoice")
+	if voice != null:
+		if active:
+			voice.begin_floor(floor_index)
+		else:
+			voice.end_floor()
 	stats_changed.emit()
 
 
@@ -103,12 +116,64 @@ func add_xp(amount: int) -> void:
 	if not active or amount <= 0:
 		return
 	xp += amount
-	while xp >= XP_PER_LEVEL:
-		xp -= XP_PER_LEVEL
+	xp_gained.emit(amount)
+	while xp >= xp_to_next():
+		xp -= xp_to_next()
 		character_level += 1
 		unspent_points += POINTS_PER_LEVEL
 		leveled_up.emit(character_level)
 	stats_changed.emit()
+
+
+## Call when the player's bare-foot stomp kills something (the Smush counter). The first-stomp
+## achievement lives in SystemVoice; this one marks ten kills.
+func add_smush() -> void:
+	smush_count += 1
+	if smush_count == SMUSH_MANY:
+		Game.unlock_achievement("smush_ten", "Stompetition", "Ten stomps. The audience has started keeping score on your socks, which you do not have.")
+	stats_changed.emit()
+
+
+func xp_to_next() -> int:
+	return XpTable.xp_to_next(character_level)
+
+
+## Call once when an enemy dies. Reads enemy_level, xp_value (-1 = use the
+## table) and is_boss from the node. A statically placed enemy pays out only
+## once even if its scene reloads after a death (no XP farming).
+func award_kill(enemy: Node) -> int:
+	if not active or enemy == null:
+		return 0
+	var key: String = ""
+	if enemy.is_inside_tree() and not str(enemy.name).begins_with("@"):
+		key = str(enemy.get_path())
+		if _awarded.has(key):
+			return 0
+	var amount: int = int(enemy.get("xp_value")) if enemy.get("xp_value") != null else -1
+	if amount < 0:
+		var lvl: int = int(enemy.get("enemy_level")) if enemy.get("enemy_level") != null else XpTable.BOOK_LEVEL
+		var boss: bool = bool(enemy.get("is_boss")) if enemy.get("is_boss") != null else false
+		amount = XpTable.xp_for_kill(lvl, boss)
+	if not key.is_empty():
+		_awarded[key] = true
+	add_xp(amount)
+	var voice: Node = get_node_or_null("/root/SystemVoice")
+	if voice != null:
+		voice.count("kill")
+		if enemy.get("is_boss") != null and bool(enemy.get("is_boss")):
+			voice.count("boss_kill")
+	return amount
+
+
+## Seconds per point of health regained; 0 when stats are inactive. Scales with Constitution.
+func health_regen_interval() -> float:
+	if not active:
+		return 0.0
+	var interval: float = REGEN_SECONDS_TIMES_CON / float(maxi(get_stat("constitution"), 1))
+	var inventory: Node = get_node_or_null("/root/Inventory")
+	if inventory != null:
+		interval /= 1.0 + float(inventory.equipment_value("regen"))
+	return interval
 
 
 func can_spend_points() -> bool:
@@ -160,6 +225,6 @@ func summary() -> String:
 	for stat_name: String in STAT_NAMES:
 		parts.append("%s %d" % [stat_name.substr(0, 3).to_upper(), get_stat(stat_name)])
 	return "floor %d | lvl %d xp %d/%d | pts %d%s | %s | mana %d/%d | maxhp %d dmg+%d" % [
-		floor_number, character_level, xp, XP_PER_LEVEL, unspent_points,
+		floor_number, character_level, xp, xp_to_next(), unspent_points,
 		"" if class_chosen else " (locked until floor %d)" % CLASS_SELECT_FLOOR,
 		" ".join(parts), mana, max_mana(), max_health(), damage_bonus()]

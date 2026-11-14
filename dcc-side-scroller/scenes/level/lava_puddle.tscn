@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/level/lava_puddle.gd" id="1_lp"]
+
+[node name="LavaPuddle" type="Area2D" groups=["hazards"]]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("1_lp")

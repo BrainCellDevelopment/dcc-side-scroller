@@ -1,110 +1,349 @@
 #!/usr/bin/env python3
+"""Level 1 generator. The level runs right to left.
+
+Everything is authored in forward coordinates (u grows with the direction of play, the
+door from the guildhall is at u=40) and levelkit mirrors it into world space on write:
+world x = WIDTH - u. Lint runs on the forward data.
+
+Add a section: append to the SECTIONS table and fill it in build(). Other Level 1
+issues should put their content in their own section function to avoid merge conflicts.
+"""
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import levelkit
+from levelkit import Writer, vec, STONE, fnum
+import section_rats
+import section_hoarder as hoarder_kit
+import section_workshop as workshop
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-OUT = ROOT + "/dcc-side-scroller/scenes/level01.tscn"
+PROJECT = ROOT + "/dcc-side-scroller"
+OUT = PROJECT + "/scenes/level01.tscn"
+CONTRACT2 = ROOT + "/docs/contract-art.md"
+UID = "uid://dl1fndtn48xq"
 
-WIDTH = 3200
 FLOOR = 304
-START_X = 3110
-DOOR_X = 3160
-STONE = 2
+BOTTOM = 364
+DOOR_U = 40
+START_U = 96
+CAM_PAD = 320
 
-RES = [
-    ("script", "Script", "res://scripts/levels/level01.gd"),
-    ("background", "PackedScene", "res://scenes/level/background.tscn"),
-    ("platform", "PackedScene", "res://scenes/level/platform.tscn"),
-    ("goblin", "PackedScene", "res://scenes/enemies/goblin.tscn"),
-    ("door", "PackedScene", "res://scenes/props/door.tscn"),
-    ("torch", "PackedScene", "res://scenes/props/torch.tscn"),
-    ("crate", "PackedScene", "res://scenes/props/crate.tscn"),
-    ("player", "PackedScene", "res://scenes/player/player.tscn"),
-    ("hud", "PackedScene", "res://scenes/ui/hud.tscn"),
+# Floor 1 art kit (#49): background styles 4 tunnel, 5 artery, 6 corridor; platform styles 4 brick, 5 wet stone, 6 plank.
+BRICK, WETSTONE, PLANK = 4, 5, 6
+# section idx -> (background style, platform style)
+LOOK = {0: (5, BRICK), 1: (6, WETSTONE), 2: (4, PLANK), 3: (6, BRICK), 4: (4, PLANK), 5: (5, BRICK), 6: (4, WETSTONE)}
+BG_STYLE = LOOK[0][0]
+
+RES = {
+    "player": "res://scenes/player/player.tscn",
+    "goblin": "res://scenes/enemies/goblin.tscn",
+    "hud": "res://scenes/ui/hud.tscn",
+    "platform": "res://scenes/level/platform.tscn",
+    "spikes": "res://scenes/level/spikes.tscn",
+    "killzone": "res://scenes/level/kill_zone.tscn",
+    "checkpoint": "res://scenes/level/checkpoint.tscn",
+    "background": "res://scenes/level/background.tscn",
+    "prop_torch": "res://scenes/props/torch_bracket.tscn",
+    "prop_crate": "res://scenes/props/crate.tscn",
+    "door": "res://scenes/props/door.tscn",
+}
+RES.update({
+    "llama": "res://scenes/enemies/llama.tscn",
+    "lava_puddle": "res://scenes/level/lava_puddle.tscn",
+    "prop_spray_arrow": "res://scenes/props/spray_arrow.tscn",
+    "prop_sign_arrow_brick": "res://scenes/props/sign_arrow_brick.tscn",
+    "prop_skull_sconce": "res://scenes/props/skull_sconce.tscn",
+    "prop_lichen_floor": "res://scenes/props/lichen_floor.tscn",
+    "prop_lichen_wall": "res://scenes/props/lichen_wall.tscn",
+    "prop_sign_hazard": "res://scenes/props/sign_hazard.tscn",
+    "prop_spray_x": "res://scenes/props/spray_x.tscn",
+    "prop_grate": "res://scenes/props/grate.tscn",
+    "prop_pipe_h": "res://scenes/props/pipe_h.tscn",
+    "fastfood_room": "res://scenes/level/fastfood_room.tscn",
+    "swine_arena": "res://scenes/level/swine_arena.tscn",
+})
+RES.update(section_rats.RES)
+RES.update(hoarder_kit.RES)
+RES.update(workshop.RES)
+EXISTING = ["player", "goblin", "hud"] + list(section_rats.RES) + list(hoarder_kit.RES) + list(workshop.RES)
+
+# idx, key (dev goto name), title shown on entry, gated (swing door at the entry edge), forward width
+SECTIONS = [
+    (0, "tunnel", "ARTERIAL TUNNEL", False, 1888),
+    (1, "rats", "THE RATS' CORRIDOR", True, 960),
+    (2, "saferoom", "SAFE ROOM", True, 768),
+    (3, "hoarder", "THE HOARDER", True, 896),
+    (4, "workshop", "GOBLIN WORKSHOP", False, 768),
+    (5, "swine", "BALL OF SWINE", True, 1024),
+    (6, "collapse", "THE COLLAPSE", True, 640),
 ]
-PLATFORMS = [
-    (0, FLOOR, WIDTH, 64, STONE),
-    (2500, FLOOR - 84, 70, 8, STONE),
-    (1750, FLOOR - 40, 200, 16, STONE),
-    (1350, FLOOR - 72, 160, 16, STONE),
-    (900, FLOOR - 40, 180, 16, STONE),
-    (520, FLOOR - 72, 150, 16, STONE),
-]
-GOBLINS = [2850, 1900, 1500, 1100, 700, 400]
-INTRO_THROWER_X = 2535
-TORCHES = list(range(3000, 100, -240))
-CRATES = [2900, 2000, 1250, 600]
 
-lines = []
+kit = levelkit.Kit(PROJECT, CONTRACT2)
+cur = kit.cur
+flat, pit, block, cp, trig = kit.flat, kit.pit, kit.block, kit.cp, kit.trig
+grunt, thrower = kit.grunt, kit.thrower
+
+WIDTH = sum(s[4] for s in SECTIONS)
+kit.mirror_w = WIDTH
 
 
-def res(key):
-    return 'ExtResource("%d_%s")' % ([r[0] for r in RES].index(key) + 1, key)
+def furnish(x0, x1, crates=()):
+    for x in range(x0 + 120, x1, 240):
+        kit.add_prop("prop_torch", x, FLOOR - 110)
+    for x in crates:
+        kit.add_prop("prop_crate", x0 + x, FLOOR)
 
 
-def node(name, parent=None, ntype=None, inst=None, **props):
-    head = '[node name="%s"' % name
-    if ntype:
-        head += ' type="%s"' % ntype
-    if parent:
-        head += ' parent="%s"' % parent
-    if inst:
-        head += ' instance=%s' % res(inst)
-    lines.append(head + "]")
-    for k, v in props.items():
-        lines.append("%s = %s" % (k, v))
-    lines.append("")
+PUDDLES = []
 
 
-def vec(x, y):
-    return "Vector2(%s, %s)" % (x, y)
+def llama(x, dormant=False, name=None):
+    kit.add_enemy("llama", x, cur["y"], dormant=dormant, name=name)
 
 
-def body(name, x, y, shape_id):
-    node(name, "Walls", "StaticBody2D", position=vec(x, y), collision_layer=1, collision_mask=0)
-    node("CollisionShape2D", "Walls/" + name, "CollisionShape2D", shape='SubResource("%s")' % shape_id)
+def puddle(x, w=32):
+    PUDDLES.append((x, w))
 
 
-def area(name, x, y, shape_id, mask=2):
-    node(name, "Triggers", "Area2D", position=vec(x, y), collision_layer=0, collision_mask=mask)
-    node("CollisionShape2D", "Triggers/" + name, "CollisionShape2D", shape='SubResource("%s")' % shape_id)
+def section_tunnel(x0):
+    # Arterial tunnel and llama alleys (#57): guild exit and torch-lit artery with the painted arrows, the
+    # intro thrower and the missile practice, then the alleys. Checkpoint 0 sits at the mouth of the alleys.
+    flat(448)
+    shelf = kit.add_plat(x0 + 288, FLOOR - 80, 64, 16, BRICK, kind="upper")
+    thrower(shelf["x"] + 32, shelf["y"])
+    kit.enemies[-1]["name"] = "IntroThrower"
+    flat(224, spk=[(96, 32)])
+    pit(48)
+    flat(176)
+    cp(0, x0 + 784, 0)
+    kit.trig("BgArtery", "bg", "5", x0, x0 + 720, FLOOR - 300, FLOOR + 120)
+    kit.trig("BgAlley", "bg", "4", x0 + 720, x0 + 1888, FLOOR - 300, FLOOR + 120)
+    # alley 1: a sleeping llama that Donut's missile wakes
+    flat(320)
+    kit.hint("HintSleepingLlama", x0 + 900, x0 + 1060, "A sleeping llama. Press K and let Donut say hello")
+    puddle(x0 + 992)
+    llama(x0 + 1130, dormant=True, name="SleepingLlama")
+    # alley 2: an awake llama behind a cover block
+    flat(352)
+    kit.block(x0 + 1296, 32, 32)
+    puddle(x0 + 1352)
+    llama(x0 + 1480)
+    # alley 3: a grunt among the spit puddles
+    flat(320, spk=[(48, 32)])
+    puddle(x0 + 1672)
+    grunt(x0 + 1780)
+    furnish(x0, x0 + 1888, crates=(160, 620))
+    decorate_llama_alley(x0)
 
 
-node("Level01", None, "Node2D", script=res("script"))
-node("Background", ".", None, "background", initial_style=2)
-node("Deco", ".", "Node2D")
-node("Platforms", ".", "Node2D")
-node("Walls", ".", "Node2D")
-node("Triggers", ".", "Node2D")
-node("Doors", ".", "Node2D")
-node("Goblins", ".", "Node2D")
+def decorate_llama_alley(x0):
+    for u in (140, 520, 700):
+        kit.add_prop("prop_spray_arrow", x0 + u, FLOOR - 58, free=True)
+    kit.add_prop("prop_sign_arrow_brick", x0 + 440, FLOOR)
+    kit.add_prop("prop_skull_sconce", x0 + 340, FLOOR - 118, free=True)
+    kit.add_prop("prop_skull_sconce", x0 + 620, FLOOR - 118, free=True)
+    kit.add_prop("prop_sign_hazard", x0 + 830, FLOOR)
+    kit.add_prop("prop_spray_x", x0 + 1250, FLOOR - 56, free=True)
+    kit.add_prop("prop_grate", x0 + 1010, FLOOR - 64, free=True)
+    kit.add_prop("prop_pipe_h", x0 + 1530, FLOOR - 132, free=True)
+    for u in (880, 1180, 1420, 1700):
+        kit.add_prop("prop_lichen_floor", x0 + u, FLOOR, free=True)
+    kit.add_prop("prop_lichen_wall", x0 + 1090, FLOOR, free=True)
 
-for i, x in enumerate(TORCHES):
-    node("T%02d" % i, "Deco", None, "torch", position=vec(x, FLOOR - 110))
-for i, x in enumerate(CRATES):
-    node("C%02d" % i, "Deco", None, "crate", position=vec(x, FLOOR))
-for i, plat in enumerate(PLATFORMS):
-    x, y, w, h, s = plat[:5]
-    extra = {"one_way": "true"} if len(plat) > 5 else {}
-    node("P%03d" % i, "Platforms", None, "platform", position=vec(x, y), size=vec(w, h), style=s, **extra)
-for i, x in enumerate(GOBLINS):
-    node("G%02d" % i, "Goblins", None, "goblin", position=vec(x, FLOOR - 2))
-node("IntroThrower", "Goblins", None, "goblin", position=vec(INTRO_THROWER_X, FLOOR - 84 - 2), variant=1)
-node("EntryDoor", "Doors", None, "door", position=vec(DOOR_X, FLOOR), start_open="true",
-     close_behind="true", close_side="-1.0", sealed_text='"Locked. No way back."')
-body("LeftBound", -8, 54, "shape_wall")
-body("RightBound", WIDTH + 8, 54, "shape_wall")
-area("EndZone", 90, FLOOR - 50, "shape_end")
-node("Player", ".", None, "player", position=vec(START_X, FLOOR - 2))
-node("Camera2D", ".", "Camera2D", position=vec(START_X, 184), limit_left=0, limit_top=-116, limit_right=WIDTH, limit_bottom=364,
-     limit_smoothed="true", position_smoothing_enabled="true", position_smoothing_speed=6.0)
-node("HUD", ".", None, "hud")
 
-head = ['[gd_scene load_steps=%d format=3]' % (len(RES) + 3), ""]
-for i, (key, typ, path) in enumerate(RES):
-    head.append('[ext_resource type="%s" path="%s" id="%d_%s"]' % (typ, path, i + 1, key))
-head += ["",
-         '[sub_resource type="RectangleShape2D" id="shape_wall"]', "size = Vector2(16, 720)", "",
-         '[sub_resource type="RectangleShape2D" id="shape_end"]', "size = Vector2(40, 140)", ""]
-with open(OUT, "w") as f:
-    f.write("\n".join(head + lines))
-print("wrote", OUT, len(PLATFORMS), "platforms", len(GOBLINS), "goblins")
+def emit_llama_alley(w):
+    gi = 0
+    for e in kit.enemies:
+        if e["kind"] != "llama":
+            continue
+        gi += 1
+        extra = {"dormant": "true"} if e.get("dormant") else {}
+        w.inst(e.get("name") or "Llama%d" % gi, "Goblins", "llama", position=vec(kit.mx(e["x"]), e["y"] - 2), **extra)
+    for i, (x, pw) in enumerate(PUDDLES):
+        w.inst("Puddle%d" % i, "Hazards", "lava_puddle", position=vec(kit.mspan(x, pw), FLOOR), width=fnum(pw) + ".0")
+
+
+def section_rats_corridor(x0):
+    # Rats and Scatterers corridor (#58, #56): layout, enemies and doors live in section_rats.py.
+    section_rats.build(kit, x0, FLOOR, furnish)
+
+
+SAFEROOM = {}
+
+
+def section_saferoom(x0):
+    # Fast-food safe room (#59): the SafeRoom kit dressed as a Polish fast-food restaurant with a playground, Tally
+    # and two loot boxes. The room instance (scenes/level/fastfood_room.tscn) owns its doors, zone, checkpoint and
+    # props; this section only lays the floor and puts the room in the middle. The level checkpoint sits under the
+    # room's own one (hidden) so goto and respawn land in the room.
+    flat(768)
+    SAFEROOM["center"] = x0 + 384
+    cp(2, x0 + 384 - 48, 2)
+    kit.add_prop("prop_torch", x0 + 40, FLOOR - 110)
+    kit.add_prop("prop_torch", x0 + 728, FLOOR - 110)
+
+
+def emit_saferoom(w):
+    w.inst("FastFoodRoom", ".", "fastfood_room", position=vec(kit.mx(SAFEROOM["center"]), FLOOR))
+
+
+def saferoom_fixup(text):
+    # the room draws its own checkpoint; the level one stays as the respawn and goto anchor but is hidden
+    return text.replace('[node name="CP2" parent="Checkpoints" instance=ExtResource("%s")]\n' % CP_ID(text),
+                        '[node name="CP2" parent="Checkpoints" instance=ExtResource("%s")]\nvisible = false\n' % CP_ID(text), 1)
+
+
+def CP_ID(text):
+    import re
+    return re.search(r'\[ext_resource [^\]]*checkpoint.tscn" id="([^"]+)"', text).group(1)
+
+
+def section_hoarder(x0):
+    # Mid-boss: the Hoarder (#60, #51): layout, enemies and the lair live in section_hoarder.py.
+    hoarder_kit.build(kit, x0, FLOOR, furnish)
+
+
+def section_workshop(x0):
+    # Optional goblin workshop (#61, #55).
+    # Layout, enemies and set-piece props live in section_workshop.py.
+    workshop.build(kit, x0, FLOOR, furnish)
+
+
+SWINE = {}
+SWINE_LEAD = 160
+SWINE_ARENA_W = 704
+
+
+def section_swine(x0):
+    # Final boss: Ball of Swine (#67, #51). A 160 px lead-in with the checkpoint, the 704 px arena
+    # with two extra one-way lanes (48 px apart), then 160 px of stair corridor behind a forcefield.
+    # swine_arena.gd builds the boss, fortress, hazards and locks at runtime around SWINE["center"].
+    flat(1024)
+    cp(5, x0 + 96, 5)
+    ax0 = x0 + SWINE_LEAD
+    for lane in (1, 2):
+        kit.add_plat(ax0, FLOOR - 48 * lane, SWINE_ARENA_W, 16, WETSTONE, kind="refuge", one_way=True)
+    SWINE["center"] = ax0 + SWINE_ARENA_W // 2
+    kit.hint("HintSwine", x0 + 40, x0 + 136, "Nothing hurts it while it rolls. Find a way to stop it")
+    for x in (120, 1000):
+        kit.add_prop("prop_torch", x0 + x, FLOOR - 110)
+    kit.add_prop("prop_sign_hazard", x0 + 24, FLOOR)
+
+
+def emit_swine(w):
+    w.inst("SwineArena", ".", "swine_arena", position=vec(kit.mx(SWINE["center"]), FLOOR))
+
+
+COLLAPSE_BOTTOM = 416
+STAIR_STEPS = 4
+STAIR_DROP = 16
+
+
+def section_collapse(x0):
+    # Stairwell, collapse beat and hand-off to Level 2 (#68). A 224 px landing with the checkpoint and the last
+    # cigarette spot, four 32 px steps down (16 px each), then a 288 px stairwell floor. Triggers (level01.gd):
+    # "cigarette" starts the text beat, "heal" restores health at the foot of the stairs, "end" starts the collapse.
+    RES["prop_stair_rail"] = "res://scenes/props/stair_rail.tscn"
+    kit.sections[-1]["bottom"] = COLLAPSE_BOTTOM
+    kit.cur["gh"] = COLLAPSE_BOTTOM - FLOOR
+    flat(224)
+    cp(6, x0 + 96, 6)
+    for _ in range(STAIR_STEPS):
+        kit.cur["y"] += STAIR_DROP
+        flat(32, h=COLLAPSE_BOTTOM - kit.cur["y"])
+    low = kit.cur["y"]
+    flat(288, h=COLLAPSE_BOTTOM - low)
+    furnish(x0, x0 + 640)
+    for i in range(STAIR_STEPS):
+        kit.add_prop("prop_stair_rail", x0 + 224 + 32 * i + 16, FLOOR + STAIR_DROP * (i + 1) - 4, free=True)
+    kit.trig("BgStairs", "bg", "1", x0, x0 + 640, FLOOR - 300, low + 120)
+    kit.trig("Cigarette", "cigarette", "", x0 + 150, x0 + 190, FLOOR - 120, FLOOR + 20)
+    kit.trig("Landing", "heal", "", x0 + 400, x0 + 432, low - 120, low + 20)
+    trig("EndZone", "end", "", x0 + 540, x0 + 580, low - 120, low + 20)
+
+
+BUILDERS = [section_tunnel, section_rats_corridor, section_saferoom, section_hoarder, section_workshop, section_swine, section_collapse]
+
+
+def build():
+    cur.update(x=0, y=FLOOR)
+    kit.walls.append({"name": "RightBound", "x": -8, "y": FLOOR - 250, "kind": "wall"})
+    last = len(SECTIONS) - 1
+    for (idx, key, title, gated, width), builder in zip(SECTIONS, BUILDERS):
+        kit.start_section(idx, key, LOOK[idx][0], title, LOOK[idx][1], BOTTOM, gate=gated)
+        x0 = cur["x"]
+        builder(x0)
+        assert cur["x"] == x0 + width, (key, cur["x"], x0 + width)
+        kit.end_section()
+        s = kit.sections[-1]
+        s["l"] = 0 if idx == 0 else x0 - CAM_PAD
+        s["r"] = cur["x"] if idx == last else cur["x"] + CAM_PAD
+    kit.walls.append({"name": "LeftBound", "x": WIDTH + 8, "y": FLOOR - 250, "kind": "wall"})
+
+
+def write_tscn():
+    w = Writer()
+    w.ext_id("script")
+    inst, raw = w.inst, w.raw
+    w.node('[node name="Level01" type="Node2D"]\nscript = ExtResource("1_level")')
+    inst("Background", ".", "background", initial_style=str(BG_STYLE))
+    raw("Deco", "Node2D", ".", ["z_index = -2"])
+    raw("Platforms", "Node2D", ".", [])
+    raw("Hazards", "Node2D", ".", [])
+    raw("Checkpoints", "Node2D", ".", [])
+    raw("Triggers", "Node2D", ".", [])
+    raw("Walls", "Node2D", ".", [])
+    raw("Doors", "Node2D", ".", [])
+    raw("Goblins", "Node2D", ".", [])
+    kit.emit_props(w)
+    kit.emit_geometry(w)
+    kit.emit_enemies(w)
+    emit_llama_alley(w)
+    section_rats.emit(kit, w)
+    workshop.emit(kit, w)
+    emit_saferoom(w)
+    emit_swine(w)
+    hoarder_kit.emit(kit, w)
+    inst("EntryDoor", "Doors", "door", position=vec(kit.mx(DOOR_U), FLOOR), start_open="true",
+         close_behind="true", close_side="-1.0", sealed_text='"Locked. No way back."')
+    inst("Player", ".", "player", position=vec(kit.mx(START_U), FLOOR - 2))
+    raw("Camera2D", "Camera2D", ".", [
+        "position = %s" % vec(kit.mx(START_U), 184), "limit_left = 0", "limit_top = -116", "limit_right = %d" % WIDTH,
+        "limit_bottom = %d" % BOTTOM, "limit_smoothed = true", "position_smoothing_enabled = true",
+        "position_smoothing_speed = 6.0"])
+    inst("HUD", ".", "hud")
+    kit.emit_section_triggers(w, lambda s: {"key": s["name"], "gate": 1 if s["gate"] else 0,
+                                            "edge": kit.mx(s["x0"]), "floor_y": FLOOR})
+    text = saferoom_fixup(w.render(RES, "res://scripts/levels/level01.gd", UID))
+    with open(OUT, "w") as f:
+        f.write(text)
+    return text
+
+
+def main():
+    build()
+    text = write_tscn()
+    errs, notes = kit.lint(text, RES, EXISTING)
+    names = [s["name"] for s in kit.sections]
+    if len(set(names)) != len(names):
+        errs.append("duplicate section names")
+    for s in kit.sections:
+        if not any(c["index"] == s["idx"] for c in kit.cps):
+            errs.append("section %s has no checkpoint with its index" % s["name"])
+    for s in kit.sections:
+        print("section %d %-9s u %5d..%5d  world x %5d..%5d  limits l=%d r=%d  gate=%s  %r" %
+              (s["idx"], s["name"], s["x0"], s["x1"], kit.mx(s["x1"]), kit.mx(s["x0"]),
+               kit.mx(s["r"]), kit.mx(s["l"]), s["gate"], s["title"]))
+    for n in notes:
+        print("note:", n)
+    print("wrote", OUT)
+    print("ERRORS: %d" % len(errs))
+    for e in errs:
+        print("  -", e)
+    return 1 if errs else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
