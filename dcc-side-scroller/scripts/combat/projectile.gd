@@ -8,13 +8,18 @@ const FRAME: Vector2i = Vector2i(14, 8)
 const ANIMS: Dictionary = {"fly": {"row": 0, "count": 4, "fps": 16.0, "loop": true}}
 const TRAIL_POINTS: int = 10
 const ANCHOR_TIME: float = 0.3
+const LAUNCH_JITTER: float = 0.3
+const WANDER_RATE: float = 5.0
+const WANDER_CALM_NEAR: float = 30.0
+const WANDER_CALM_RANGE: float = 150.0
 const MASK_AT_ENEMIES: int = 5
 const MASK_AT_PLAYER: int = 3
 
 @export var speed: float = 230.0
 @export var damage: int = 1
-@export var lifetime: float = 1.8
-@export var turn_rate: float = 6.5
+@export var lifetime: float = 2.2
+@export var turn_rate: float = 14.0
+@export var wander: bool = true
 @export var home_delay: float = 0.14
 @export var target_range: float = 280.0
 @export var target_arc: float = 75.0
@@ -28,6 +33,10 @@ var _target: Node2D = null
 var anchor: Node2D = null
 var anchor_offset: Vector2 = Vector2.ZERO
 
+var _heading: float = 0.0
+var _wander_rate: float = 0.0
+var _wander_target: float = 0.0
+var _wander_timer: float = 0.0
 var _trail: Line2D = null
 var _history: Array[Vector2] = []
 
@@ -58,7 +67,10 @@ func _ready() -> void:
 
 func fire(direction: Vector2, group: StringName = &"enemies") -> void:
 	target_group = group
-	velocity = direction.normalized() * speed
+	_heading = direction.angle()
+	if wander:
+		_heading += randf_range(-LAUNCH_JITTER, LAUNCH_JITTER)
+	velocity = Vector2.from_angle(_heading) * speed
 	collision_mask = MASK_AT_PLAYER if group == &"player" else MASK_AT_ENEMIES
 	rotation = velocity.angle()
 
@@ -67,8 +79,12 @@ func _physics_process(delta: float) -> void:
 	if _done:
 		return
 	_age += delta
+	var calm: float = 1.0
 	if _age >= home_delay:
-		_steer(delta)
+		calm = _steer(delta)
+	if wander:
+		_drift(delta, calm)
+	velocity = Vector2.from_angle(_heading) * speed
 	rotation = velocity.angle()
 	global_position += velocity * delta
 	_update_trail()
@@ -76,14 +92,24 @@ func _physics_process(delta: float) -> void:
 		_finish()
 
 
-func _steer(delta: float) -> void:
+func _steer(delta: float) -> float:
 	if not Targeting.is_valid(_target):
 		_target = Targeting.nearest(global_position, velocity, get_tree().get_nodes_in_group(target_group), target_range, target_arc)
 	if _target == null:
-		return
-	var wanted: float = (_target.global_position + Targeting.AIM_OFFSET - global_position).angle()
-	var turn: float = clampf(angle_difference(velocity.angle(), wanted), -turn_rate * delta, turn_rate * delta)
-	velocity = Vector2.from_angle(velocity.angle() + turn) * speed
+		return 1.0
+	var offset: Vector2 = _target.global_position + Targeting.AIM_OFFSET - global_position
+	var turn: float = clampf(angle_difference(_heading, offset.angle()), -turn_rate * delta, turn_rate * delta)
+	_heading += turn
+	return clampf((offset.length() - WANDER_CALM_NEAR) / WANDER_CALM_RANGE, 0.2, 1.0)
+
+
+func _drift(delta: float, calm: float) -> void:
+	_wander_timer -= delta
+	if _wander_timer <= 0.0:
+		_wander_timer = randf_range(0.07, 0.17)
+		_wander_target = randf_range(-1.0, 1.0) * WANDER_RATE
+	_wander_rate = lerpf(_wander_rate, _wander_target, clampf(delta * 12.0, 0.0, 1.0))
+	_heading += _wander_rate * calm * delta
 
 
 func _update_trail() -> void:
