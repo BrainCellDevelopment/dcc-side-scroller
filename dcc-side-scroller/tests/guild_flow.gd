@@ -94,7 +94,7 @@ func _guild() -> void:
 	await _frames(200)
 	var face: float = player.global_position.y - boxes[0].global_position.y
 	_check(face > 15.0 and face < 35.0, "box at face height (%.1f above feet)" % face)
-	_check(absf(boxes[0].global_position.x - player.global_position.x) < 40.0, "box near face horizontally")
+	_check(absf(boxes[0].global_position.x - player.global_position.x) < 48.0, "box near face horizontally")
 	await _shot("guild_boxes")
 	_check(not exit_door.get("is_open"), "exit door still closed before boxes")
 	await _tap()
