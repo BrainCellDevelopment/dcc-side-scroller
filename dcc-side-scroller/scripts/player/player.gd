@@ -11,6 +11,7 @@ const SpriteUtil: GDScript = preload("res://scripts/util/sprite_util.gd")
 const HIT_SPARK: PackedScene = preload("res://scenes/fx/hit_spark.tscn")
 const DUST: PackedScene = preload("res://scenes/fx/dust.tscn")
 const Explosives: GDScript = preload("res://scripts/combat/explosives.gd")
+const ItemEffects: GDScript = preload("res://scripts/combat/item_effects.gd")
 const DYNAMITE: PackedScene = preload("res://scenes/combat/dynamite.tscn")
 const THROW_COOLDOWN: float = 0.5
 const DUST_COOLDOWN: float = 0.18
@@ -61,6 +62,7 @@ var control_enabled: bool = true
 var facing: int = 1
 
 var _dead: bool = false
+var _base_max_health: int = 10
 var mana: float = 0.0
 var _mana_delay: float = 0.0
 var _health_regen_acc: float = 0.0
@@ -96,7 +98,9 @@ var _standstill: bool = true
 
 func _ready() -> void:
 	_gravity = float(ProjectSettings.get_setting("physics/2d/default_gravity"))
+	_base_max_health = max_health
 	max_health += PlayerStats.max_health() - PlayerStats.BASE_HEALTH
+	PlayerStats.stats_changed.connect(_on_stats_changed)
 	health = Game.take_carried_health(max_health)
 	stamina = max_stamina
 	_body = SpriteUtil.make_sprite(Game.skin_sheet(), Game.skin_frame(), Game.skin_anims())
@@ -185,6 +189,7 @@ func take_damage(amount: int, from: Vector2) -> void:
 	_jumping = false
 	_hurt_left = HURT_STUN_TIME
 	Game.shake(2.0, 0.12)
+	ItemEffects.reflect_damage(get_tree(), amount, from)
 	if health <= 0:
 		_die()
 		return
@@ -223,6 +228,35 @@ func restore_all() -> void:
 	_mana_shown = -1
 	_report_mana()
 	PlayerStats.restore_mana(PlayerStats.max_mana())
+
+
+func _on_stats_changed() -> void:
+	var target: int = _base_max_health + PlayerStats.max_health() - PlayerStats.BASE_HEALTH
+	if target == max_health or _dead:
+		return
+	health = clampi(health + maxi(target - max_health, 0), 1, target)
+	max_health = target
+	Game.report_player_health(health, max_health)
+
+
+## Item effect: returns false (nothing spent) when already at full health.
+func heal(amount: int) -> bool:
+	if _dead or health >= max_health:
+		return false
+	health = mini(health + amount, max_health)
+	Game.report_player_health(health, max_health)
+	return true
+
+
+## Item effect: refills the spell bar and the stat-sheet mana. False when both are full.
+func restore_mana(amount: int) -> bool:
+	if _dead or (mana >= max_mana and PlayerStats.mana >= PlayerStats.max_mana()):
+		return false
+	mana = minf(mana + float(amount), max_mana)
+	_mana_shown = -1
+	_report_mana()
+	PlayerStats.restore_mana(amount)
+	return true
 
 
 func is_dead() -> bool:

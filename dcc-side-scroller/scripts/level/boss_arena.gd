@@ -20,6 +20,8 @@ const CARD_FADE: float = 0.3
 @export var intro_seconds: float = 0.0
 @export var card_seconds: float = 2.5
 @export var drop_tier: String = ""
+## Loot table set for the boss box (see loot_tables.gd). Use drop_tier "Boss" for the real drop.
+@export var drop_kit: String = "floor1"
 @export var map_reward: bool = false
 
 var boss: Node = null
@@ -96,6 +98,7 @@ func _on_boss_defeated(node: Node) -> void:
 func _drop_box(at: Vector2) -> void:
 	var box: Node2D = LOOT_BOX.instantiate() as Node2D
 	box.set("tier", drop_tier)
+	box.set("kit", drop_kit)
 	box.add_to_group("boss_boxes")
 	get_tree().current_scene.add_child(box)
 	box.global_position = at

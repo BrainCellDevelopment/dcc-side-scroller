@@ -22,9 +22,10 @@ const HEIGHT_FRACTION: float = 0.78
 const STAT_COLS: int = 3
 const GRID_FRACTION: float = 0.70
 const GAP: float = 3.0
-const DEFAULT_SLOTS: PackedStringArray = ["head", "left_hand", "right_hand", "left_foot", "right_foot"]
+const DEFAULT_SLOTS: PackedStringArray = ["head", "body", "left_hand", "right_hand", "left_foot", "right_foot"]
 const SLOT_CAPTIONS: Dictionary = {
 	"head": "HEAD",
+	"body": "BODY",
 	"left_hand": "L.HAND",
 	"right_hand": "R.HAND",
 	"left_foot": "L.FOOT",
@@ -32,6 +33,7 @@ const SLOT_CAPTIONS: Dictionary = {
 }
 const DOLL_GRID: Dictionary = {
 	"head": Vector2i(0, 0),
+	"body": Vector2i(1, 0),
 	"left_hand": Vector2i(0, 1),
 	"right_hand": Vector2i(1, 1),
 	"left_foot": Vector2i(0, 2),
@@ -140,7 +142,8 @@ func _ready() -> void:
 
 	_detail = _make_label(" ", 8, Color(0.8, 0.82, 0.9))
 	_detail.clip_text = true
-	_detail.custom_minimum_size.y = 12.0
+	_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_detail.custom_minimum_size.y = 34.0
 	_inv_region.add_child(_detail)
 
 	_stats_region = VBoxContainer.new()
@@ -335,7 +338,9 @@ func _activate() -> void:
 		Focus.STATS:
 			PlayerStats.spend_point(PlayerStats.STAT_NAMES[_selected_stat])
 		Focus.INVENTORY:
-			if inv != null and inv.has_method("equip_from"):
+			if inv != null and not str(_slot(_selected_slot).get("use", "")).is_empty():
+				inv.call("use_item", _selected_slot)
+			elif inv != null and inv.has_method("equip_from"):
 				inv.call("equip_from", _selected_slot)
 		Focus.DOLL:
 			if inv != null and inv.has_method("unequip"):
@@ -493,8 +498,16 @@ func _detail_text() -> String:
 	if bonuses is Dictionary:
 		for k: Variant in (bonuses as Dictionary).keys():
 			parts.append("%+d %s" % [int((bonuses as Dictionary)[k]), LABELS.get(str(k), str(k).capitalize())])
-	var hint: String = "  [E: equip, 1-5: hotbar]" if _focus == Focus.INVENTORY and slot_name != "" else ("  [E: unequip, 1-5: hotbar]" if _focus == Focus.DOLL else "")
-	return "  |  ".join(parts) + hint
+	var is_use: bool = not str(item.get("use", "")).is_empty()
+	var hint: String = "  [E: use, 1-5: hotbar]" if _focus == Focus.INVENTORY and is_use else "  [E: equip, 1-5: hotbar]" if _focus == Focus.INVENTORY and slot_name != "" else ("  [E: unequip, 1-5: hotbar]" if _focus == Focus.DOLL else "")
+	var text: String = "  |  ".join(parts) + hint
+	var desc: String = str(item.get("desc", ""))
+	if desc != "":
+		text += "\n" + desc
+	var effect: String = str(item.get("effect", ""))
+	if effect != "":
+		text += "\n" + effect
+	return text
 
 
 func _stats_bbcode(focused: bool) -> String:

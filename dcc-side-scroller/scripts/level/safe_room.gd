@@ -21,6 +21,8 @@ const PLAYER_MASK: int = 2
 @export var checkpoint_index: int = 0
 @export var checkpoint_stage: int = 0
 @export var box_tiers: PackedStringArray = PackedStringArray()
+## Loot table set for this room's boxes (see loot_tables.gd).
+@export var box_kit: String = "floor1"
 
 var player_inside: bool = false
 var visited: bool = false
@@ -92,6 +94,7 @@ func restore(player: Node) -> void:
 func add_box(tier: String = "Bronze") -> Area2D:
 	var box: Area2D = LOOT_BOX.instantiate() as Area2D
 	box.set("tier", tier)
+	box.set("kit", box_kit)
 	box.set("slot", get_tree().get_nodes_in_group("loot_boxes").size())
 	add_child(box)
 	box.global_position = box_spot.global_position

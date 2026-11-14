@@ -4,7 +4,8 @@ signal changed
 
 const SLOT_COUNT: int = 24
 const HOTBAR_SIZE: int = 5
-const EQUIP_SLOTS: PackedStringArray = ["head", "left_hand", "right_hand", "left_foot", "right_foot"]
+const EQUIP_SLOTS: PackedStringArray = ["head", "body", "left_hand", "right_hand", "left_foot", "right_foot"]
+const ItemEffects: GDScript = preload("res://scripts/combat/item_effects.gd")
 
 var slots: Array[Dictionary] = []
 var equipped: Dictionary = {}
@@ -102,6 +103,37 @@ func equipment_bonus(stat_name: String) -> int:
 	return total
 
 
+## Sum of a numeric item field (reflect, regen) over everything worn.
+func equipment_value(key: String) -> float:
+	var total: float = 0.0
+	for slot_name: String in EQUIP_SLOTS:
+		var item: Dictionary = equipped.get(slot_name, {})
+		if not item.is_empty():
+			total += float(item.get(key, 0.0))
+	return total
+
+
+func count_of(id: String) -> int:
+	var total: int = 0
+	for slot: Dictionary in slots:
+		if not slot.is_empty() and str(slot["id"]) == id:
+			total += int(slot["count"])
+	return total
+
+
+## Consumes one of a "use" item (potion, toast, cookie). False when it has no
+## effect right now (full health, no player), in which case nothing is spent.
+func use_item(index: int) -> bool:
+	if index < 0 or index >= slots.size() or slots[index].is_empty():
+		return false
+	var item: Dictionary = slots[index]
+	var use: String = str(item.get("use", ""))
+	if use.is_empty() or not ItemEffects.apply_use(use, int(item.get("amount", 0))):
+		return false
+	remove_at(index, 1)
+	return true
+
+
 func assign_hotbar(index: int, item_id: String) -> void:
 	if index < 0 or index >= HOTBAR_SIZE:
 		return
@@ -146,6 +178,11 @@ func use_hotbar(index: int) -> bool:
 	if item.is_empty():
 		return false
 	var item_id: String = str(item["id"])
+	if not str(item.get("use", "")).is_empty():
+		for i: int in slots.size():
+			if not slots[i].is_empty() and str(slots[i]["id"]) == item_id:
+				return use_item(i)
+		return false
 	for slot_name: String in EQUIP_SLOTS:
 		var worn: Dictionary = equipped[slot_name]
 		if not worn.is_empty() and str(worn["id"]) == item_id:
