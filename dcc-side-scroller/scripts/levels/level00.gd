@@ -20,6 +20,7 @@ const ENGINEER_NAME: String = "Goblin Engineer"
 const RUN_CHECKPOINT: int = 7
 const STAGE_RUN: int = 1
 const STAGE_AFTERMATH: int = 2
+const STAGE_ROUND2: int = 3
 const NEW_LOOK_TITLE: String = "NEW LOOK UNLOCKED"
 const NEW_LOOK_QUIP: String = "Congratulations, crawler. You are now dressed for the occasion."
 const NEW_LOOK_SECONDS: float = 3.5
@@ -63,6 +64,7 @@ var _kills: int = 0
 var _rounds_cleared: int = 0
 var _reinforced: bool = false
 var _engineer_fleeing: bool = false
+var _start_round: int = 0
 var _focus_y: float = 0.0
 var _bg_section: int = -1
 var _hint_owner: Area2D = null
@@ -234,8 +236,10 @@ func _begin() -> void:
 	_seen[_section_at(pos.x)] = true
 	_enter_section(_section_at(pos.x))
 	match Game.checkpoint_stage:
-		STAGE_RUN:
+		STAGE_RUN, STAGE_ROUND2:
 			_engineer.queue_free()
+			if Game.checkpoint_stage == STAGE_ROUND2:
+				_start_round = 1
 		STAGE_AFTERMATH:
 			_engineer.queue_free()
 			_dozer.queue_free()
@@ -420,6 +424,7 @@ func _start_fight() -> void:
 	_phase = Phase.FIGHT
 	_engineer_fleeing = false
 	_dozer_wall.set_deferred("disabled", false)
+	Game.set_checkpoint(RUN_CHECKPOINT, _arena_checkpoint(), STAGE_RUN)
 	var area: Area2D = _section_areas[5] as Area2D
 	_camera.limit_left = int(_dozer_arena.global_position.x)
 	_camera.limit_right = int(_guild_entry_door.global_position.x + 48.0)
@@ -427,7 +432,7 @@ func _start_fight() -> void:
 	_camera.limit_bottom = int(area.get_meta("b"))
 	Game.set_hint(HATCH_HINT)
 	_hud.call("show_banner", "GOBLIN MURDER DOZER", 2.0)
-	_dozer.call("begin_patrol", _player, _dozer_arena.global_position.y)
+	_dozer.call("begin_patrol", _player, _dozer_arena.global_position.y, _start_round)
 
 
 func _on_vulnerable_changed(is_vulnerable: bool) -> void:
@@ -545,6 +550,11 @@ func dev_goto(target: String) -> bool:
 			index = 8
 		"dozerfight", "chase":
 			index = 7
+		"dozerfight2":
+			Game.clear_checkpoint()
+			Game.set_checkpoint(RUN_CHECKPOINT, _arena_checkpoint(), STAGE_ROUND2)
+			Game.reset_run()
+			return true
 		_:
 			if target.begins_with("cp") and target.substr(2).is_valid_int():
 				index = target.substr(2).to_int()
