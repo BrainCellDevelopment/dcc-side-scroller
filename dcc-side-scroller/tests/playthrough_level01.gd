@@ -6,6 +6,8 @@ const BOT_HEALTH: int = 999
 const STUCK_LIMIT: float = 25.0
 const MAX_DEATHS: int = 12
 const FACING: int = -1
+const DOOR_STANDOFF: float = 100.0
+const Explosives: GDScript = preload("res://scripts/combat/explosives.gd")
 
 var _level: Node
 var _player: CharacterBody2D
@@ -18,6 +20,8 @@ var _release: Array[StringName] = []
 var _section: int = -1
 var _best_x: float = 1.0e9
 var _stuck_time: float = 0.0
+var _throw_wait: float = 0.5
+var _boss_log: float = 0.0
 var _finished: bool = false
 var _room_seen: bool = Game.has_meta("bot_room_seen")
 var _keys: PackedStringArray = PackedStringArray()
@@ -145,7 +149,50 @@ func _physics_process(delta: float) -> void:
 	_hold(&"jump", _jump_hold > 0.0)
 
 
+func _boss_fight_on() -> bool:
+	for foe: Node2D in _foes():
+		if foe.get("is_boss") == true and foe.get("active") == true:
+			return true
+	return false
+
+
+# Stops short of a sealed door and throws dynamite until it opens. True while it is handling the door.
+func _blast_door_step(pos: Vector2) -> bool:
+	for node: Node in get_tree().get_nodes_in_group("destructibles"):
+		var door: Node2D = node as Node2D
+		if door == null or bool(door.get("is_open")):
+			continue
+		var ahead: float = (door.global_position.x - pos.x) * float(FACING)
+		if ahead < 0.0 or ahead > 150.0 or absf(door.global_position.y - pos.y) > 40.0:
+			continue
+		if ahead > DOOR_STANDOFF:
+			return false
+		_move(0)
+		if int(_player.get("facing")) != FACING:
+			_move(FACING)
+			return true
+		_throw_wait -= get_physics_process_delta_time()
+		if _throw_wait <= 0.0:
+			if Explosives.stack_count() <= 0:
+				_finish(false, "no dynamite left at the sealed door")
+				return true
+			_log("throwing dynamite at the sealed door")
+			_throw_wait = 2.5
+			_tap(&"throw")
+		return true
+	return false
+
+
 func _track_progress(delta: float, pos: Vector2) -> void:
+	if _boss_fight_on():
+		_stuck_time = 0.0
+		_boss_log -= delta
+		if _boss_log <= 0.0:
+			_boss_log = 10.0
+			var boss: Node = _level.get_node_or_null("Bosses/Hoarder")
+			if boss != null:
+				_log("Hoarder health %d/%d state %d at %.0f, player health %d at %.0f facing %d" % [int(boss.get("health")), int(boss.get("max_health")), int(boss.get("state")), (boss as Node2D).global_position.x, int(_player.get("health")), _player.global_position.x, int(_player.get("facing"))])
+		return
 	if pos.x < _best_x - 8.0:
 		_best_x = pos.x
 		_stuck_time = 0.0
@@ -177,11 +224,16 @@ func _navigate(pos: Vector2) -> void:
 	if _ignore_foes <= 0.0:
 		for foe: Node2D in _foes():
 			var ahead: float = (foe.global_position.x - pos.x) * float(FACING)
-			if ahead > -4.0 and ahead < 52.0 and absf(foe.global_position.y - pos.y) < 26.0:
-				front = foe
-				break
+			var behind: float = -80.0 if foe.get("is_boss") == true and foe.get("active") == true else -4.0
+			if ahead > behind and ahead < 52.0 and absf(foe.global_position.y - pos.y) < 26.0:
+				if front == null:
+					front = foe
+				if foe.is_in_group("hoarder_roach"):
+					front = foe
+					break
 	if front != null:
-		_fight_time += get_physics_process_delta_time()
+		if front.get("is_boss") != true and not front.is_in_group("hoarder_roach"):
+			_fight_time += get_physics_process_delta_time()
 		if _fight_time > 4.0:
 			_ignore_foes = 3.0
 			_fight_time = 0.0
@@ -196,6 +248,8 @@ func _navigate(pos: Vector2) -> void:
 			_tap(&"attack")
 		return
 	_fight_time = 0.0
+	if _blast_door_step(pos):
+		return
 	_move(FACING)
 	if _player.is_on_floor() and _jump_hold <= 0.0 and (_wall_ahead(pos) or _gap_ahead(pos) or _hazard_ahead(pos)):
 		_jump_hold = 0.4

@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import levelkit
 from levelkit import Writer, vec, STONE, fnum
 import section_rats
+import section_hoarder as hoarder_kit
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 PROJECT = ROOT + "/dcc-side-scroller"
@@ -63,7 +64,8 @@ RES.update({
     "swine_arena": "res://scenes/level/swine_arena.tscn",
 })
 RES.update(section_rats.RES)
-EXISTING = ["player", "goblin", "hud"] + list(section_rats.RES)
+RES.update(hoarder_kit.RES)
+EXISTING = ["player", "goblin", "hud"] + list(section_rats.RES) + list(hoarder_kit.RES)
 
 # idx, key (dev goto name), title shown on entry, gated (swing door at the entry edge), forward width
 SECTIONS = [
@@ -197,10 +199,8 @@ def CP_ID(text):
 
 
 def section_hoarder(x0):
-    # Mid-boss: the Hoarder (#60, #51).
-    flat(896)
-    cp(3, x0 + 96, 3)
-    furnish(x0, x0 + 896)
+    # Mid-boss: the Hoarder (#60, #51): layout, enemies and the lair live in section_hoarder.py.
+    hoarder_kit.build(kit, x0, FLOOR, furnish)
 
 
 def section_workshop(x0):
@@ -284,6 +284,7 @@ def write_tscn():
     section_rats.emit(kit, w)
     emit_saferoom(w)
     emit_swine(w)
+    hoarder_kit.emit(kit, w)
     inst("EntryDoor", "Doors", "door", position=vec(kit.mx(DOOR_U), FLOOR), start_open="true",
          close_behind="true", close_side="-1.0", sealed_text='"Locked. No way back."')
     inst("Player", ".", "player", position=vec(kit.mx(START_U), FLOOR - 2))
