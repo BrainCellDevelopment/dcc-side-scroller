@@ -17,6 +17,7 @@ const GATES: Array[Dictionary] = [
 const VEIL_PLAYER_Z: int = 41
 const VEIL_NEAR: float = 320.0
 const ENGINEER_NAME: String = "Goblin Engineer"
+const GOBLIN_THROWER: int = 1
 const NEXT_LEVEL: String = "res://scenes/level01.tscn"
 const EXIT_HINT: String = "Leave the way you came in"
 const EXIT_DELAY: float = 1.4
@@ -58,7 +59,7 @@ const ACHIEVEMENTS: Dictionary = {
 	"secret_route": ["Off The Beaten Path", "You found the high road. The goblins down below are filing a complaint."],
 	"gauntlet": ["Sharp Dressed Feet", "You crossed a corridor designed by someone who really hates shoes."],
 	"pest_control": ["Pest Control", "Ten goblins down. The rest have started talking about a union."],
-	"reinforcements": ["Management Escalation", "The Engineer called for backup. Backup arrived through the ceiling, unhappy."],
+	"reinforcements": ["Management Escalation", "The Engineer called for backup. Backup arrived through the ceiling, unhappy and holding rocks."],
 }
 
 var section: int = 0
@@ -360,8 +361,9 @@ func _watch_goblin(goblin: Node) -> void:
 	goblin.connect("died", _on_goblin_died)
 
 
-func _spawn_goblin(pos: Vector2) -> void:
+func _spawn_goblin(pos: Vector2, variant: int = 0) -> void:
 	var goblin: Node2D = GOBLIN_SCENE.instantiate() as Node2D
+	goblin.set("variant", variant)
 	goblin.position = pos
 	_goblins.add_child.call_deferred(goblin)
 	_watch_goblin(goblin)
@@ -416,8 +418,8 @@ func _on_boss_health_changed(boss_name: String, current: int, maximum: int) -> v
 	_reinforced = true
 	var center: float = _scroll_start.global_position.x + 320.0
 	var y: float = _scroll_start.global_position.y - 220.0
-	_spawn_goblin(Vector2(center - 90.0, y))
-	_spawn_goblin(Vector2(center + 90.0, y))
+	_spawn_goblin(Vector2(center - 90.0, y), GOBLIN_THROWER)
+	_spawn_goblin(Vector2(center + 90.0, y), GOBLIN_THROWER)
 	_unlock("reinforcements")
 
 
