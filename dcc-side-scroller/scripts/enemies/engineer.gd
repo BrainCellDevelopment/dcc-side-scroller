@@ -30,6 +30,8 @@ const RECOVER_TIME: float = 0.7
 const RECOVER_TIME_FAST: float = 0.5
 const HURT_TIME: float = 0.15
 const MAX_STAGGERS: int = 3
+## After any hit, stomps are ignored for this long, so a bounce cannot chain stomps into a cheap stun-lock.
+const STOMP_LOCK: float = 0.8
 
 @export var max_health: int = 12
 @export var speed: float = 95.0
@@ -47,6 +49,7 @@ var facing: int = 1
 var state_timer: float = 0.0
 var resume_recover: float = 0.0
 var stagger_count: int = 0
+var _stomp_lock: float = 0.0
 var engaged: bool = false
 var has_hit: bool = false
 var attack_enabled: bool = false
@@ -89,9 +92,15 @@ func activate() -> void:
 	Game.report_boss_health(BOSS_NAME, health, max_health)
 
 
+## Carl landing on the Engineer's head only counts as a stomp while this is true (see player._slide_off_enemies).
+func can_be_stomped() -> bool:
+	return active and state != State.DEFEATED and _stomp_lock <= 0.0
+
+
 func take_damage(amount: int, from: Vector2) -> void:
 	if not active or state == State.DEFEATED:
 		return
+	_stomp_lock = STOMP_LOCK
 	health = maxi(health - amount, 0)
 	Game.report_boss_health(BOSS_NAME, health, max_health)
 	if health <= 0:
@@ -130,6 +139,7 @@ func set_pose(pose: String) -> void:
 func _physics_process(delta: float) -> void:
 	if scripted:
 		return
+	_stomp_lock = maxf(_stomp_lock - delta, 0.0)
 	if not is_on_floor():
 		velocity.y += gravity_force * delta
 	if not active or state == State.DEFEATED:

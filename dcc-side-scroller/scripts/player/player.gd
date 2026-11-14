@@ -195,7 +195,8 @@ func _slide_off_enemies() -> void:
 		var c: KinematicCollision2D = get_slide_collision(i)
 		var other: Node2D = c.get_collider() as Node2D
 		if other != null and other.is_in_group("enemies") and c.get_normal().y < -0.5:
-			if _prev_vy >= STOMP_MIN_FALL and other.has_method("take_damage"):
+			var stompable: bool = not other.has_method("can_be_stomped") or bool(other.call("can_be_stomped"))
+			if _prev_vy >= STOMP_MIN_FALL and other.has_method("take_damage") and stompable:
 				_stomp(other)
 				return
 			var away: float = signf(global_position.x - other.global_position.x)
