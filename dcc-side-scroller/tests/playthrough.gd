@@ -43,8 +43,8 @@ func _ready() -> void:
 	if Game.has_meta("bot_elapsed"):
 		_elapsed = float(Game.get_meta("bot_elapsed"))
 	var start: String = OS.get_environment("DCC_START")
-	if start == "fight":
-		Game.set_checkpoint(7, Vector2(float(DOZER_ARENA_X) + 56.0, 912.0), 1)
+	if start == "fight" or start == "fight2":
+		Game.set_checkpoint(7, Vector2(float(DOZER_ARENA_X) + 56.0, 912.0), 3 if start == "fight2" else 1)
 	_level = LEVEL.instantiate()
 	add_child(_level)
 	_player = _level.get_node("Player") as CharacterBody2D
@@ -283,6 +283,9 @@ func _fight(pos: Vector2) -> void:
 		return
 	if Engine.get_physics_frames() % 60 == 0:
 		_log("fight pos (%.0f, %.0f) dozer %.0f dir %d state %s open %s round %d" % [pos.x, pos.y, _dozer.global_position.x, int(_dozer.get("direction")), _dozer.get("state"), _dozer.get("vulnerable"), int(_dozer.get("round_index"))])
+	var flying: int = get_tree().get_nodes_in_group("projectiles").size()
+	if flying > 0:
+		_shot("pineapple_%d" % (Engine.get_physics_frames() / 8))
 	var direction: int = int(_dozer.get("direction"))
 	var speeds: Array = (_dozer.get_script() as GDScript).get_script_constant_map()["PATROL_SPEEDS"]
 	var vx: float = float(direction) * float(speeds[int(_dozer.get("round_index"))]) if int(_dozer.get("state")) == STATE_PATROL else 0.0
