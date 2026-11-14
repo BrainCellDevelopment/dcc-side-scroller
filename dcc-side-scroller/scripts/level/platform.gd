@@ -30,6 +30,15 @@ const OUTLINES: Array = [
 		one_way = value
 		_refresh()
 
+@export var snow: bool = false:
+	set(value):
+		snow = value
+		_refresh()
+
+const SNOW_TOP: Color = Color(0.62, 0.72, 0.86, 1.0)
+const SNOW_BODY: Color = Color(0.42, 0.5, 0.66, 1.0)
+const SNOW_SHADE: Color = Color(0.28, 0.34, 0.5, 1.0)
+
 var _shape: CollisionShape2D = null
 
 
@@ -94,7 +103,24 @@ func _draw() -> void:
 			draw_texture_rect_region(tex, Rect2(size.x - 1.0 - float(EDGE_W), y + y0, float(EDGE_W), eh), Rect2(edge_right_src, y0, float(EDGE_W), eh))
 	if size.y >= 16.0 and size.x > 2.0:
 		draw_rect(Rect2(1.0, size.y - 3.0, size.x - 2.0, 2.0), Color(0.0, 0.0, 0.0, 0.45))
+	if snow:
+		_draw_snow()
 	var outline: Color = OUTLINES[style]
 	draw_rect(Rect2(0.0, 0.0, 1.0, size.y), outline)
 	draw_rect(Rect2(size.x - 1.0, 0.0, 1.0, size.y), outline)
 	draw_rect(Rect2(0.0, size.y - 1.0, size.x, 1.0), outline)
+
+
+func _draw_snow() -> void:
+	var inset: float = 1.0
+	var x: float = inset
+	var end: float = size.x - inset
+	while x < end:
+		var h: int = (int(x) * 2654435761 + int(global_position.x) * 40503) & 0x7FFFFFFF
+		var w: float = minf(float(2 + (h >> 4) % 3), end - x)
+		var depth: float = 3.0 + float((h >> 9) % 3)
+		var lift: float = float((h >> 13) % 2)
+		draw_rect(Rect2(x, -lift, w, lift + depth), SNOW_BODY)
+		draw_rect(Rect2(x, -lift, w, 1.0), SNOW_TOP)
+		draw_rect(Rect2(x, depth - 1.0, w, 1.0), SNOW_SHADE)
+		x += w
