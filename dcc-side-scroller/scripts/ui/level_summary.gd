@@ -55,12 +55,12 @@ func _ready() -> void:
 		label.name = "Line"
 		label.text = line
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		label.add_theme_font_size_override("font_size", 11)
+		label.add_theme_font_size_override("font_size", 12)
 		box.add_child(label)
 	var prompt: Label = Label.new()
 	prompt.text = PROMPT
 	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	prompt.add_theme_font_size_override("font_size", 9)
+	prompt.add_theme_font_size_override("font_size", 12)
 	prompt.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
 	box.add_child(prompt)
 	add_child(panel)

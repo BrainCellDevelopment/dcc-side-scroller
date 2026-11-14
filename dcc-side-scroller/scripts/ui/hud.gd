@@ -10,7 +10,7 @@ const MANA_DENIED_COLOR: Color = Color(0.95, 0.9, 1.0)
 const XP_BAR_WIDTH: float = 80.0
 const XP_COLOR: Color = Color(0.45, 0.85, 0.55)
 const BOSS_BAR_WIDTH: float = 240.0
-const TOAST_WIDTH: float = 200.0
+const TOAST_WIDTH: float = 220.0
 const TOAST_MAX: int = 3
 const TOAST_MIN_SECONDS: float = 3.0
 const TOAST_PER_CHAR: float = 0.05
@@ -85,7 +85,7 @@ func _build_charm_label() -> void:
 	_charm_label.name = "CharmLabel"
 	_charm_label.position = Vector2(8.0, 33.0)
 	_charm_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_charm_label.add_theme_font_size_override("font_size", 8)
+	_charm_label.add_theme_font_size_override("font_size", 12)
 	_charm_label.add_theme_color_override("font_color", Color(1.0, 0.55, 0.75))
 	_charm_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	_charm_label.add_theme_constant_override("outline_size", 3)
@@ -132,6 +132,7 @@ func _build_countdown() -> void:
 
 func _build_survivors() -> void:
 	_survivor_label = Label.new()
+	_survivor_label.theme_type_variation = &"HudLabel"
 	_survivor_label.name = "SurvivorLabel"
 	_survivor_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_survivor_label.anchor_left = 1.0
@@ -217,7 +218,7 @@ func _spawn_toast(data: Dictionary) -> void:
 	heading.text = title
 	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	heading.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	heading.add_theme_font_size_override("font_size", 8)
+	heading.add_theme_font_size_override("font_size", 10)
 	heading.add_theme_color_override("font_color", TOAST_GOLD)
 	column.add_child(heading)
 	if not body.is_empty():
@@ -225,7 +226,7 @@ func _spawn_toast(data: Dictionary) -> void:
 		text.text = body
 		text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		text.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		text.add_theme_font_size_override("font_size", 8)
+		text.add_theme_font_size_override("font_size", 10)
 		text.add_theme_constant_override("line_spacing", -1)
 		column.add_child(text)
 	panel.modulate.a = 0.0
@@ -280,7 +281,7 @@ func _build_god_label() -> void:
 	_god_label.text = "GOD MODE"
 	_god_label.position = Vector2(92.0, 14.0)
 	_god_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_god_label.add_theme_font_size_override("font_size", 8)
+	_god_label.add_theme_font_size_override("font_size", 12)
 	_god_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
 	_god_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	_god_label.add_theme_constant_override("outline_size", 3)
@@ -305,7 +306,7 @@ func _build_item_label() -> void:
 	_item_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_item_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_item_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_item_label.add_theme_font_size_override("font_size", 10)
+	_item_label.add_theme_font_size_override("font_size", 12)
 	_item_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
 	_item_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	_item_label.add_theme_constant_override("outline_size", 3)
@@ -449,6 +450,7 @@ func _build_xp_bar() -> void:
 	_xp_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_xp_bg.add_child(_xp_fill)
 	_level_label = Label.new()
+	_level_label.theme_type_variation = &"HudLabel"
 	_level_label.name = "LevelLabel"
 	_level_label.position = Vector2(92.0, 24.0)
 	_level_label.mouse_filter = Control.MOUSE_FILTER_IGNORE

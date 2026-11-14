@@ -37,8 +37,9 @@ func _ready() -> void:
 		cell.add_child(box)
 		var key: Label = Label.new()
 		key.name = "Key"
+		key.theme_type_variation = &"HudLabel"
 		key.text = str(i + 1)
-		key.add_theme_font_size_override("font_size", 7)
+		key.add_theme_font_size_override("font_size", 8)
 		key.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		box.add_child(key)
 		var icon: TextureRect = TextureRect.new()
@@ -53,14 +54,15 @@ func _ready() -> void:
 		var title: Label = Label.new()
 		title.name = "Name"
 		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		title.add_theme_font_size_override("font_size", 7)
+		title.add_theme_font_size_override("font_size", 10)
 		title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		title.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		box.add_child(title)
 		var count: Label = Label.new()
 		count.name = "Count"
+		count.theme_type_variation = &"HudLabel"
 		count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		count.add_theme_font_size_override("font_size", 7)
+		count.add_theme_font_size_override("font_size", 8)
 		count.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		box.add_child(count)
 		_root.add_child(cell)

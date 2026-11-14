@@ -34,6 +34,7 @@ mouse_filter = 2
 color = Color(0.95, 0.78, 0.2, 1)
 
 [node name="HealthLabel" type="Label" parent="."]
+theme_type_variation = &"HudLabel"
 offset_left = 92.0
 offset_top = 5.0
 offset_right = 160.0
@@ -43,6 +44,7 @@ theme_override_font_sizes/font_size = 8
 text = "HP 10/10"
 
 [node name="TimerLabel" type="Label" parent="."]
+theme_type_variation = &"HudLabel"
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -52,12 +54,13 @@ offset_right = -8.0
 offset_bottom = 19.0
 grow_horizontal = 0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 8
 text = "5d 00:00:00"
 horizontal_alignment = 2
 
 [node name="HintLabel" type="Label" parent="."]
 visible = false
+theme_type_variation = &"ShadowText"
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
@@ -70,7 +73,7 @@ offset_bottom = -46.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 12
 horizontal_alignment = 1
 
 [node name="BossBar" type="Control" parent="."]
@@ -92,7 +95,7 @@ mouse_filter = 2
 offset_right = 240.0
 offset_bottom = 14.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 12
 text = "Boss"
 horizontal_alignment = 1
 

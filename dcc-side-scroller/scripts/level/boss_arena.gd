@@ -137,7 +137,8 @@ func _show_card() -> void:
 	text.add_child(_name_label(boss_name.to_upper(), Color(1.0, 0.85, 0.3)))
 	if tooltip != "":
 		var tip: Label = _name_label(tooltip, Color(0.8, 0.8, 0.85))
-		tip.add_theme_font_size_override("font_size", 10)
+		tip.theme_type_variation = &"ShadowText"
+		tip.add_theme_font_size_override("font_size", 12)
 		text.add_child(tip)
 	row.add_child(text)
 	root.modulate.a = 0.0

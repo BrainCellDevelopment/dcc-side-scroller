@@ -23,6 +23,11 @@ PlayerStats="*res://scripts/autoload/player_stats.gd"
 SystemVoice="*res://scripts/autoload/system_voice.gd"
 DevConsole="*res://scripts/autoload/dev_console.gd"
 
+[gui]
+
+theme/custom="res://assets/ui/theme.tres"
+theme/custom_font="res://assets/fonts/PixelifySans.ttf"
+
 [display]
 
 window/size/viewport_width=640

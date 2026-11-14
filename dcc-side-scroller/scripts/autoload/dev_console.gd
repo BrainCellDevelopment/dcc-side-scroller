@@ -31,10 +31,10 @@ func _ready() -> void:
 	_log.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_log.scroll_following = true
 	_log.bbcode_enabled = false
-	_log.add_theme_font_size_override("normal_font_size", 8)
+	_log.add_theme_font_size_override("normal_font_size", 10)
 	_line = LineEdit.new()
 	_line.placeholder_text = "dev console: help"
-	_line.add_theme_font_size_override("font_size", 8)
+	_line.add_theme_font_size_override("font_size", 10)
 	_line.text_submitted.connect(_on_submitted)
 	box.add_child(_log)
 	box.add_child(_line)
