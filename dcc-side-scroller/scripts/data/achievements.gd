@@ -60,12 +60,6 @@ const LEVEL_UP_LINES: Array[String] = [
 	"You are taller in spirit. Physically, no change.",
 ]
 
-const BOSS_INTRO_LINES: Array[String] = [
-	"A boss approaches. It looks fine with this. You may not be.",
-	"Boss room sealed. The door is not shy about it.",
-	"A challenger awaits. The System would like to remind you of the bet.",
-]
-
 const COLLAPSE_LINES: Dictionary = {
 	86400: ["Time to Level Collapse: 24 hours.", "One day left. Finish what you came for. Or do not, and keep the souvenirs."],
 	21600: ["Time to Level Collapse: 6 hours.", "Six hours. The dungeon is polite enough to tell you."],

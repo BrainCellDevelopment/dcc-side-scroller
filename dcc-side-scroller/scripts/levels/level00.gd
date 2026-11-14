@@ -130,7 +130,6 @@ func _ready() -> void:
 	_boss_arena = BOSS_ARENA.new() as Node2D
 	_boss_arena.set("boss_name", ENGINEER_NAME)
 	_boss_arena.set("tooltip", "He fixes things. Mostly with a knife.")
-	_boss_arena.set("announcement", "GOBLIN ENGINEER")
 	_boss_arena.set("hud", _hud)
 	add_child(_boss_arena)
 	var locks: Array[CollisionShape2D] = [_arena_left, _arena_right]

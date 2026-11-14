@@ -35,7 +35,6 @@ func _ready() -> void:
 	boss_arena.name = "BossArena"
 	boss_arena.set("boss_name", "Krakaren Clone")
 	boss_arena.set("tooltip", "Level 10. A pyramid scheme with tentacles. Terms and conditions apply.")
-	boss_arena.set("announcement", "KRAKAREN CLONE")
 	boss_arena.set("hud", get_parent().get_node_or_null("HUD"))
 	boss_arena.set("intro_seconds", 1.2)
 	boss_arena.set("card_seconds", 2.4)

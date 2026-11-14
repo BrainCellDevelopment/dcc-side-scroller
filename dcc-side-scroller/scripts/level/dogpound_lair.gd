@@ -42,7 +42,6 @@ func _ready() -> void:
 	boss_arena.name = "BossArena"
 	boss_arena.set("boss_name", "Ralph, the Frenzied Gerbil")
 	boss_arena.set("tooltip", "Level 11. Small. Furious. Has never once been asked how he is.")
-	boss_arena.set("announcement", "RALPH")
 	boss_arena.set("hud", get_parent().get_node_or_null("HUD"))
 	boss_arena.set("intro_seconds", 1.2)
 	boss_arena.set("card_seconds", 2.4)

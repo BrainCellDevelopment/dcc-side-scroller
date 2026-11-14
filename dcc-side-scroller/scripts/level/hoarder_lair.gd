@@ -33,7 +33,6 @@ func _ready() -> void:
 	arena = BOSS_ARENA.new() as Node2D
 	arena.set("boss_name", BOSS_NAME)
 	arena.set("tooltip", TOOLTIP)
-	arena.set("announcement", GRIEF_TITLE)
 	arena.set("hud", level.get_node_or_null("HUD"))
 	arena.set("intro_seconds", 1.0)
 	arena.set("drop_tier", "Boss")
