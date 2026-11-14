@@ -1,0 +1,32 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/hoarder.gd" id="1_hoard"]
+[ext_resource type="Script" path="res://scripts/enemies/hoarder_art.gd" id="2_art"]
+
+[sub_resource type="RectangleShape2D" id="shape_body"]
+size = Vector2(36, 56)
+
+[sub_resource type="RectangleShape2D" id="shape_attack"]
+size = Vector2(34, 46)
+
+[node name="Hoarder" type="CharacterBody2D" groups=["enemies"]]
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1_hoard")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -28)
+shape = SubResource("shape_body")
+
+[node name="Visual" type="Node2D" parent="."]
+script = ExtResource("2_art")
+
+[node name="AttackArea" type="Area2D" parent="Visual"]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Visual/AttackArea"]
+position = Vector2(26, -26)
+shape = SubResource("shape_attack")
+disabled = true

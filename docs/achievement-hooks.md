@@ -13,7 +13,7 @@ All text is original. Style: short rude title, one mocking sentence, a little hi
 - Floor timer: `Game.floor_time_left` (5 days) is shown by the HUD; `SystemVoice.time_left()`, `begin_floor(floor, seconds)`. "Time to Level Collapse" boxes fire at 24h, 6h, 1h, 10min. #68 should call `begin_floor` / `drop_survivors` and fire `collapse_survived`.
 
 ## Already wired
-`boom` (explosives), `level_2/5/9` (level-up), `stomp_*`/`first_smush`, `kill_*`/`first_blood`, `boss_kill_*` (via XP award on `is_boss`), `death_*`/`first_death`, `borough_boss` (Ball of Swine pop, #67), boss intro announcement (boss arena), level-up announcement, survivor counter and timer warnings.
+`boom` (explosives), `level_2/5/9` (level-up), `stomp_*`/`first_smush`, `kill_*`/`first_blood`, `boss_kill_*` (via XP award on `is_boss`), `death_*`/`first_death`, `borough_boss` (Ball of Swine pop, #67), boss intro announcement (boss arena), level-up announcement, survivor counter and timer warnings, `neighborhood_boss` and `map_upgrade` (the Hoarder's defeat, `scripts/level/hoarder_lair.gd`, #60).
 
 ## Hooks later issues must fire
 | Hook | Fire when | Issue |
