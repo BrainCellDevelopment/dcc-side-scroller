@@ -91,55 +91,52 @@ size = Vector2(3200, 64)
 style = 2
 
 [node name="P001" parent="Platforms" instance=ExtResource("3_platform")]
-position = Vector2(2500, 264)
-size = Vector2(160, 16)
+position = Vector2(2470, 220)
+size = Vector2(150, 16)
 style = 2
+one_way = true
 
 [node name="P002" parent="Platforms" instance=ExtResource("3_platform")]
-position = Vector2(2200, 232)
-size = Vector2(140, 16)
-style = 2
-
-[node name="P003" parent="Platforms" instance=ExtResource("3_platform")]
 position = Vector2(1750, 264)
 size = Vector2(200, 16)
 style = 2
 
-[node name="P004" parent="Platforms" instance=ExtResource("3_platform")]
+[node name="P003" parent="Platforms" instance=ExtResource("3_platform")]
 position = Vector2(1350, 232)
 size = Vector2(160, 16)
 style = 2
 
-[node name="P005" parent="Platforms" instance=ExtResource("3_platform")]
+[node name="P004" parent="Platforms" instance=ExtResource("3_platform")]
 position = Vector2(900, 264)
 size = Vector2(180, 16)
 style = 2
 
-[node name="P006" parent="Platforms" instance=ExtResource("3_platform")]
+[node name="P005" parent="Platforms" instance=ExtResource("3_platform")]
 position = Vector2(520, 232)
 size = Vector2(150, 16)
 style = 2
 
 [node name="G00" parent="Goblins" instance=ExtResource("4_goblin")]
-position = Vector2(2700, 302)
+position = Vector2(2850, 302)
 
 [node name="G01" parent="Goblins" instance=ExtResource("4_goblin")]
-position = Vector2(2350, 302)
-
-[node name="G02" parent="Goblins" instance=ExtResource("4_goblin")]
 position = Vector2(1900, 302)
 
-[node name="G03" parent="Goblins" instance=ExtResource("4_goblin")]
+[node name="G02" parent="Goblins" instance=ExtResource("4_goblin")]
 position = Vector2(1500, 302)
 
-[node name="G04" parent="Goblins" instance=ExtResource("4_goblin")]
+[node name="G03" parent="Goblins" instance=ExtResource("4_goblin")]
 position = Vector2(1100, 302)
 
-[node name="G05" parent="Goblins" instance=ExtResource("4_goblin")]
+[node name="G04" parent="Goblins" instance=ExtResource("4_goblin")]
 position = Vector2(700, 302)
 
-[node name="G06" parent="Goblins" instance=ExtResource("4_goblin")]
+[node name="G05" parent="Goblins" instance=ExtResource("4_goblin")]
 position = Vector2(400, 302)
+
+[node name="IntroThrower" parent="Goblins" instance=ExtResource("4_goblin")]
+position = Vector2(2545, 218)
+variant = 1
 
 [node name="EntryDoor" parent="Doors" instance=ExtResource("5_door")]
 position = Vector2(3160, 304)
