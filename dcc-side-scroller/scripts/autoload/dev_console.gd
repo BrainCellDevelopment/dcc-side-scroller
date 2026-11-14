@@ -3,6 +3,8 @@ extends CanvasLayer
 const LEVELS: Dictionary = {
 	"level0": "res://scenes/level00.tscn",
 	"level1": "res://scenes/level01.tscn",
+	"yacht": "res://scenes/yacht_cabin.tscn",
+	"level2": "res://scenes/level02.tscn",
 }
 const SECTIONS: PackedStringArray = ["surface", "stairtop", "stairs", "hall", "tunnels", "tunnels2", "tunnels3", "arena", "chase", "guildhall"]
 
