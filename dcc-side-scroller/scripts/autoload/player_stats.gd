@@ -29,7 +29,20 @@ var _mana_timer: float = 0.0
 
 func _ready() -> void:
 	reset()
-	add_child(preload("res://scripts/ui/stats_menu.gd").new())
+	add_child(preload("res://scripts/ui/tab_menu.gd").new())
+	add_child(preload("res://scripts/ui/hotbar.gd").new())
+	_connect_inventory.call_deferred()
+
+
+func _connect_inventory() -> void:
+	var inventory: Node = get_node_or_null("/root/Inventory")
+	if inventory != null:
+		inventory.changed.connect(_on_inventory_changed)
+
+
+func _on_inventory_changed() -> void:
+	mana = mini(mana, max_mana())
+	stats_changed.emit()
 
 
 func _process(delta: float) -> void:
@@ -71,7 +84,11 @@ func enter_floor(floor_index: int) -> void:
 func get_stat(stat_name: String) -> int:
 	if not active or not _base.has(stat_name):
 		return 0
-	return int(_base[stat_name]) + int(_bonus[stat_name])
+	var gear: int = 0
+	var inventory: Node = get_node_or_null("/root/Inventory")
+	if inventory != null:
+		gear = int(inventory.equipment_bonus(stat_name))
+	return int(_base[stat_name]) + int(_bonus[stat_name]) + gear
 
 
 func set_bonus(stat_name: String, amount: int) -> void:

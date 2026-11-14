@@ -159,7 +159,7 @@ func _slide_off_enemies() -> void:
 
 func _stomp(enemy: Node2D) -> void:
 	enemy.call("take_damage", stomp_damage, global_position)
-	var holding_jump: bool = Input.is_action_pressed("jump")
+	var holding_jump: bool = Game.action_pressed("jump")
 	velocity.y = jump_velocity * 0.85 if holding_jump else -stomp_bounce
 	_jumping = holding_jump
 	_coyote_left = 0.0
@@ -208,18 +208,18 @@ func is_dead() -> bool:
 
 
 func _handle_input(delta: float) -> void:
-	var axis: float = Input.get_axis("move_left", "move_right")
+	var axis: float = Game.action_axis("move_left", "move_right")
 	if is_zero_approx(axis):
 		velocity.x = move_toward(velocity.x, 0.0, friction * delta)
 	else:
 		var top_speed: float = speed
-		if Input.is_action_pressed("sprint") and not _exhausted:
+		if Game.action_pressed("sprint") and not _exhausted:
 			top_speed *= sprint_multiplier
 			_drain_stamina(sprint_drain * delta)
 		velocity.x = move_toward(velocity.x, axis * top_speed, acceleration * delta)
 		_set_facing(1 if axis > 0.0 else -1)
 
-	if Input.is_action_just_pressed("jump"):
+	if Game.action_just_pressed("jump"):
 		_jump_buffer_left = JUMP_BUFFER_TIME
 	if _jump_buffer_left > 0.0 and _coyote_left > 0.0:
 		if _spend_stamina(jump_cost):
@@ -227,14 +227,14 @@ func _handle_input(delta: float) -> void:
 			_jumping = true
 			_coyote_left = 0.0
 		_jump_buffer_left = 0.0
-	elif _jumping and velocity.y < 0.0 and not Input.is_action_pressed("jump"):
+	elif _jumping and velocity.y < 0.0 and not Game.action_pressed("jump"):
 		velocity.y *= JUMP_CUT
 		_jumping = false
 
-	if Input.is_action_just_pressed("attack") and _cooldown_left <= 0.0 and not _attacking:
+	if Game.action_just_pressed("attack") and _cooldown_left <= 0.0 and not _attacking:
 		if _spend_stamina(attack_cost):
 			_start_attack()
-	if Input.is_action_just_pressed("spell"):
+	if Game.action_just_pressed("spell"):
 		_try_cast()
 
 
@@ -346,7 +346,7 @@ func _regen_stamina(delta: float) -> void:
 	if _stamina_delay > 0.0 or stamina >= max_stamina:
 		return
 	stamina = minf(stamina + stamina_regen * delta, max_stamina)
-	if _exhausted and stamina >= stamina_exhaust_recover and not Input.is_action_pressed("sprint"):
+	if _exhausted and stamina >= stamina_exhaust_recover and not Game.action_pressed("sprint"):
 		_exhausted = false
 	_report_stamina()
 

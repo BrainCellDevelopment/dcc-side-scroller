@@ -25,10 +25,10 @@ const ACHIEVEMENTS: Dictionary = {
 }
 
 const ITEMS: Dictionary = {
-	"Bronze": {"id": "bandages", "name": "Slightly Used Bandages"},
-	"Silver": {"id": "knuckle_wraps", "name": "Spiked Knuckle Wraps"},
-	"Gold": {"id": "lucky_boxers", "name": "Lucky Boxers"},
-	"Legendary": {"id": "legendary_pet_biscuit", "name": "Legendary Pet Biscuit"},
+	"Bronze": {"id": "bandages", "name": "Slightly Used Bandages", "slot": "left_hand", "bonuses": {"constitution": 1}},
+	"Silver": {"id": "knuckle_wraps", "name": "Spiked Knuckle Wraps", "slot": "right_hand", "bonuses": {"strength": 2}},
+	"Gold": {"id": "lucky_boxers", "name": "Lucky Boxers", "slot": "left_foot", "bonuses": {"dexterity": 2, "constitution": 1}},
+	"Legendary": {"id": "legendary_pet_biscuit", "name": "Legendary Pet Biscuit", "slot": "head", "bonuses": {"charisma": 3, "intelligence": 2}},
 }
 const FACE_HEIGHT: float = 24.0
 const FIRST_DISTANCE: float = 34.0
@@ -103,7 +103,7 @@ func _process(delta: float) -> void:
 	if not focused:
 		return
 	prompt.text = "E: open" if Game.in_safe_zone else "Safe zones only"
-	if Game.in_safe_zone and _age > ARM_SECONDS and _last_open_frame != Engine.get_process_frames() and Input.is_action_just_pressed("interact"):
+	if Game.in_safe_zone and _age > ARM_SECONDS and _last_open_frame != Engine.get_process_frames() and Game.action_just_pressed("interact"):
 		_open()
 
 
@@ -138,7 +138,7 @@ func _open() -> void:
 	get_tree().current_scene.add_child(spark)
 	spark.global_position = global_position
 	var item: Dictionary = ITEMS.get(tier, ITEMS["Bronze"])
-	Game.add_item(str(item["id"]), str(item["name"]), tier)
+	Game.add_item(str(item["id"]), str(item["name"]), tier, {"slot": item["slot"], "bonuses": item["bonuses"]})
 	Game.report_loot_box_opened(tier)
 	opened.emit(tier)
 	var entry: Array = ACHIEVEMENTS.get(tier, ACHIEVEMENTS["Bronze"])

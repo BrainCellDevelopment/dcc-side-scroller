@@ -50,11 +50,11 @@ func _process(_delta: float) -> void:
 		return
 	_face_player()
 	if talking:
-		if Input.is_action_just_pressed("interact"):
+		if Game.action_just_pressed("interact"):
 			_advance()
 		return
 	_prompt.visible = not _boxes_busy()
-	if _prompt.visible and Input.is_action_just_pressed("interact"):
+	if _prompt.visible and Game.action_just_pressed("interact"):
 		_start()
 
 

@@ -66,7 +66,7 @@ func _process(_delta: float) -> void:
 		return
 	_prompt.text = open_text
 	_prompt.visible = true
-	if Input.is_action_just_pressed("interact"):
+	if Game.action_just_pressed("interact"):
 		open()
 
 

@@ -50,13 +50,13 @@ const SKINS: Dictionary = {
 var in_combat: bool = false
 var god_mode: bool = false
 var in_safe_zone: bool = false
+var menu_open: bool = false
 var floor_time_left: float = FLOOR_TIME
 var checkpoint_index: int = -1
 var checkpoint_position: Vector2 = Vector2.ZERO
 var checkpoint_stage: int = 0
 var carried_health: int = -1
 
-var items: Array[Dictionary] = []
 var unlocked_skins: Array[String] = [DEFAULT_SKIN]
 var selected_skin: String = DEFAULT_SKIN
 var tutorial_death_streak: int = 0
@@ -96,6 +96,18 @@ func set_god_mode(active: bool) -> void:
 		return
 	god_mode = active
 	god_mode_changed.emit(active)
+
+
+func action_pressed(action: StringName) -> bool:
+	return not menu_open and Input.is_action_pressed(action)
+
+
+func action_just_pressed(action: StringName) -> bool:
+	return not menu_open and Input.is_action_just_pressed(action)
+
+
+func action_axis(negative: StringName, positive: StringName) -> float:
+	return 0.0 if menu_open else Input.get_axis(negative, positive)
 
 
 func set_safe_zone(active: bool) -> void:
@@ -141,17 +153,16 @@ func report_loot_box_opened(tier: String) -> void:
 	loot_box_opened.emit(tier)
 
 
-func add_item(id: String, item_name: String, tier: String = "") -> void:
-	var item: Dictionary = {"id": id, "name": item_name, "tier": tier}
-	items.append(item)
-	item_added.emit(item)
+func add_item(id: String, item_name: String, tier: String = "", extra: Dictionary = {}) -> void:
+	if not Inventory.add_item(id, item_name, tier, 1, extra):
+		return
+	var info: Dictionary = {"id": id, "name": item_name, "tier": tier}
+	info.merge(extra)
+	item_added.emit(info)
 
 
 func has_item(id: String) -> bool:
-	for item: Dictionary in items:
-		if str(item["id"]) == id:
-			return true
-	return false
+	return Inventory.has_item(id)
 
 
 func set_hint(text: String) -> void:
@@ -194,7 +205,7 @@ func reset_run() -> void:
 	_refresh_combat()
 	set_safe_zone(false)
 	floor_time_left = FLOOR_TIME
-	items.clear()
+	Inventory.clear()
 	set_hint("")
 
 
@@ -325,6 +336,9 @@ func _register_inputs() -> void:
 		_key(KEY_K),
 		_joy_button(JOY_BUTTON_B),
 	]
+	for i: int in Inventory.HOTBAR_SIZE:
+		var hotbar_events: Array[InputEvent] = [_key((KEY_1 + i) as Key)]
+		_add_action(StringName("hotbar_%d" % (i + 1)), hotbar_events)
 	var interact_events: Array[InputEvent] = [
 		_key(KEY_E),
 		_joy_button(JOY_BUTTON_Y),
