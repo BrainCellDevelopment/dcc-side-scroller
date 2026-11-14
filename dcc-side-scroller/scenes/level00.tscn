@@ -1511,7 +1511,7 @@ position = Vector2(200, 214)
 collision_layer = 0
 collision_mask = 2
 metadata/kind = "hint"
-metadata/arg = "A / D or arrows: move"
+metadata/arg = "A / D or arrows: move. Hold Shift to sprint"
 
 [node name="Shape" type="CollisionShape2D" parent="Triggers/H_move"]
 shape = SubResource("shape_400x420")

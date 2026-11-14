@@ -4,6 +4,8 @@ signal achievement_unlocked(title: String, description: String)
 signal player_health_changed(current: int, maximum: int)
 signal boss_health_changed(boss_name: String, current: int, maximum: int)
 signal boss_cleared()
+signal player_stamina_changed(current: int, maximum: int)
+signal stamina_denied()
 signal combat_changed(active: bool)
 signal safe_zone_changed(active: bool)
 signal loot_box_opened(tier: String)
@@ -61,6 +63,14 @@ func set_safe_zone(active: bool) -> void:
 
 func report_player_health(current: int, maximum: int) -> void:
 	player_health_changed.emit(current, maximum)
+
+
+func report_player_stamina(current: int, maximum: int) -> void:
+	player_stamina_changed.emit(current, maximum)
+
+
+func deny_stamina() -> void:
+	stamina_denied.emit()
 
 
 func report_boss_health(boss_name: String, current: int, maximum: int) -> void:
@@ -151,6 +161,10 @@ func _register_inputs() -> void:
 		_key(KEY_X),
 		_joy_button(JOY_BUTTON_X),
 	]
+	var sprint_events: Array[InputEvent] = [
+		_key(KEY_SHIFT),
+		_joy_button(JOY_BUTTON_RIGHT_SHOULDER),
+	]
 	var interact_events: Array[InputEvent] = [
 		_key(KEY_E),
 		_joy_button(JOY_BUTTON_Y),
@@ -159,6 +173,7 @@ func _register_inputs() -> void:
 	_add_action(&"move_right", move_right_events)
 	_add_action(&"jump", jump_events)
 	_add_action(&"attack", attack_events)
+	_add_action(&"sprint", sprint_events)
 	_add_action(&"interact", interact_events)
 
 

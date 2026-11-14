@@ -1,6 +1,9 @@
 extends CanvasLayer
 
 const HEALTH_BAR_WIDTH: float = 80.0
+const STAMINA_BAR_WIDTH: float = 80.0
+const STAMINA_COLOR: Color = Color(0.95, 0.78, 0.2)
+const STAMINA_DENIED_COLOR: Color = Color(0.9, 0.2, 0.2)
 const BOSS_BAR_WIDTH: float = 240.0
 const POPUP_SECONDS: float = 3.5
 const POPUP_FADE: float = 0.25
@@ -15,6 +18,7 @@ var _item_busy: bool = false
 var _item_label: Label = null
 
 @onready var health_fill: ColorRect = $HealthBarBg/HealthFill
+@onready var stamina_fill: ColorRect = $StaminaBarBg/StaminaFill
 @onready var health_label: Label = $HealthLabel
 @onready var timer_label: Label = $TimerLabel
 @onready var achievement_panel: ColorRect = $AchievementPanel
@@ -34,6 +38,8 @@ func _ready() -> void:
 	banner.visible = false
 	Game.achievement_unlocked.connect(_on_achievement_unlocked)
 	Game.player_health_changed.connect(_on_player_health_changed)
+	Game.player_stamina_changed.connect(_on_player_stamina_changed)
+	Game.stamina_denied.connect(_on_stamina_denied)
 	Game.boss_health_changed.connect(_on_boss_health_changed)
 	Game.boss_cleared.connect(_on_boss_cleared)
 	Game.combat_changed.connect(_on_combat_changed)
@@ -123,6 +129,19 @@ func _on_player_health_changed(current: int, maximum: int) -> void:
 		ratio = clampf(float(current) / float(maximum), 0.0, 1.0)
 	health_fill.size.x = HEALTH_BAR_WIDTH * ratio
 	health_label.text = "HP %d/%d" % [current, maximum]
+
+
+func _on_player_stamina_changed(current: int, maximum: int) -> void:
+	var ratio: float = 0.0
+	if maximum > 0:
+		ratio = clampf(float(current) / float(maximum), 0.0, 1.0)
+	stamina_fill.size.x = STAMINA_BAR_WIDTH * ratio
+
+
+func _on_stamina_denied() -> void:
+	stamina_fill.color = STAMINA_DENIED_COLOR
+	var tween: Tween = create_tween()
+	tween.tween_property(stamina_fill, "color", STAMINA_COLOR, 0.25)
 
 
 func _on_boss_health_changed(boss_name: String, current: int, maximum: int) -> void:

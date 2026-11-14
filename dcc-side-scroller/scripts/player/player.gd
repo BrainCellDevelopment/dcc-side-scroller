@@ -26,6 +26,14 @@ const DUST_COOLDOWN: float = 0.18
 const LAND_SPEED: float = 140.0
 
 @export var speed: float = 130.0
+@export var sprint_multiplier: float = 1.5
+@export var max_stamina: float = 100.0
+@export var stamina_regen: float = 40.0
+@export var stamina_regen_delay: float = 0.5
+@export var stamina_exhaust_recover: float = 30.0
+@export var sprint_drain: float = 22.0
+@export var jump_cost: float = 10.0
+@export var attack_cost: float = 12.0
 @export var acceleration: float = 1100.0
 @export var friction: float = 1400.0
 @export var jump_velocity: float = -330.0
@@ -36,10 +44,14 @@ const LAND_SPEED: float = 140.0
 @export var knockback: Vector2 = Vector2(160.0, -140.0)
 
 var health: int = 0
+var stamina: float = 0.0
 var control_enabled: bool = true
 var facing: int = 1
 
 var _dead: bool = false
+var _exhausted: bool = false
+var _stamina_delay: float = 0.0
+var _stamina_shown: int = -1
 var _jumping: bool = false
 var _attacking: bool = false
 var _coyote_left: float = 0.0
@@ -65,6 +77,7 @@ var _standstill: bool = true
 func _ready() -> void:
 	_gravity = float(ProjectSettings.get_setting("physics/2d/default_gravity"))
 	health = max_health
+	stamina = max_stamina
 	_body = SpriteUtil.make_sprite(CARL_SHEET, FRAME, ANIMS)
 	_body.name = "Body"
 	_body.scale = Vector2.ONE * BODY_SCALE
@@ -76,6 +89,7 @@ func _ready() -> void:
 	_attack_area.body_entered.connect(_on_attack_area_body_entered)
 	_invuln_timer.timeout.connect(_on_invuln_timeout)
 	Game.report_player_health(health, max_health)
+	_report_stamina()
 
 
 func _physics_process(delta: float) -> void:
@@ -100,6 +114,7 @@ func _physics_process(delta: float) -> void:
 		if on_floor or _dead:
 			velocity.x = move_toward(velocity.x, 0.0, friction * delta)
 
+	_regen_stamina(delta)
 	_update_attack(delta)
 	_prev_vy = velocity.y
 	move_and_slide()
@@ -163,22 +178,65 @@ func _handle_input(delta: float) -> void:
 	if is_zero_approx(axis):
 		velocity.x = move_toward(velocity.x, 0.0, friction * delta)
 	else:
-		velocity.x = move_toward(velocity.x, axis * speed, acceleration * delta)
+		var top_speed: float = speed
+		if Input.is_action_pressed("sprint") and not _exhausted:
+			top_speed *= sprint_multiplier
+			_drain_stamina(sprint_drain * delta)
+		velocity.x = move_toward(velocity.x, axis * top_speed, acceleration * delta)
 		_set_facing(1 if axis > 0.0 else -1)
 
 	if Input.is_action_just_pressed("jump"):
 		_jump_buffer_left = JUMP_BUFFER_TIME
 	if _jump_buffer_left > 0.0 and _coyote_left > 0.0:
-		velocity.y = jump_velocity
-		_jumping = true
+		if _spend_stamina(jump_cost):
+			velocity.y = jump_velocity
+			_jumping = true
+			_coyote_left = 0.0
 		_jump_buffer_left = 0.0
-		_coyote_left = 0.0
 	elif _jumping and velocity.y < 0.0 and not Input.is_action_pressed("jump"):
 		velocity.y *= JUMP_CUT
 		_jumping = false
 
 	if Input.is_action_just_pressed("attack") and _cooldown_left <= 0.0 and not _attacking:
-		_start_attack()
+		if _spend_stamina(attack_cost):
+			_start_attack()
+
+
+func _spend_stamina(cost: float) -> bool:
+	if stamina < cost:
+		Game.deny_stamina()
+		return false
+	stamina -= cost
+	_stamina_delay = stamina_regen_delay
+	_report_stamina()
+	return true
+
+
+func _drain_stamina(amount: float) -> void:
+	stamina = maxf(stamina - amount, 0.0)
+	_stamina_delay = stamina_regen_delay
+	if stamina <= 0.0:
+		_exhausted = true
+		Game.deny_stamina()
+	_report_stamina()
+
+
+func _regen_stamina(delta: float) -> void:
+	_stamina_delay = maxf(_stamina_delay - delta, 0.0)
+	if _stamina_delay > 0.0 or stamina >= max_stamina:
+		return
+	stamina = minf(stamina + stamina_regen * delta, max_stamina)
+	if _exhausted and stamina >= stamina_exhaust_recover and not Input.is_action_pressed("sprint"):
+		_exhausted = false
+	_report_stamina()
+
+
+func _report_stamina() -> void:
+	var shown: int = roundi(stamina)
+	if shown == _stamina_shown:
+		return
+	_stamina_shown = shown
+	Game.report_player_stamina(shown, roundi(max_stamina))
 
 
 func _set_facing(direction: int) -> void:
@@ -257,7 +315,7 @@ func _update_animation() -> void:
 	elif not is_on_floor():
 		_play(&"jump" if velocity.y < 0.0 else &"fall")
 	elif absf(velocity.x) > 12.0:
-		_play(&"run", clampf(absf(velocity.x) / maxf(speed, 1.0), 0.5, 1.3))
+		_play(&"run", clampf(absf(velocity.x) / maxf(speed, 1.0), 0.5, sprint_multiplier + 0.1))
 	else:
 		_play(&"idle")
 
