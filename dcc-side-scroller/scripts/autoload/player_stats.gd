@@ -1,0 +1,148 @@
+extends Node
+
+signal stats_changed
+signal leveled_up(level: int)
+signal mana_changed(current: int, maximum: int)
+
+const STAT_NAMES: PackedStringArray = ["strength", "intelligence", "constitution", "dexterity", "charisma"]
+const POINTS_PER_LEVEL: int = 3
+const CLASS_SELECT_FLOOR: int = 3
+const XP_PER_LEVEL: int = 100
+const MANA_REGEN_SECONDS: float = 3600.0
+const BASE_VALUE: int = 5
+const BASE_HEALTH: int = 10
+const HEALTH_PER_CON: int = 2
+const STRENGTH_PER_DAMAGE: int = 3
+
+var active: bool = false
+var floor_number: int = 0
+var character_level: int = 1
+var xp: int = 0
+var unspent_points: int = 0
+var class_chosen: bool = false
+var mana: int = 0
+
+var _base: Dictionary = {}
+var _bonus: Dictionary = {}
+var _mana_timer: float = 0.0
+
+
+func _ready() -> void:
+	reset()
+	add_child(preload("res://scripts/ui/stats_menu.gd").new())
+
+
+func _process(delta: float) -> void:
+	if not active or mana >= max_mana():
+		return
+	_mana_timer += delta
+	if _mana_timer >= MANA_REGEN_SECONDS:
+		_mana_timer = 0.0
+		restore_mana(1)
+
+
+func reset() -> void:
+	active = false
+	floor_number = 0
+	character_level = 1
+	xp = 0
+	unspent_points = 0
+	class_chosen = false
+	_mana_timer = 0.0
+	for stat_name: String in STAT_NAMES:
+		_base[stat_name] = BASE_VALUE
+		_bonus[stat_name] = 0
+	_base["intelligence"] = 3
+	mana = max_mana()
+	stats_changed.emit()
+
+
+func enter_floor(floor_index: int) -> void:
+	floor_number = floor_index
+	var was_active: bool = active
+	active = floor_index >= 1
+	if floor_index >= CLASS_SELECT_FLOOR:
+		class_chosen = true
+	if active and not was_active:
+		mana = max_mana()
+	stats_changed.emit()
+
+
+func get_stat(stat_name: String) -> int:
+	if not active or not _base.has(stat_name):
+		return 0
+	return int(_base[stat_name]) + int(_bonus[stat_name])
+
+
+func set_bonus(stat_name: String, amount: int) -> void:
+	if not _bonus.has(stat_name):
+		return
+	_bonus[stat_name] = amount
+	mana = mini(mana, max_mana())
+	stats_changed.emit()
+
+
+func add_xp(amount: int) -> void:
+	if not active or amount <= 0:
+		return
+	xp += amount
+	while xp >= XP_PER_LEVEL:
+		xp -= XP_PER_LEVEL
+		character_level += 1
+		unspent_points += POINTS_PER_LEVEL
+		leveled_up.emit(character_level)
+	stats_changed.emit()
+
+
+func can_spend_points() -> bool:
+	return active and class_chosen and unspent_points > 0
+
+
+func spend_point(stat_name: String) -> bool:
+	if not can_spend_points() or not _base.has(stat_name):
+		return false
+	_base[stat_name] = int(_base[stat_name]) + 1
+	unspent_points -= 1
+	stats_changed.emit()
+	return true
+
+
+func max_mana() -> int:
+	return get_stat("intelligence")
+
+
+func spend_mana(amount: int) -> bool:
+	if not active or mana < amount:
+		return false
+	mana -= amount
+	mana_changed.emit(mana, max_mana())
+	return true
+
+
+func restore_mana(amount: int) -> void:
+	mana = mini(mana + amount, max_mana())
+	mana_changed.emit(mana, max_mana())
+
+
+func max_health() -> int:
+	if not active:
+		return BASE_HEALTH
+	return maxi(BASE_HEALTH + (get_stat("constitution") - BASE_VALUE) * HEALTH_PER_CON, 1)
+
+
+func damage_bonus() -> int:
+	if not active:
+		return 0
+	return maxi((get_stat("strength") - BASE_VALUE) / STRENGTH_PER_DAMAGE, 0)
+
+
+func summary() -> String:
+	if not active:
+		return "stats inactive (floor %d)" % floor_number
+	var parts: PackedStringArray = PackedStringArray()
+	for stat_name: String in STAT_NAMES:
+		parts.append("%s %d" % [stat_name.substr(0, 3).to_upper(), get_stat(stat_name)])
+	return "floor %d | lvl %d xp %d/%d | pts %d%s | %s | mana %d/%d | maxhp %d dmg+%d" % [
+		floor_number, character_level, xp, XP_PER_LEVEL, unspent_points,
+		"" if class_chosen else " (locked until floor %d)" % CLASS_SELECT_FLOOR,
+		" ".join(parts), mana, max_mana(), max_health(), damage_bonus()]

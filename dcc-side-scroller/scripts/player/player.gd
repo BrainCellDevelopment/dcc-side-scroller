@@ -91,6 +91,7 @@ var _standstill: bool = true
 
 func _ready() -> void:
 	_gravity = float(ProjectSettings.get_setting("physics/2d/default_gravity"))
+	max_health += PlayerStats.max_health() - PlayerStats.BASE_HEALTH
 	health = Game.take_carried_health(max_health)
 	stamina = max_stamina
 	_body = SpriteUtil.make_sprite(Game.skin_sheet(), Game.skin_frame(), Game.skin_anims())
@@ -437,7 +438,7 @@ func _try_hit(body: Node2D) -> void:
 	if not body.has_method("take_damage"):
 		return
 	_hit_bodies.append(body)
-	body.call("take_damage", attack_damage, global_position)
+	body.call("take_damage", attack_damage + PlayerStats.damage_bonus(), global_position)
 	_spawn_fx(HIT_SPARK, _visual.to_global(Vector2(24.0, -22.0)))
 
 

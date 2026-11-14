@@ -111,6 +111,10 @@ var _gate_edges: Array[float] = []
 @onready var _boxes: Node2D = $Guildhall/LootBoxes
 
 
+func _enter_tree() -> void:
+	PlayerStats.enter_floor(0)
+
+
 func _ready() -> void:
 	_camera.process_callback = Camera2D.CAMERA2D_PROCESS_PHYSICS
 	_player.connect("died", _on_player_died)
