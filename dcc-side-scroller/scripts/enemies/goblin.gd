@@ -30,6 +30,9 @@ const KNOCKBACK: Vector2 = Vector2(120.0, -90.0)
 const HEIGHT_TOLERANCE: float = 40.0
 
 @export_enum("Grunt", "Thrower") var variant: int = 0
+@export var enemy_level: int = 2
+@export var xp_value: int = -1
+@export var is_boss: bool = false
 @export var max_health: int = 2
 @export var speed: float = 55.0
 @export var chase_speed: float = 80.0
@@ -256,6 +259,7 @@ func _die() -> void:
 	set_deferred("collision_layer", 0)
 	body_shape.set_deferred("disabled", true)
 	_set_engaged(false)
+	PlayerStats.award_kill(self)
 	died.emit(self)
 	sprite.speed_scale = 1.0
 	sprite.play("die")

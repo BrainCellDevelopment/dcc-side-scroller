@@ -7,6 +7,8 @@ const STAMINA_DENIED_COLOR: Color = Color(0.9, 0.2, 0.2)
 const MANA_BAR_WIDTH: float = 80.0
 const MANA_COLOR: Color = Color(0.55, 0.35, 0.95)
 const MANA_DENIED_COLOR: Color = Color(0.95, 0.9, 1.0)
+const XP_BAR_WIDTH: float = 80.0
+const XP_COLOR: Color = Color(0.45, 0.85, 0.55)
 const BOSS_BAR_WIDTH: float = 240.0
 const POPUP_SECONDS: float = 3.5
 const POPUP_FADE: float = 0.25
@@ -24,6 +26,9 @@ var _countdown_label: Label = null
 var _flash_rect: ColorRect = null
 var _mana_bg: ColorRect = null
 var _mana_fill: ColorRect = null
+var _xp_bg: ColorRect = null
+var _xp_fill: ColorRect = null
+var _level_label: Label = null
 
 @onready var health_fill: ColorRect = $HealthBarBg/HealthFill
 @onready var stamina_fill: ColorRect = $StaminaBarBg/StaminaFill
@@ -58,6 +63,7 @@ func _ready() -> void:
 	_build_item_label()
 	_build_god_label()
 	_build_mana_bar()
+	_build_xp_bar()
 	_build_countdown()
 	_update_timer()
 
@@ -266,6 +272,52 @@ func _build_mana_bar() -> void:
 	_mana_fill.size = Vector2(MANA_BAR_WIDTH, 4.0)
 	_mana_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_mana_bg.add_child(_mana_fill)
+
+
+func _build_xp_bar() -> void:
+	_xp_bg = ColorRect.new()
+	_xp_bg.name = "XpBarBg"
+	_xp_bg.color = Color(0.08, 0.06, 0.08, 0.9)
+	_xp_bg.position = Vector2(8.0, 28.0)
+	_xp_bg.size = Vector2(XP_BAR_WIDTH, 3.0)
+	_xp_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_xp_bg)
+	_xp_fill = ColorRect.new()
+	_xp_fill.name = "XpFill"
+	_xp_fill.color = XP_COLOR
+	_xp_fill.size = Vector2(0.0, 3.0)
+	_xp_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_xp_bg.add_child(_xp_fill)
+	_level_label = Label.new()
+	_level_label.name = "LevelLabel"
+	_level_label.position = Vector2(92.0, 24.0)
+	_level_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_level_label.add_theme_font_size_override("font_size", 8)
+	_level_label.add_theme_color_override("font_color", XP_COLOR)
+	_level_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_level_label.add_theme_constant_override("outline_size", 3)
+	add_child(_level_label)
+	PlayerStats.stats_changed.connect(_refresh_xp)
+	PlayerStats.leveled_up.connect(_on_leveled_up)
+	_refresh_xp()
+
+
+func _refresh_xp() -> void:
+	var shown: bool = PlayerStats.active
+	_xp_bg.visible = shown
+	_level_label.visible = shown
+	if not shown:
+		return
+	var need: int = PlayerStats.xp_to_next()
+	_xp_fill.size.x = XP_BAR_WIDTH * clampf(float(PlayerStats.xp) / float(maxi(need, 1)), 0.0, 1.0)
+	_level_label.text = "LV %d  %d/%d" % [PlayerStats.character_level, PlayerStats.xp, need]
+
+
+func _on_leveled_up(level: int) -> void:
+	var points: String = "%d unspent attribute points." % PlayerStats.unspent_points
+	if not PlayerStats.class_chosen:
+		points += " They stay locked until you choose a race and class."
+	show_system_message("LEVEL UP!", "Congratulations, crawler. You have reached level %d.\n%s" % [level, points], 3.5)
 
 
 func _on_player_mana_changed(current: int, maximum: int) -> void:

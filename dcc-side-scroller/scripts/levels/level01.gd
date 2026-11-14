@@ -19,7 +19,6 @@ const FOCUS_ON_FLOOR: float = 40.0
 const Targeting: GDScript = preload("res://scripts/combat/targeting.gd")
 const MISSILE_HINT: String = "Out of reach? Press K to fire magic missiles"
 const HINT_RANGE: float = 380.0
-const GOBLIN_XP: int = 50
 
 var section: int = 0
 var complete: bool = false
@@ -63,8 +62,6 @@ func _ready() -> void:
 	Game.screen_shake.connect(_on_screen_shake)
 	Game.spell_cast.connect(_on_spell_cast)
 	_player.call("enable_spell")
-	for goblin: Node in $Goblins.get_children():
-		goblin.connect("died", _on_goblin_died)
 	Game.report_player_health(int(_player.get("health")), int(_player.get("max_health")))
 	_begin()
 	_setup_gates()
@@ -249,10 +246,6 @@ func _on_end_entered() -> void:
 	Game.clear_checkpoint()
 	_player.set("control_enabled", false)
 	_hud.call("show_banner", END_TEXT, 0.0)
-
-
-func _on_goblin_died(_enemy: Node) -> void:
-	PlayerStats.add_xp(GOBLIN_XP)
 
 
 func dev_sections() -> PackedStringArray:
