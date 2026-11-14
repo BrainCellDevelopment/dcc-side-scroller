@@ -233,6 +233,8 @@ class Kit:
                      "style = %d" % p["style"]]
             if p["one_way"]:
                 lines.append("one_way = true")
+            if p.get("hide"):
+                lines.append("modulate = Color(1, 1, 1, 0)")
             w.inst(p["id"], "Platforms", "platform", **{l.split(" = ")[0]: l.split(" = ")[1] for l in lines})
         for i, s in enumerate(self.spikes):
             w.inst("S%03d" % i, "Hazards", "spikes", position=vec(self.mspan(s["x"], s["w"]), s["y"]), width=fnum(s["w"]) + ".0")

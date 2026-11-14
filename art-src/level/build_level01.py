@@ -16,6 +16,7 @@ import levelkit
 from levelkit import Writer, vec, STONE, fnum
 import section_rats
 import section_hoarder as hoarder_kit
+import section_workshop as workshop
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 PROJECT = ROOT + "/dcc-side-scroller"
@@ -65,7 +66,8 @@ RES.update({
 })
 RES.update(section_rats.RES)
 RES.update(hoarder_kit.RES)
-EXISTING = ["player", "goblin", "hud"] + list(section_rats.RES) + list(hoarder_kit.RES)
+RES.update(workshop.RES)
+EXISTING = ["player", "goblin", "hud"] + list(section_rats.RES) + list(hoarder_kit.RES) + list(workshop.RES)
 
 # idx, key (dev goto name), title shown on entry, gated (swing door at the entry edge), forward width
 SECTIONS = [
@@ -205,10 +207,8 @@ def section_hoarder(x0):
 
 def section_workshop(x0):
     # Optional goblin workshop (#61, #55).
-    flat(768)
-    cp(4, x0 + 96, 4)
-    thrower(x0 + 520)
-    furnish(x0, x0 + 768, crates=(200,))
+    # Layout, enemies and set-piece props live in section_workshop.py.
+    workshop.build(kit, x0, FLOOR, furnish)
 
 
 SWINE = {}
@@ -282,6 +282,7 @@ def write_tscn():
     kit.emit_enemies(w)
     emit_llama_alley(w)
     section_rats.emit(kit, w)
+    workshop.emit(kit, w)
     emit_saferoom(w)
     emit_swine(w)
     hoarder_kit.emit(kit, w)

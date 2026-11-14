@@ -61,6 +61,15 @@ func _llamas_alive() -> int:
 	return alive
 
 
+func _count_variant(variant: int) -> int:
+	var alive: int = 0
+	for foe: Node2D in _foes():
+		var v: Variant = foe.get("variant")
+		if v != null and int(v) == variant:
+			alive += 1
+	return alive
+
+
 func _deaths() -> int:
 	return int(Game.get_meta("bot_deaths")) if Game.has_meta("bot_deaths") else 0
 
@@ -133,6 +142,8 @@ func _physics_process(delta: float) -> void:
 			_log("bot health restored after the Hoarder (no safe room between her and the Ball of Swine)")
 		if section == 1:
 			_log("llama alleys left behind with %d of 2 llamas alive, health %d" % [_llamas_alive(), int(_player.get("health"))])
+		if section == 5:
+			_log("workshop left behind with %d of 2 bomb bards and %d of 1 shamanka alive" % [_count_variant(2), _count_variant(3)])
 	if section == 2 and Game.in_safe_zone and not _room_seen:
 		_room_seen = true
 		Game.set_meta("bot_room_seen", true)
