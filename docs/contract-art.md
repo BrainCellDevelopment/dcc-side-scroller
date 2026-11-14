@@ -151,3 +151,11 @@ Everything here is drawn in code (no sprite sheets yet), so the Level 1 generato
 | `scenes/enemies/ball_of_swine.tscn` | `scripts/enemies/ball_of_swine.gd` | CharacterBody2D, Lv15 boss (`enemy_level`, `is_boss`, `max_health` 9). Not in group `enemies` (the bot and homing missiles ignore it); group `destructibles` so dynamite blasts it (3 damage). `take_damage` only counts while `state == WEDGED` (doubled). Signals `defeated`, `wedged`, `freed`, `rebounded`. |
 | `scenes/enemies/tuskling.tscn` | `scripts/enemies/tuskling.gd` | CharacterBody2D, group `enemies`, `kind` Knight (Lv4) / Courtesan (Lv5) / Dominatrix (Lv8); `decor = true` makes a harmless crowd extra. Staggers, trips, flees, flails for 1 damage when cornered. Calls `PlayerStats.award_kill`. |
 Helper scripts (no scenes): `scripts/level/swine_fortress.gd` (two barricade pieces, two sockets on the floor lane; `E` lifts, places or drops), `scripts/level/rave_hazards.gd` (lane lasers and floor grooves, telegraphed), `scripts/level/swine_dome.gd` (brick hall that reveals the black-light dome, neon grooves).
+
+## The Hoarder sprites
+Hand-supplied pixel art, imported by `art-src/floor1/import_hoarder.py` (numpy, pillow, scipy; reads `art-src/floor1/hoarder_{idle,roar,run}_ref.webp`). Frames are 192x160 texels, feet at the bottom centre with a 2 px margin; `scripts/enemies/hoarder_art.gd` shows them as `Sprite2D` children of `Visual` at scale 0.5 with the feet on the node origin (so `Visual.scale.x = facing` flips them and `Visual.modulate` tints them). The art faces +x.
+| File | Frame | Frames |
+|---|---|---|
+| `assets/characters/hoarder_idle.png` | 192x160 | 1 (standing guard; also slam, charge wind-up, stunned and death poses) |
+| `assets/characters/hoarder_roar.png` | 192x160 | 1 (mouth wide open; stomp wind-up and vomit) |
+| `assets/characters/hoarder_run.png` | 192x160 | 8 side by side (walk at 8 fps, charge at 16 fps; frames 4 and 8 are mid-air) |
