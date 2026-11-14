@@ -436,8 +436,6 @@ def build():
     markers.append({"name": "GuildCenter", "x": gx, "y": 912})
     doors.append({"name": "GuildEntryDoor", "x": g0 + 48, "y": 912, "locked": True, "range": 170,
                   "text": "Locked. Finish the dozer."})
-    doors.append({"name": "GuildExitDoor", "x": gx + 402, "y": 912, "locked": True,
-                  "text": "Locked. Talk to Mordecai and open your boxes."})
     walls.append({"name": "RightBound", "x": g0 + 904, "y": 912 - 250, "kind": "wall"})
     end_section()
     return {"gx": gx, "scroll0": scroll0, "a0": a0, "banner": props_banner}
@@ -590,7 +588,7 @@ def write_tscn(info):
     for i, (k, x, y) in enumerate(GUILD):
         inst("G%d_%s" % (i, k.replace("prop_", "")), "Guildhall", k, position=vec(x, y), z_index="-2")
     inst("Mordecai", "Guildhall", "mordecai", position=vec(-100, 0))
-    raw("ExitZone", "Area2D", "Guildhall", ["position = Vector2(402, -50)", "collision_layer = 0",
+    raw("ExitZone", "Area2D", "Guildhall", ["position = Vector2(-398, -50)", "collision_layer = 0",
                                            "collision_mask = 2"])
     raw("CollisionShape2D", "CollisionShape2D", "Guildhall/ExitZone", ['shape = SubResource("%s")' % w.shape(24, 100)])
     raw("SafeZone", "Area2D", "Guildhall", ["position = Vector2(0, -60)", "collision_layer = 0",

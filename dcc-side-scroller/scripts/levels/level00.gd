@@ -18,6 +18,9 @@ const GATES: Array[Dictionary] = [
 const VEIL_PLAYER_Z: int = 41
 const VEIL_NEAR: float = 320.0
 const ENGINEER_NAME: String = "Goblin Engineer"
+const NEXT_LEVEL: String = "res://scenes/level01.tscn"
+const EXIT_HINT: String = "Leave the way you came in"
+const EXIT_DELAY: float = 1.4
 const RUN_CHECKPOINT: int = 7
 const STAGE_RUN: int = 1
 const STAGE_AFTERMATH: int = 2
@@ -61,6 +64,7 @@ var complete: bool = false
 var _phase: Phase = Phase.PLAY
 var _boxes_opened: int = 0
 var _talked: bool = false
+var _exit_ready: bool = false
 var _kills: int = 0
 var _rounds_cleared: int = 0
 var _reinforced: bool = false
@@ -97,7 +101,6 @@ var _gate_edges: Array[float] = []
 @onready var _mordecai: Area2D = $Guildhall/Mordecai
 @onready var _exit_zone: Area2D = $Guildhall/ExitZone
 @onready var _guild_entry_door: Node2D = $Doors/GuildEntryDoor
-@onready var _guild_exit_door: Node2D = $Doors/GuildExitDoor
 @onready var _boxes: Node2D = $Guildhall/LootBoxes
 
 
@@ -127,7 +130,6 @@ func _ready() -> void:
 	for box: Node in _boxes.get_children():
 		box.connect("opened", _on_loot_box_opened)
 	_mordecai.connect("dialogue_finished", _on_mordecai_done)
-	_guild_exit_door.connect("opened", _try_exit)
 	_exit_zone.body_entered.connect(_on_exit_entered)
 	_dozer.visible = false
 	_dozer.set("patrol_min_x", _dozer_left.global_position.x)
@@ -512,22 +514,20 @@ func _on_loot_box_opened(_tier: String) -> void:
 
 
 func _check_exit_ready() -> void:
-	if not _talked or _boxes_opened < LOOT_BOX_COUNT or _guild_exit_door.get("is_open"):
+	if not _talked or _boxes_opened < LOOT_BOX_COUNT or _exit_ready:
 		return
-	Game.set_hint("The door is open.")
-	_guild_exit_door.call("unlock")
-	_guild_exit_door.call("open")
+	_exit_ready = true
+	Game.set_hint(EXIT_HINT)
+	_try_exit()
 
 
 func _try_exit() -> void:
-	if not bool(_guild_exit_door.get("is_open")):
-		return
 	for body: Node2D in _exit_zone.get_overlapping_bodies():
 		_on_exit_entered(body)
 
 
 func _on_exit_entered(body: Node2D) -> void:
-	if body != _player or complete or not bool(_guild_exit_door.get("is_open")):
+	if body != _player or complete or not _exit_ready:
 		return
 	_phase = Phase.COMPLETE
 	complete = true
@@ -535,7 +535,11 @@ func _on_exit_entered(body: Node2D) -> void:
 	Game.register_tutorial_complete()
 	Game.set_hint("")
 	Game.clear_checkpoint()
-	_hud.call("show_banner", "LEVEL 0 COMPLETE\nLevel 1 coming soon", 0.0)
+	Game.carry_player_state(_player)
+	_player.set("control_enabled", false)
+	_hud.call("show_banner", "LEVEL 0 COMPLETE", 0.0)
+	await get_tree().create_timer(EXIT_DELAY).timeout
+	get_tree().change_scene_to_file(NEXT_LEVEL)
 
 
 func _setup_doors() -> void:

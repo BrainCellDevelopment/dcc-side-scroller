@@ -1,0 +1,185 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/level01.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/level/background.tscn" id="2_background"]
+[ext_resource type="PackedScene" path="res://scenes/level/platform.tscn" id="3_platform"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/goblin.tscn" id="4_goblin"]
+[ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="5_door"]
+[ext_resource type="PackedScene" path="res://scenes/props/torch.tscn" id="6_torch"]
+[ext_resource type="PackedScene" path="res://scenes/props/crate.tscn" id="7_crate"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="8_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="9_hud"]
+
+[sub_resource type="RectangleShape2D" id="shape_wall"]
+size = Vector2(16, 720)
+
+[sub_resource type="RectangleShape2D" id="shape_end"]
+size = Vector2(40, 140)
+
+[node name="Level01" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Background" parent="." instance=ExtResource("2_background")]
+initial_style = 2
+
+[node name="Deco" type="Node2D" parent="."]
+
+[node name="Platforms" type="Node2D" parent="."]
+
+[node name="Walls" type="Node2D" parent="."]
+
+[node name="Triggers" type="Node2D" parent="."]
+
+[node name="Doors" type="Node2D" parent="."]
+
+[node name="Goblins" type="Node2D" parent="."]
+
+[node name="T00" parent="Deco" instance=ExtResource("6_torch")]
+position = Vector2(3000, 194)
+
+[node name="T01" parent="Deco" instance=ExtResource("6_torch")]
+position = Vector2(2760, 194)
+
+[node name="T02" parent="Deco" instance=ExtResource("6_torch")]
+position = Vector2(2520, 194)
+
+[node name="T03" parent="Deco" instance=ExtResource("6_torch")]
+position = Vector2(2280, 194)
+
+[node name="T04" parent="Deco" instance=ExtResource("6_torch")]
+position = Vector2(2040, 194)
+
+[node name="T05" parent="Deco" instance=ExtResource("6_torch")]
+position = Vector2(1800, 194)
+
+[node name="T06" parent="Deco" instance=ExtResource("6_torch")]
+position = Vector2(1560, 194)
+
+[node name="T07" parent="Deco" instance=ExtResource("6_torch")]
+position = Vector2(1320, 194)
+
+[node name="T08" parent="Deco" instance=ExtResource("6_torch")]
+position = Vector2(1080, 194)
+
+[node name="T09" parent="Deco" instance=ExtResource("6_torch")]
+position = Vector2(840, 194)
+
+[node name="T10" parent="Deco" instance=ExtResource("6_torch")]
+position = Vector2(600, 194)
+
+[node name="T11" parent="Deco" instance=ExtResource("6_torch")]
+position = Vector2(360, 194)
+
+[node name="T12" parent="Deco" instance=ExtResource("6_torch")]
+position = Vector2(120, 194)
+
+[node name="C00" parent="Deco" instance=ExtResource("7_crate")]
+position = Vector2(2900, 304)
+
+[node name="C01" parent="Deco" instance=ExtResource("7_crate")]
+position = Vector2(2000, 304)
+
+[node name="C02" parent="Deco" instance=ExtResource("7_crate")]
+position = Vector2(1250, 304)
+
+[node name="C03" parent="Deco" instance=ExtResource("7_crate")]
+position = Vector2(600, 304)
+
+[node name="P000" parent="Platforms" instance=ExtResource("3_platform")]
+position = Vector2(0, 304)
+size = Vector2(3200, 64)
+style = 2
+
+[node name="P001" parent="Platforms" instance=ExtResource("3_platform")]
+position = Vector2(2500, 264)
+size = Vector2(160, 16)
+style = 2
+
+[node name="P002" parent="Platforms" instance=ExtResource("3_platform")]
+position = Vector2(2200, 232)
+size = Vector2(140, 16)
+style = 2
+
+[node name="P003" parent="Platforms" instance=ExtResource("3_platform")]
+position = Vector2(1750, 264)
+size = Vector2(200, 16)
+style = 2
+
+[node name="P004" parent="Platforms" instance=ExtResource("3_platform")]
+position = Vector2(1350, 232)
+size = Vector2(160, 16)
+style = 2
+
+[node name="P005" parent="Platforms" instance=ExtResource("3_platform")]
+position = Vector2(900, 264)
+size = Vector2(180, 16)
+style = 2
+
+[node name="P006" parent="Platforms" instance=ExtResource("3_platform")]
+position = Vector2(520, 232)
+size = Vector2(150, 16)
+style = 2
+
+[node name="G00" parent="Goblins" instance=ExtResource("4_goblin")]
+position = Vector2(2700, 302)
+
+[node name="G01" parent="Goblins" instance=ExtResource("4_goblin")]
+position = Vector2(2350, 302)
+
+[node name="G02" parent="Goblins" instance=ExtResource("4_goblin")]
+position = Vector2(1900, 302)
+
+[node name="G03" parent="Goblins" instance=ExtResource("4_goblin")]
+position = Vector2(1500, 302)
+
+[node name="G04" parent="Goblins" instance=ExtResource("4_goblin")]
+position = Vector2(1100, 302)
+
+[node name="G05" parent="Goblins" instance=ExtResource("4_goblin")]
+position = Vector2(700, 302)
+
+[node name="G06" parent="Goblins" instance=ExtResource("4_goblin")]
+position = Vector2(400, 302)
+
+[node name="EntryDoor" parent="Doors" instance=ExtResource("5_door")]
+position = Vector2(3160, 304)
+start_open = true
+
+[node name="LeftBound" type="StaticBody2D" parent="Walls"]
+position = Vector2(-8, 54)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/LeftBound"]
+shape = SubResource("shape_wall")
+
+[node name="RightBound" type="StaticBody2D" parent="Walls"]
+position = Vector2(3208, 54)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/RightBound"]
+shape = SubResource("shape_wall")
+
+[node name="EndZone" type="Area2D" parent="Triggers"]
+position = Vector2(90, 254)
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Triggers/EndZone"]
+shape = SubResource("shape_end")
+
+[node name="Player" parent="." instance=ExtResource("8_player")]
+position = Vector2(3110, 302)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(3110, 184)
+limit_left = 0
+limit_top = -116
+limit_right = 3200
+limit_bottom = 364
+limit_smoothed = true
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0
+
+[node name="HUD" parent="." instance=ExtResource("9_hud")]

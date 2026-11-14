@@ -335,6 +335,5 @@ func _loot(pos: Vector2) -> void:
 			_attack_timer = 0.6
 			_tap(&"interact")
 		return
-	_move(1)
-	if _player.is_on_floor() and _jump_hold <= 0.0 and _wall_ahead(pos):
-		_jump()
+	var door: Node2D = _level.get_node("Doors/GuildEntryDoor")
+	_walk_to(pos, door.global_position.x - 6.0, 4.0)
