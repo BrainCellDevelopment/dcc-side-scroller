@@ -91,10 +91,9 @@ size = Vector2(3200, 64)
 style = 2
 
 [node name="P001" parent="Platforms" instance=ExtResource("3_platform")]
-position = Vector2(2470, 220)
-size = Vector2(150, 16)
+position = Vector2(2500, 220)
+size = Vector2(70, 8)
 style = 2
-one_way = true
 
 [node name="P002" parent="Platforms" instance=ExtResource("3_platform")]
 position = Vector2(1750, 264)
@@ -135,7 +134,7 @@ position = Vector2(700, 302)
 position = Vector2(400, 302)
 
 [node name="IntroThrower" parent="Goblins" instance=ExtResource("4_goblin")]
-position = Vector2(2545, 218)
+position = Vector2(2535, 218)
 variant = 1
 
 [node name="EntryDoor" parent="Doors" instance=ExtResource("5_door")]

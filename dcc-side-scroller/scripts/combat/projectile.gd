@@ -7,6 +7,7 @@ const IMPACT_SCENE: PackedScene = preload("res://scenes/fx/magic_impact.tscn")
 const FRAME: Vector2i = Vector2i(14, 8)
 const ANIMS: Dictionary = {"fly": {"row": 0, "count": 4, "fps": 16.0, "loop": true}}
 const TRAIL_POINTS: int = 10
+const ANCHOR_TIME: float = 0.3
 const MASK_AT_ENEMIES: int = 5
 const MASK_AT_PLAYER: int = 3
 
@@ -24,6 +25,9 @@ var velocity: Vector2 = Vector2.ZERO
 var _age: float = 0.0
 var _done: bool = false
 var _target: Node2D = null
+var anchor: Node2D = null
+var anchor_offset: Vector2 = Vector2.ZERO
+
 var _trail: Line2D = null
 var _history: Array[Vector2] = []
 
@@ -44,7 +48,7 @@ func _ready() -> void:
 	curve.add_point(Vector2(1.0, 1.0))
 	_trail.width_curve = curve
 	var gradient: Gradient = Gradient.new()
-	gradient.set_color(0, Color(0.45, 0.25, 0.85, 0.0))
+	gradient.set_color(0, Color(0.45, 0.25, 0.85, 0.3))
 	gradient.set_color(1, Color(0.85, 0.65, 1.0, 0.85))
 	_trail.gradient = gradient
 	add_child(_trail)
@@ -84,18 +88,21 @@ func _steer(delta: float) -> void:
 
 func _update_trail() -> void:
 	_history.append(global_position)
-	if _history.size() > TRAIL_POINTS:
-		_history.pop_front()
+	var anchored: bool = anchor != null and is_instance_valid(anchor) and _age < ANCHOR_TIME
+	if not anchored:
+		anchor = null
+		while _history.size() > TRAIL_POINTS:
+			_history.pop_front()
 	_trail.global_position = Vector2.ZERO
 	_trail.clear_points()
+	if anchored:
+		_trail.add_point(anchor.global_position + anchor_offset)
 	for point: Vector2 in _history:
 		_trail.add_point(point)
 
 
 func _on_body_entered(body: Node2D) -> void:
 	if _done or body == null or not is_instance_valid(body):
-		return
-	if body.get("one_way") == true:
 		return
 	if body.is_in_group(target_group):
 		if body.has_method("take_damage"):

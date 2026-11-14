@@ -252,10 +252,11 @@ func _try_cast() -> void:
 	_spell_cooldown = SPELL_COOLDOWN
 	Game.report_spell_cast()
 	var origin: Vector2 = global_position + Vector2(float(facing) * CAST_ORIGIN.x, CAST_ORIGIN.y)
+	var anchor_offset: Vector2 = Vector2(float(facing) * CAST_ORIGIN.x, CAST_ORIGIN.y)
 	var flash: Node2D = CAST_FLASH.instantiate() as Node2D
 	flash.scale = Vector2.ONE * 0.45
-	flash.position = origin
-	get_parent().add_child(flash)
+	flash.position = anchor_offset
+	add_child(flash)
 	var forward: Vector2 = Vector2(float(facing), 0.0)
 	var aim: float = forward.angle()
 	var target: Node2D = Targeting.nearest(origin, forward, get_tree().get_nodes_in_group("enemies"), SPELL_RANGE, SPELL_ARC)
@@ -265,6 +266,8 @@ func _try_cast() -> void:
 		var fan: float = lerpf(-MISSILE_FAN, MISSILE_FAN, float(index) / maxf(float(missile_count - 1), 1.0))
 		var missile: Area2D = MISSILE_SCENE.instantiate() as Area2D
 		missile.set("damage", missile_damage)
+		missile.set("anchor", self)
+		missile.set("anchor_offset", anchor_offset)
 		missile.position = origin
 		missile.call("fire", Vector2.from_angle(aim + fan))
 		get_parent().add_child(missile)
