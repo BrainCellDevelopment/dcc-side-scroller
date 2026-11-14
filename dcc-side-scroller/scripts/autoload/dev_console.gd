@@ -1,5 +1,9 @@
 extends CanvasLayer
 
+const LEVELS: Dictionary = {
+	"level0": "res://scenes/level00.tscn",
+	"level1": "res://scenes/level01.tscn",
+}
 const SECTIONS: PackedStringArray = ["surface", "stairtop", "stairs", "hall", "tunnels", "tunnels2", "tunnels3", "arena", "chase", "guildhall"]
 
 var _panel: PanelContainer
@@ -84,9 +88,9 @@ func _on_submitted(text: String) -> void:
 	var argument: String = parts[1].to_lower() if parts.size() > 1 else ""
 	match command:
 		"help":
-			_print("goto <section>  list  heal  god [on|off]  kms  skins  skin <default|derpy>  unlockskin <id>  resetprofile  help  (` or esc closes)")
+			_print("goto <section|level0|level1>  list  heal  god [on|off]  kms  skins  skin <default|derpy>  unlockskin <id>  resetprofile  help  (` or esc closes)")
 		"list":
-			_print("sections: " + ", ".join(SECTIONS) + ", cp<N>")
+			_print("sections: " + ", ".join(SECTIONS) + ", cp<N>  levels: " + ", ".join(LEVELS.keys()))
 		"heal":
 			_heal()
 		"god":
@@ -164,9 +168,22 @@ func _skin(skin_id: String) -> void:
 	get_tree().reload_current_scene()
 
 
+func _goto_level(path: String, label: String) -> void:
+	Game.clear_checkpoint()
+	Game.reset_run()
+	_print("going to " + label)
+	_panel.visible = false
+	_line.release_focus()
+	get_tree().paused = false
+	get_tree().change_scene_to_file(path)
+
+
 func _goto(target: String) -> void:
 	if target.is_empty():
-		_print("usage: goto <section>")
+		_print("usage: goto <section|level0|level1>")
+		return
+	if LEVELS.has(target):
+		_goto_level(String(LEVELS[target]), target)
 		return
 	var level: Node = get_tree().current_scene
 	if level == null or not level.has_method("dev_goto"):
