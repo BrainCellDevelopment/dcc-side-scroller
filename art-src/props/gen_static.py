@@ -218,6 +218,64 @@ def sign_arrow():
     return cv
 
 
+def street_lamp():
+    cv = Cv(40, 80)
+    paint(cv, rect(cv, 11, 12, 14, 77), STEEL, hl=1, sd=2)
+    paint(cv, rect(cv, 8, 72, 17, 77), CHAR, hl=1, sd=1)
+    paint(cv, line(cv, [(13, 14), (13, 8), (21, 4), (30, 6)], 3), STEEL, hl=1, sd=2)
+    paint(cv, poly(cv, [(25, 4), (37, 4), (36, 9), (26, 9)]), CHAR, hl=1, sd=1)
+    flat(cv, rect(cv, 28, 8, 34, 9), BONE[1], ol=False)
+    cv.px(30, 9, BONE[3])
+    flat(cv, rect(cv, 10, 40, 15, 41), STEEL[0], ol=False)
+    speckle(cv, cv.opaque(), RUST[2], 0.1, 5)
+    exterior_outline(cv)
+    return cv
+
+
+def street_lamp_bent():
+    cv = Cv(48, 72)
+    paint(cv, rect(cv, 9, 40, 12, 71), STEEL, hl=1, sd=2)
+    paint(cv, rect(cv, 6, 66, 15, 71), CHAR, hl=1, sd=1)
+    paint(cv, poly(cv, [(8, 42), (13, 42), (17, 38), (12, 36)]), STEEL, hl=1, sd=1)
+    paint(cv, line(cv, [(12, 39), (26, 28), (38, 22)], 3), STEEL, hl=1, sd=2)
+    paint(cv, poly(cv, [(34, 17), (46, 21), (43, 27), (33, 24)]), CHAR, hl=1, sd=1)
+    for (x, y) in ((8, 41), (14, 38)):
+        cv.px(x, y, RUST[3])
+    speckle(cv, cv.opaque(), RUST[2], 0.12, 6)
+    exterior_outline(cv)
+    return cv
+
+
+def street_sign():
+    cv = Cv(40, 60)
+    paint(cv, rect(cv, 18, 8, 21, 59), STEEL, hl=1, sd=2)
+    paint(cv, rect(cv, 15, 55, 24, 59), CHAR, hl=1, sd=1)
+    paint(cv, rect(cv, 4, 4, 34, 13), GREEN, hl=1, sd=2)
+    paint(cv, rect(cv, 10, 17, 37, 24), GREEN, hl=1, sd=2)
+    for x in range(7, 31, 4):
+        flat(cv, rect(cv, x, 7, x + 2, 9), BONE[3], ol=False)
+    for x in range(13, 34, 4):
+        flat(cv, rect(cv, x, 20, x + 2, 21), BONE[3], ol=False)
+    flat(cv, rect(cv, 17, 14, 22, 16), STEEL[1], ol=False)
+    speckle(cv, cv.opaque(), RUST[2], 0.08, 9)
+    exterior_outline(cv)
+    return cv
+
+
+def stop_sign():
+    cv = Cv(32, 56)
+    paint(cv, rect(cv, 14, 20, 17, 55), STEEL, hl=1, sd=2)
+    paint(cv, rect(cv, 11, 51, 20, 55), CHAR, hl=1, sd=1)
+    paint(cv, poly(cv, [(10, 2), (21, 2), (28, 9), (28, 19), (21, 25), (10, 25), (3, 19), (3, 9)]), LEAT, hl=1, sd=2)
+    flat(cv, rect(cv, 8, 12, 23, 15), BONE[3], ol=False)
+    flat(cv, rect(cv, 9, 16, 22, 16), BONE[1], ol=False)
+    for (x, y) in ((6, 9), (6, 18), (25, 9), (25, 18)):
+        cv.px(x, y, STEEL[4])
+    speckle(cv, cv.opaque(), CHAR[1], 0.1, 3)
+    exterior_outline(cv)
+    return cv
+
+
 def stair_rail():
     cv = Cv(64, 24)
     paint(cv, rect(cv, 0, 3, 63, 5), STEEL, hl=1, sd=1)
@@ -318,7 +376,7 @@ def bookshelf():
 
 STATIC = {
     "burnt_tree": burnt_tree, "bike_rack": bike_rack, "moped": moped, "rubble": rubble, "big_door": big_door,
-    "rug": rug, "crate": crate, "sign_arrow": sign_arrow, "stair_rail": stair_rail, "bed": bed, "desk": desk, "bookshelf": bookshelf,
+    "rug": rug, "crate": crate, "sign_arrow": sign_arrow, "street_lamp": street_lamp, "street_lamp_bent": street_lamp_bent, "street_sign": street_sign, "stop_sign": stop_sign, "stair_rail": stair_rail, "bed": bed, "desk": desk, "bookshelf": bookshelf,
 }
 
 if __name__ == "__main__":
