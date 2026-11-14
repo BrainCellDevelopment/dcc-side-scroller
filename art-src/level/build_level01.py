@@ -60,6 +60,7 @@ RES.update({
     "prop_grate": "res://scenes/props/grate.tscn",
     "prop_pipe_h": "res://scenes/props/pipe_h.tscn",
     "fastfood_room": "res://scenes/level/fastfood_room.tscn",
+    "swine_arena": "res://scenes/level/swine_arena.tscn",
 })
 RES.update(section_rats.RES)
 EXISTING = ["player", "goblin", "hud"] + list(section_rats.RES)
@@ -210,11 +211,29 @@ def section_workshop(x0):
     furnish(x0, x0 + 768, crates=(200,))
 
 
+SWINE = {}
+SWINE_LEAD = 160
+SWINE_ARENA_W = 704
+
+
 def section_swine(x0):
-    # Final boss: Ball of Swine (#67, #51).
+    # Final boss: Ball of Swine (#67, #51). A 160 px lead-in with the checkpoint, the 704 px arena
+    # with two extra one-way lanes (48 px apart), then 160 px of stair corridor behind a forcefield.
+    # swine_arena.gd builds the boss, fortress, hazards and locks at runtime around SWINE["center"].
     flat(1024)
     cp(5, x0 + 96, 5)
-    furnish(x0, x0 + 1024)
+    ax0 = x0 + SWINE_LEAD
+    for lane in (1, 2):
+        kit.add_plat(ax0, FLOOR - 48 * lane, SWINE_ARENA_W, 16, WETSTONE, kind="refuge", one_way=True)
+    SWINE["center"] = ax0 + SWINE_ARENA_W // 2
+    kit.hint("HintSwine", x0 + 40, x0 + 136, "Nothing hurts it while it rolls. Find a way to stop it")
+    for x in (120, 1000):
+        kit.add_prop("prop_torch", x0 + x, FLOOR - 110)
+    kit.add_prop("prop_sign_hazard", x0 + 24, FLOOR)
+
+
+def emit_swine(w):
+    w.inst("SwineArena", ".", "swine_arena", position=vec(kit.mx(SWINE["center"]), FLOOR))
 
 
 def section_collapse(x0):
@@ -264,6 +283,7 @@ def write_tscn():
     emit_llama_alley(w)
     section_rats.emit(kit, w)
     emit_saferoom(w)
+    emit_swine(w)
     inst("EntryDoor", "Doors", "door", position=vec(kit.mx(DOOR_U), FLOOR), start_open="true",
          close_behind="true", close_side="-1.0", sealed_text='"Locked. No way back."')
     inst("Player", ".", "player", position=vec(kit.mx(START_U), FLOOR - 2))

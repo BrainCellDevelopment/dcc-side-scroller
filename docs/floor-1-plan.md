@@ -107,7 +107,7 @@ Kit and usage: see "Floor 1 art kit (#49)" in [contract-art.md](contract-art.md)
 ## Open decisions (need the owner)
 1. Should Donut get her own spell variant, or share Magic Missile? (open in #42)
 2. Include Dexterity and Charisma stats? (open in #37)
-3. Is the Ball of Swine solved only by the Speedbump fortress, or are dynamite and lane tricks also valid? (#67)
+3. ~~Is the Ball of Swine solved only by the Speedbump fortress?~~ Resolved in #67: no. Fortress (wedge it, melee counts double while wedged) and dynamite (3 per blast, 9 health) are both valid; the arena holds 4 sticks and the fortress is rebuildable after it breaks.
 4. Survivor counter: always visible, or only at story beats? (#70)
 5. Checkpoint density against the difficulty modes (#23).
 

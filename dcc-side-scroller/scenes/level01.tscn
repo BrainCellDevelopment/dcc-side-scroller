@@ -1,4 +1,4 @@
-[gd_scene load_steps=39 format=3 uid="uid://dl1fndtn48xq"]
+[gd_scene load_steps=41 format=3 uid="uid://dl1fndtn48xq"]
 
 [ext_resource type="Script" path="res://scripts/levels/level01.gd" id="1_level"]
 [ext_resource type="PackedScene" path="res://scenes/level/background.tscn" id="2_background"]
@@ -24,9 +24,10 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/scatterer.tscn" id="22_scatterer"]
 [ext_resource type="PackedScene" path="res://scenes/props/bathroom_door.tscn" id="23_bathroom_door"]
 [ext_resource type="PackedScene" path="res://scenes/level/fastfood_room.tscn" id="24_fastfood_room"]
-[ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="25_door"]
-[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="26_player"]
-[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="27_hud"]
+[ext_resource type="PackedScene" path="res://scenes/level/swine_arena.tscn" id="25_swine_arena"]
+[ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="26_door"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="27_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="28_hud"]
 
 [sub_resource type="RectangleShape2D" id="shape_720x420"]
 size = Vector2(720, 420)
@@ -36,6 +37,9 @@ size = Vector2(1168, 420)
 
 [sub_resource type="RectangleShape2D" id="shape_160x420"]
 size = Vector2(160, 420)
+
+[sub_resource type="RectangleShape2D" id="shape_96x420"]
+size = Vector2(96, 420)
 
 [sub_resource type="RectangleShape2D" id="shape_40x140"]
 size = Vector2(40, 140)
@@ -256,21 +260,18 @@ position = Vector2(2232, 304)
 position = Vector2(1544, 194)
 
 [node name="D057" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(1304, 194)
+position = Vector2(664, 194)
 
-[node name="D058" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(1064, 194)
+[node name="D058" parent="Deco" instance=ExtResource("8_p_sign_hazard")]
+position = Vector2(1640, 304)
 
 [node name="D059" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(824, 194)
-
-[node name="D060" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(520, 194)
 
-[node name="D061" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D060" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(280, 194)
 
-[node name="D062" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D061" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(40, 194)
 
 [node name="P001" parent="Platforms" instance=ExtResource("14_platform")]
@@ -360,6 +361,18 @@ size = Vector2(1024, 64)
 style = 4
 
 [node name="P018" parent="Platforms" instance=ExtResource("14_platform")]
+position = Vector2(800, 256)
+size = Vector2(704, 16)
+style = 5
+one_way = true
+
+[node name="P019" parent="Platforms" instance=ExtResource("14_platform")]
+position = Vector2(800, 208)
+size = Vector2(704, 16)
+style = 5
+one_way = true
+
+[node name="P020" parent="Platforms" instance=ExtResource("14_platform")]
 position = Vector2(0, 304)
 size = Vector2(640, 64)
 style = 5
@@ -445,6 +458,16 @@ metadata/arg = "A sleeping llama. Press K and let Donut say hello"
 
 [node name="Shape" type="CollisionShape2D" parent="Triggers/HintSleepingLlama"]
 shape = SubResource("shape_160x420")
+
+[node name="HintSwine" type="Area2D" parent="Triggers"]
+position = Vector2(1576, 214)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "hint"
+metadata/arg = "Nothing hurts it while it rolls. Find a way to stop it"
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/HintSwine"]
+shape = SubResource("shape_96x420")
 
 [node name="EndZone" type="Area2D" parent="Triggers"]
 position = Vector2(80, 254)
@@ -549,14 +572,17 @@ hidden_item_name = "Travel-Size Soap"
 [node name="FastFoodRoom" parent="." instance=ExtResource("24_fastfood_room")]
 position = Vector2(3712, 304)
 
-[node name="EntryDoor" parent="Doors" instance=ExtResource("25_door")]
+[node name="SwineArena" parent="." instance=ExtResource("25_swine_arena")]
+position = Vector2(1152, 304)
+
+[node name="EntryDoor" parent="Doors" instance=ExtResource("26_door")]
 position = Vector2(6904, 304)
 start_open = true
 close_behind = true
 close_side = -1.0
 sealed_text = "Locked. No way back."
 
-[node name="Player" parent="." instance=ExtResource("26_player")]
+[node name="Player" parent="." instance=ExtResource("27_player")]
 position = Vector2(6848, 302)
 
 [node name="Camera2D" type="Camera2D" parent="."]
@@ -569,7 +595,7 @@ limit_smoothed = true
 position_smoothing_enabled = true
 position_smoothing_speed = 6.0
 
-[node name="HUD" parent="." instance=ExtResource("27_hud")]
+[node name="HUD" parent="." instance=ExtResource("28_hud")]
 
 [node name="Sec0" type="Area2D" parent="Triggers"]
 position = Vector2(6000, 550)

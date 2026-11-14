@@ -142,3 +142,12 @@ Art generators: `art-src/floor1/gen_props_fastfood.py` (props, Pillow and numpy)
 | `scenes/level/fastfood_room.tscn` | The SafeRoom kit (`safe_room.gd`, width 640, checkpoint index 2, `box_tiers` Bronze and Silver, kit `floor1`) with a `Dressing` node, one-way play-structure platforms (`PlayDeck`, `PlayStep`), the checkpoint, Tally and the box spot. Instanced by the Level 1 generator in the saferoom section. |
 | `scenes/props/tally.tscn` | Caretaker NPC (`scripts/props/tally.gd`): talk, take the paper hat, then eat (full heal plus the 90 s "Well Fed" buff, salmon for Donut). |
 | `ff_counter` 96x40, `ff_booth` 44x34, `ff_slide` 72x64, `ff_ballpit` 72x24, `ff_soda` 28x52 (Hoop Cola), `ff_cubicle` 48x56, `ff_menu` 56x24 (centre origin), `ff_playtower` 40x80 | Static props under `scenes/props/`, origin bottom-centre unless noted. |
+
+## Ball of Swine (#67)
+Everything here is drawn in code (no sprite sheets yet), so the Level 1 generator only instances one scene. The arena builds the rest at runtime.
+| Scene | Script | Notes |
+|---|---|---|
+| `scenes/level/swine_arena.tscn` | `scripts/level/swine_arena.gd` | Node2D, group `swine_arena`; origin is the arena centre on the floor line, +x is the entry side (the level runs right to left). Builds the boss, the `BossArena` framework, the fortress, hazards, a dynamite cache, the entry wall, the exit forcefield and the Tuskling mop-up. Starts the fight when the player passes `trigger_x`. Sets `Game` meta `borough_field_guide` and fires `borough_boss` on the pop. |
+| `scenes/enemies/ball_of_swine.tscn` | `scripts/enemies/ball_of_swine.gd` | CharacterBody2D, Lv15 boss (`enemy_level`, `is_boss`, `max_health` 9). Not in group `enemies` (the bot and homing missiles ignore it); group `destructibles` so dynamite blasts it (3 damage). `take_damage` only counts while `state == WEDGED` (doubled). Signals `defeated`, `wedged`, `freed`, `rebounded`. |
+| `scenes/enemies/tuskling.tscn` | `scripts/enemies/tuskling.gd` | CharacterBody2D, group `enemies`, `kind` Knight (Lv4) / Courtesan (Lv5) / Dominatrix (Lv8); `decor = true` makes a harmless crowd extra. Staggers, trips, flees, flails for 1 damage when cornered. Calls `PlayerStats.award_kill`. |
+Helper scripts (no scenes): `scripts/level/swine_fortress.gd` (two barricade pieces, two sockets on the floor lane; `E` lifts, places or drops), `scripts/level/rave_hazards.gd` (lane lasers and floor grooves, telegraphed), `scripts/level/swine_dome.gd` (brick hall that reveals the black-light dome, neon grooves).

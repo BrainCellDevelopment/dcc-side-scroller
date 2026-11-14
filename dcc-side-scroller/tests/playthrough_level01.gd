@@ -21,6 +21,8 @@ var _stuck_time: float = 0.0
 var _finished: bool = false
 var _room_seen: bool = Game.has_meta("bot_room_seen")
 var _keys: PackedStringArray = PackedStringArray()
+var _swine_logged: bool = false
+var _swine_tick: int = -1
 
 
 func _ready() -> void:
@@ -167,6 +169,10 @@ func _foes() -> Array[Node2D]:
 
 
 func _navigate(pos: Vector2) -> void:
+	var arena: Node2D = get_tree().get_first_node_in_group("swine_arena") as Node2D
+	if arena != null and bool(arena.get("started")) and not bool(arena.get("won")):
+		_swine(pos, arena)
+		return
 	var front: Node2D = null
 	if _ignore_foes <= 0.0:
 		for foe: Node2D in _foes():
@@ -212,3 +218,65 @@ func _hazard_ahead(pos: Vector2) -> bool:
 		if dx > -4.0 and dx < 22.0 and absf(spikes.global_position.y - pos.y) < 40.0:
 			return true
 	return false
+
+
+func _toward(pos: Vector2, x: float) -> int:
+	return 1 if x >= pos.x else -1
+
+
+func _walk_to(pos: Vector2, x: float) -> void:
+	var direction: int = _toward(pos, x)
+	_move(direction)
+	if _player.is_on_floor() and _jump_hold <= 0.0 and _ray(pos + Vector2(0.0, -8.0), pos + Vector2(22.0 * float(direction), -8.0)):
+		_jump_hold = 0.14
+
+
+# Ball of Swine: build the Speedbump fortress with E, wait for the wedge, then punch it.
+func _swine(pos: Vector2, arena: Node2D) -> void:
+	_stuck_time = 0.0
+	var ball: Node2D = arena.get("boss") as Node2D
+	var fort: Node2D = arena.get("fortress") as Node2D
+	if ball == null or not is_instance_valid(ball) or not bool(ball.get("active")):
+		_move(0)
+		return
+	if not _swine_logged:
+		_swine_logged = true
+		_log("Ball of Swine fight: building the fortress")
+	if bool(ball.call("is_vulnerable")):
+		var dx: float = ball.global_position.x - pos.x
+		var toward: int = _toward(pos, ball.global_position.x)
+		if absf(dx) > 34.0:
+			_walk_to(pos, ball.global_position.x)
+		else:
+			_move(0)
+			if int(_player.get("facing")) != toward:
+				_move(toward)
+			elif _attack_timer <= 0.0:
+				_attack_timer = 0.45
+				_tap(&"attack")
+		return
+	if pos.y < arena.global_position.y - 40.0:
+		_move(1 if pos.x > arena.global_position.x else -1)
+		return
+	if int(_elapsed) % 5 == 0 and int(_elapsed) != _swine_tick:
+		_swine_tick = int(_elapsed)
+		_log("swine: ball state %d lane %d hp %d, bot x %.0f carrying %s placed %d" % [int(ball.get("state")), int(ball.get("lane")), int(ball.get("health")), pos.x, str(fort.call("is_carrying")), int(fort.call("placed_count"))])
+	var target_x: float = INF
+	if bool(fort.call("is_carrying")):
+		var sockets: Array[int] = fort.call("empty_socket_indices")
+		if not sockets.is_empty():
+			target_x = (fort.call("socket_position", sockets[0]) as Vector2).x
+	else:
+		var pieces: Array[int] = fort.call("free_piece_indices")
+		if not pieces.is_empty():
+			target_x = (fort.call("piece_position", pieces[0]) as Vector2).x
+	if target_x == INF:
+		_move(0)
+		return
+	if absf(target_x - pos.x) < 12.0 and _player.is_on_floor():
+		_move(0)
+		if _attack_timer <= 0.0:
+			_attack_timer = 0.5
+			_tap(&"interact")
+		return
+	_walk_to(pos, target_x)
