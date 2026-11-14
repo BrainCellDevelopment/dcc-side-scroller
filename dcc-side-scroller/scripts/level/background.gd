@@ -57,10 +57,34 @@ const STYLES: Array = [
 			{"file": "near", "fx": 0.55, "fy": 0.18, "top": "", "bottom": "08040a"},
 		],
 	},
+	{
+		"name": "floor2",
+		"layers": [
+			{"file": "far", "fx": 0.1, "fy": 0.04, "top": "2a2420", "bottom": "1c1713"},
+			{"file": "mid", "fx": 0.3, "fy": 0.1, "top": "", "bottom": "18110d"},
+			{"file": "near", "fx": 0.55, "fy": 0.18, "top": "", "bottom": "0e0a08"},
+		],
+	},
+	{
+		"name": "floor2_artery",
+		"layers": [
+			{"file": "far", "fx": 0.1, "fy": 0.04, "top": "2e2620", "bottom": "201a14"},
+			{"file": "mid", "fx": 0.3, "fy": 0.1, "top": "", "bottom": "1b140e"},
+			{"file": "near", "fx": 0.55, "fy": 0.18, "top": "", "bottom": "100b08"},
+		],
+	},
+	{
+		"name": "floor2_corridor",
+		"layers": [
+			{"file": "far", "fx": 0.1, "fy": 0.04, "top": "221c18", "bottom": "171210"},
+			{"file": "mid", "fx": 0.3, "fy": 0.1, "top": "", "bottom": "14100c"},
+			{"file": "near", "fx": 0.55, "fy": 0.18, "top": "", "bottom": "0b0807"},
+		],
+	},
 ]
 const FILL_EXTENT: float = 6000.0
 
-@export_enum("Street", "Stairwell", "Tunnel", "Guildhall", "Floor1", "Floor1Artery", "Floor1Corridor") var initial_style: int = 0
+@export_enum("Street", "Stairwell", "Tunnel", "Guildhall", "Floor1", "Floor1Artery", "Floor1Corridor", "Floor2", "Floor2Artery", "Floor2Corridor") var initial_style: int = 0
 @export var anchor_cam_y: float = 180.0
 
 var current_style: int = -1

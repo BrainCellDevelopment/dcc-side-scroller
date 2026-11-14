@@ -112,6 +112,12 @@ func _run() -> void:
 	var before: int = SystemVoice.survivors
 	SystemVoice.survivors_changed.connect(func(count: int) -> void: _count_seen.append(count))
 	_put_at_trigger("EndZone")
+	await _frames(4)
+	_check(not bool(_level.get("complete")), "end held until the greenroom is done")
+	var room: Node = _level.get_node("Greenroom")
+	room.set("talked", true)
+	for box: Node in get_tree().get_nodes_in_group("loot_boxes"):
+		box.set("is_open", true)
 	await _wait_until(func() -> bool: return bool(_level.get("complete")), 2.0)
 	_check(bool(_level.get("complete")), "collapse starts at the end zone")
 	_check(not bool(_player.get("control_enabled")), "player held during the collapse")
