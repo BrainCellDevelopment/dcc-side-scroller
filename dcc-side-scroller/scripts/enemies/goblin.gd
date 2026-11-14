@@ -9,6 +9,9 @@ const SpriteUtil: GDScript = preload("res://scripts/util/sprite_util.gd")
 const GRUNT_SHEET: Texture2D = preload("res://assets/characters/goblin.png")
 const THROWER_SHEET: Texture2D = preload("res://assets/characters/goblin_thrower.png")
 const ROCK_SCENE: PackedScene = preload("res://scenes/enemies/rock.tscn")
+const ItemEffects: GDScript = preload("res://scripts/combat/item_effects.gd")
+const ItemDefs: GDScript = preload("res://scripts/data/item_defs.gd")
+const CharmMark: GDScript = preload("res://scripts/fx/charm_mark.gd")
 const FRAME: Vector2i = Vector2i(32, 32)
 const ANIMS: Dictionary = {
 	"idle": {"row": 0, "count": 4, "fps": 5.0, "loop": true},
@@ -43,6 +46,10 @@ const HEIGHT_TOLERANCE: float = 40.0
 @export var attack_active: float = 0.15
 @export var attack_cooldown: float = 0.9
 @export var patrol_distance: float = 40.0
+## Red marker: a marked goblin cannot be charmed and ignores the Goblin Pass.
+@export var charmable: bool = true
+## Item handed over the first time this goblin is charmed (empty = none).
+@export var charm_gift: String = ""
 
 var health: int = 0
 var state: State = State.PATROL
@@ -59,6 +66,9 @@ var windup_time: float = 0.35
 var active_time: float = 0.15
 var sprite: AnimatedSprite2D = null
 var flash_tween: Tween = null
+var charm_left: float = 0.0
+var charm_permanent: bool = false
+var charm_mark: Node2D = null
 
 @onready var visual: Node2D = $Visual
 @onready var attack_area: Area2D = $Visual/AttackArea
@@ -99,7 +109,12 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y += gravity_force * delta
 	throw_cooldown = maxf(throw_cooldown - delta, 0.0)
+	_tick_charm(delta)
 	var player: CharacterBody2D = _get_player()
+	if is_passive():
+		player = null
+		if state == State.CHASE or state == State.ATTACK:
+			_calm_down()
 	match state:
 		State.PATROL:
 			_patrol(player)
@@ -111,6 +126,81 @@ func _physics_process(delta: float) -> void:
 			_hurt(delta, player)
 	move_and_slide()
 	_update_animation()
+
+
+## True when this goblin will not fight Carl: charmed, or a plain goblin and Carl holds a Goblin Pass.
+func is_passive() -> bool:
+	if state == State.DEAD:
+		return false
+	return charm_permanent or charm_left > 0.0 or has_pass_effect()
+
+
+func is_charmed() -> bool:
+	return charm_permanent or charm_left > 0.0
+
+
+## Bosses and marked goblins are immune to both charm and the pass.
+func can_be_charmed() -> bool:
+	return charmable and not is_boss and state != State.DEAD
+
+
+func has_pass_effect() -> bool:
+	return can_be_charmed() and ItemEffects.has_goblin_pass()
+
+
+## Charm for `seconds`; a negative value is permanent. Returns false when immune.
+func charm(seconds: float) -> bool:
+	if not can_be_charmed():
+		return false
+	var fresh: bool = not is_charmed()
+	if seconds < 0.0:
+		charm_permanent = true
+	else:
+		charm_left = maxf(charm_left, seconds)
+	add_to_group("charmed")
+	_calm_down()
+	if charm_mark == null:
+		charm_mark = CharmMark.new()
+		charm_mark.position = Vector2(0.0, -34.0)
+		add_child(charm_mark)
+	charm_mark.set("faint", false)
+	charm_mark.call("pulse")
+	if fresh and not charm_gift.is_empty():
+		var gift: String = charm_gift
+		charm_gift = ""
+		ItemDefs.give(gift)
+	return true
+
+
+func end_charm() -> void:
+	charm_left = 0.0
+	charm_permanent = false
+	remove_from_group("charmed")
+	if charm_mark != null:
+		charm_mark.queue_free()
+		charm_mark = null
+
+
+func _tick_charm(delta: float) -> void:
+	if charm_left > 0.0:
+		charm_left -= delta
+		if charm_left <= 0.0:
+			end_charm()
+	if charm_mark != null and is_instance_valid(charm_mark):
+		charm_mark.visible = is_passive()
+	elif has_pass_effect():
+		charm_mark = CharmMark.new()
+		charm_mark.position = Vector2(0.0, -34.0)
+		charm_mark.set("faint", true)
+		add_child(charm_mark)
+
+
+func _calm_down() -> void:
+	attack_shape.set_deferred("disabled", true)
+	_set_engaged(false)
+	if state == State.CHASE or state == State.ATTACK:
+		state = State.PATROL
+	velocity.x = 0.0
 
 
 func take_damage(amount: int, from: Vector2) -> void:

@@ -42,7 +42,7 @@ const DEFS: Dictionary = {
 	"goblin_pass": {
 		"name": "Goblin Pass", "tier": "Silver", "passive": "goblin_pass",
 		"desc": "A tattoo-shaped permission slip. Goblins stop hating you on sight and start hating you on paperwork.",
-		"effect": "Carried: goblins will treat you as a guest (takes hold in a later update)",
+		"effect": "Carried: plain goblins stay neutral. Bosses and engineers do not care",
 	},
 	"dynamite": {
 		"name": "Goblin Dynamite", "tier": "Bronze",

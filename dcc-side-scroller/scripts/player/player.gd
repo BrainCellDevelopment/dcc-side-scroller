@@ -54,6 +54,12 @@ const CAST_ORIGIN: Vector2 = Vector2(3.0, -47.0)
 const SPELL_RANGE: float = 280.0
 const SPELL_ARC: float = 75.0
 const MISSILE_FAN: float = 0.3
+const CHARM_COST: float = 4.0
+const CHARM_COOLDOWN: float = 1.5
+const CHARM_RANGE: float = 140.0
+const CHARM_ARC: float = 80.0
+const CHARM_BASE_SECONDS: float = 15.0
+const CHARM_PER_CHARISMA: float = 1.0
 const Targeting: GDScript = preload("res://scripts/combat/targeting.gd")
 
 var health: int = 0
@@ -68,6 +74,7 @@ var _mana_delay: float = 0.0
 var _health_regen_acc: float = 0.0
 var _mana_shown: int = -1
 var _spell_cooldown: float = 0.0
+var _charm_cooldown: float = 0.0
 var _throw_cooldown: float = 0.0
 var _exhausted: bool = false
 var _stamina_delay: float = 0.0
@@ -296,6 +303,8 @@ func _handle_input(delta: float) -> void:
 		_try_cast()
 	if Game.action_just_pressed("throw"):
 		throw_dynamite()
+	if Game.action_just_pressed("charm"):
+		try_charm()
 
 
 func throw_dynamite() -> bool:
@@ -307,6 +316,32 @@ func throw_dynamite() -> bool:
 	var power: Vector2 = Vector2(float(facing) * 170.0 + velocity.x * 0.5, -170.0)
 	stick.call("launch", global_position + Vector2(float(facing) * 8.0, -30.0), power)
 	return true
+
+
+## Donut's charm (#55): the nearest enemy in front of Carl, if it can be charmed, turns neutral.
+## Returns true when a charm landed. Bosses and engineers have no charm method and are immune.
+func try_charm() -> bool:
+	if not spell_enabled or _dead or _charm_cooldown > 0.0:
+		return false
+	var candidates: Array = get_tree().get_nodes_in_group("enemies")
+	var target: Node2D = Targeting.nearest(global_position, Vector2(float(facing), 0.0), candidates, CHARM_RANGE, CHARM_ARC)
+	if target == null:
+		return false
+	if not target.has_method("charm") or not bool(target.call("can_be_charmed")):
+		Game.set_hint("Immune to charm.")
+		_charm_cooldown = 0.5
+		return false
+	if bool(target.call("is_charmed")):
+		return false
+	if not _spend_mana(CHARM_COST):
+		return false
+	_charm_cooldown = CHARM_COOLDOWN
+	var seconds: float = CHARM_BASE_SECONDS + CHARM_PER_CHARISMA * float(PlayerStats.get_stat("charisma"))
+	var landed: bool = bool(target.call("charm", seconds))
+	if landed:
+		SystemVoice.fire("first_charm")
+		Game.set_hint("Charmed.")
+	return landed
 
 
 func enable_spell() -> void:
@@ -373,6 +408,7 @@ func _regen_health(delta: float) -> void:
 
 func _regen_mana(delta: float) -> void:
 	_spell_cooldown = maxf(_spell_cooldown - delta, 0.0)
+	_charm_cooldown = maxf(_charm_cooldown - delta, 0.0)
 	_throw_cooldown = maxf(_throw_cooldown - delta, 0.0)
 	if not spell_enabled:
 		return

@@ -356,6 +356,11 @@ func _register_inputs() -> void:
 		_joy_button(JOY_BUTTON_LEFT_SHOULDER),
 	]
 	_add_action(&"throw", throw_events)
+	var charm_events: Array[InputEvent] = [
+		_key(KEY_C),
+		_joy_button(JOY_BUTTON_RIGHT_STICK),
+	]
+	_add_action(&"charm", charm_events)
 
 
 func _add_action(action: StringName, events: Array[InputEvent]) -> void:
