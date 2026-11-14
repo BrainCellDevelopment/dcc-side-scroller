@@ -3,6 +3,7 @@ extends Area2D
 const SpriteUtil: GDScript = preload("res://scripts/util/sprite_util.gd")
 const ROCK_SHEET: Texture2D = preload("res://assets/characters/rock.png")
 const ANIMS: Dictionary = {"spin": {"row": 0, "count": 4, "fps": 14.0, "loop": true}}
+const Taint: GDScript = preload("res://scripts/combat/taint.gd")
 const LIFETIME: float = 4.0
 
 @export var sheet: Texture2D = ROCK_SHEET
@@ -10,6 +11,7 @@ const LIFETIME: float = 4.0
 @export var fall_gravity: float = 520.0
 @export var damage: int = 1
 @export var max_fall: float = 0.0
+@export var taints: bool = false
 
 var velocity: Vector2 = Vector2.ZERO
 
@@ -53,6 +55,8 @@ func _on_body_entered(body: Node2D) -> void:
 			return
 		if body.has_method("take_damage"):
 			body.call("take_damage", damage, global_position)
+		if taints and body is CharacterBody2D:
+			Taint.apply(body as CharacterBody2D)
 		_finish()
 	elif body.is_in_group("enemies"):
 		return

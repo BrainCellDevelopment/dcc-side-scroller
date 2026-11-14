@@ -2,6 +2,8 @@
 
 Frames are 32x32, feet on the bottom row, creature faces right (the Visual node flips it).
 rat.png rows:       idle(2) walk(4) windup(2) attack(2) die(4)
+grub.png rows:      idle(2) walk(4) die(3)  (Floor 2 Brindle Grub)
+dingo.png rows:     idle(2) walk(4) windup(2) attack(2) die(3)  (Floor 2 Danger Dingo)
 scatterer.png rows: idle(2) walk(4) die(3)
 Run: python3 art-src/characters/vermin.py
 """
@@ -186,6 +188,169 @@ def scatterer(kind, i):
     return img
 
 
+CREAM = (234, 222, 178, 255)
+CREAM_D = (196, 176, 126, 255)
+CREAM_L = (252, 246, 214, 255)
+GRUB_DK = (120, 96, 70, 255)
+DOG = (156, 122, 84, 255)
+DOG_D = (104, 78, 54, 255)
+DOG_L = (196, 164, 118, 255)
+PAINT = (246, 242, 232, 255)
+INK = (24, 16, 22, 255)
+
+
+def grub(kind, i):
+    img = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    if kind == "die":
+        if i == 0:
+            ell(d, (4, 20, 28, 31), CREAM)
+            ell(d, (6, 20, 24, 26), CREAM_L)
+            d.point([(23, 24), (25, 24)], fill=INK)
+        elif i == 1:
+            ell(d, (1, 26, 31, 31), GOO)
+            ell(d, (5, 25, 27, 30), CREAM)
+            for (x, y) in [(3, 22), (28, 21), (16, 19), (9, 18)]:
+                d.point([(x, y), (x, y + 1)], fill=GOO)
+        else:
+            ell(d, (0, 28, 32, 32), (226, 214, 150, 170))
+            d.line([(8, 29), (14, 29)], fill=CREAM_D, width=1)
+        outline(img)
+        return img
+    hump = 0
+    bob = 0
+    if kind == "idle":
+        bob = (0, 1)[i]
+    else:
+        hump = i
+    # body: six fuzzy segments, a hump travelling tail to head while walking
+    for n in range(6):
+        cx = 6 + n * 4
+        lift = 0
+        if kind == "walk":
+            lift = 3 if (n - hump) % 4 == 0 else (1 if (n - hump) % 4 == 1 else 0)
+        top = 20 - lift + bob
+        ell(d, (cx - 3, top, cx + 4, 30), CREAM if n % 2 == 0 else CREAM_D)
+        d.point([(cx, top + 1), (cx + 1, top)], fill=CREAM_L)
+    # head
+    ell(d, (25, 19 + bob, 31, 30), CREAM_D)
+    d.point([(28, 23 + bob), (29, 23 + bob)], fill=INK)
+    d.line([(27, 26 + bob), (30, 27 + bob)], fill=GRUB_DK, width=1)
+    # fuzz
+    for x in (8, 14, 20):
+        d.point([(x, 19 + bob), (x + 2, 18 + bob)], fill=CREAM_L)
+    outline(img)
+    return img
+
+
+def dingo(kind, i):
+    img = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    if kind == "die":
+        if i == 0:
+            ell(d, (3, 18, 26, 30), DOG)
+            ell(d, (20, 17, 31, 27), DOG_L)
+            d.line([(23, 21), (26, 24)], fill=INK, width=1)
+            d.line([(26, 21), (23, 24)], fill=INK, width=1)
+            d.line([(4, 26), (0, 24)], fill=DOG_D, width=1)
+        elif i == 1:
+            ell(d, (2, 23, 29, 31), DOG)
+            ell(d, (21, 22, 31, 30), DOG_L)
+            d.line([(25, 25), (28, 28)], fill=INK, width=1)
+            d.line([(28, 25), (25, 28)], fill=INK, width=1)
+        else:
+            ell(d, (1, 27, 31, 31), DOG_D)
+            ell(d, (22, 26, 31, 31), DOG_L)
+        outline(img)
+        return img
+    bob = 0
+    legs = (0, 0, 0, 0)
+    lunge = 0
+    crouch = 0
+    mouth = False
+    if kind == "idle":
+        bob = (0, 1)[i]
+    elif kind == "walk":
+        bob = (0, -1, 0, -1)[i]
+        legs = ((-3, 3, 3, -3), (0, 0, 0, 0), (3, -3, -3, 3), (0, 0, 0, 0))[i]
+    elif kind == "windup":
+        crouch = (2, 3)[i]
+        lunge = (-2, -3)[i]
+        mouth = i == 1
+    elif kind == "attack":
+        lunge = (2, 3)[i]
+        mouth = True
+    ox = lunge
+    top = bob + crouch
+    # tail
+    d.line([(5 + ox, 20 + top), (1 + ox, 16 + top)], fill=DOG_D, width=2)
+    # back legs
+    d.line([(8 + ox + legs[0], 25 + top), (8 + ox + legs[0], 30)], fill=DOG_D, width=2)
+    d.line([(12 + ox + legs[1], 25 + top), (12 + ox + legs[1], 30)], fill=DOG_D, width=2)
+    # body
+    ell(d, (4 + ox, 17 + top, 22 + ox, 27 + top), DOG)
+    ell(d, (6 + ox, 17 + top, 20 + ox, 21 + top), DOG_D)
+    ell(d, (7 + ox, 23 + top, 19 + ox, 27 + top), DOG_L)
+    # front legs
+    d.line([(17 + ox + legs[2], 25 + top), (17 + ox + legs[2], 30)], fill=DOG, width=2)
+    d.line([(21 + ox + legs[3], 25 + top), (21 + ox + legs[3], 30)], fill=DOG, width=2)
+    # head and snout with corpse paint
+    ell(d, (19 + ox, 14 + top, 28 + ox, 24 + top), DOG)
+    d.polygon([(25 + ox, 18 + top), (31 + ox, 21 + top), (31 + ox, 24 + top), (25 + ox, 24 + top)], fill=DOG_L)
+    ell(d, (20 + ox, 15 + top, 27 + ox, 22 + top), PAINT)
+    d.rectangle((22 + ox, 17 + top, 25 + ox, 19 + top), fill=INK)
+    d.point([(25 + ox, 18 + top)], fill=RED)
+    d.line([(21 + ox, 21 + top), (26 + ox, 21 + top)], fill=INK, width=1)
+    # ear
+    d.polygon([(19 + ox, 14 + top), (21 + ox, 9 + top), (24 + ox, 14 + top)], fill=DOG_D)
+    # nose and fangs
+    d.point([(31 + ox, 21 + top)], fill=INK)
+    if mouth:
+        d.polygon([(26 + ox, 23 + top), (31 + ox, 23 + top), (28 + ox, 27 + top)], fill=(60, 20, 34, 255))
+        d.point([(27 + ox, 23 + top), (30 + ox, 23 + top)], fill=WHITE)
+    else:
+        d.point([(28 + ox, 25 + top), (30 + ox, 25 + top)], fill=WHITE)
+    outline(img)
+    return img
+
+
+ARMOR = (150, 156, 168, 255)
+ARMOR_D = (96, 102, 116, 255)
+ARMOR_L = (206, 212, 222, 255)
+PLUME = (214, 60, 52, 255)
+LANCE = (190, 150, 90, 255)
+
+
+def kobold(kind, i):
+    """Kobold Rider: a Danger Dingo with an armoured chihuahua knight on its back and a lance."""
+    img = dingo(kind, i)
+    if kind == "die":
+        d = ImageDraw.Draw(img)
+        d.rectangle((9, 24, 15, 27), fill=ARMOR)
+        d.point([(14, 24)], fill=PLUME)
+        outline(img)
+        return img
+    d = ImageDraw.Draw(img)
+    bob = {"idle": (0, 1)[i % 2], "walk": (0, -1, 0, -1)[i % 4]}.get(kind, 0)
+    crouch = (2, 3)[i % 2] if kind == "windup" else 0
+    lunge = (2, 3)[i % 2] if kind == "attack" else ((-2, -3)[i % 2] if kind == "windup" else 0)
+    top = bob + crouch
+    ox = lunge
+    # rider: tiny armoured knight with plume, on the dingo's back
+    d.rectangle((9 + ox, 9 + top, 15 + ox, 17 + top), fill=ARMOR)
+    d.rectangle((9 + ox, 9 + top, 15 + ox, 10 + top), fill=ARMOR_L)
+    d.rectangle((10 + ox, 14 + top, 14 + ox, 17 + top), fill=ARMOR_D)
+    d.rectangle((10 + ox, 4 + top, 14 + ox, 9 + top), fill=ARMOR_L)
+    d.point([(13 + ox, 6 + top)], fill=INK)
+    d.line([(12 + ox, 4 + top), (10 + ox, 1 + top)], fill=PLUME, width=1)
+    # lance forward
+    reach = 8 if kind == "attack" else 5
+    d.line([(14 + ox, 12 + top), (14 + ox + reach, 10 + top)], fill=LANCE, width=1)
+    d.point([(14 + ox + reach + 1, 10 + top)], fill=ARMOR_L)
+    outline(img)
+    return img
+
+
 def sheet(rows, fn, name):
     w = 4 * 32
     h = len(rows) * 32
@@ -201,3 +366,6 @@ def sheet(rows, fn, name):
 if __name__ == "__main__":
     sheet([("idle", 2), ("walk", 4), ("windup", 2), ("attack", 2), ("die", 4)], rat, "rat.png")
     sheet([("idle", 2), ("walk", 4), ("die", 3)], scatterer, "scatterer.png")
+    sheet([("idle", 2), ("walk", 4), ("die", 3)], grub, "grub.png")
+    sheet([("idle", 2), ("walk", 4), ("windup", 2), ("attack", 2), ("die", 3)], dingo, "dingo.png")
+    sheet([("idle", 2), ("walk", 4), ("windup", 2), ("attack", 2), ("die", 3)], kobold, "kobold.png")
