@@ -90,6 +90,8 @@ func _process(delta: float) -> void:
 	if not summoned or _target == null:
 		return
 	_age += delta
+	if not is_open:
+		visible = Game.in_safe_zone
 	_visual.position.y = 16.0 + sin(_age * 3.0 + float(slot)) * 2.0
 	if is_open:
 		return
@@ -107,6 +109,13 @@ func _process(delta: float) -> void:
 	prompt.text = "E: open" if Game.in_safe_zone else "Safe zones only"
 	if Game.in_safe_zone and _age > ARM_SECONDS and _last_open_frame != Engine.get_process_frames() and Game.action_just_pressed("interact"):
 		_open()
+
+
+func open_now() -> bool:
+	if is_open or not summoned or not Game.in_safe_zone:
+		return false
+	_open()
+	return true
 
 
 func _caretaker_busy() -> bool:

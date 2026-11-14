@@ -41,6 +41,12 @@ const CHECKPOINT_OFFSET: float = 56.0
 const FOCUS_ON_FLOOR: float = 40.0
 const KILLS_FOR_PEST: int = 10
 const LOOT_BOX_COUNT: int = 2
+const LOOT_BOX_SCENE: PackedScene = preload("res://scenes/props/loot_box.tscn")
+const EARNED_BOX_KIT: String = "floor1"
+const STARTER_BOX_SECTION: int = 2
+const PET_BISCUIT_ID: String = "legendary_pet_biscuit"
+const PET_BISCUIT_LINE: String = "Donut ate the Legendary Pet Biscuit. She is not the same cat, and your head is lighter."
+const STARTER_BOX_TIERS: PackedStringArray = ["Bronze", "Legendary"]
 const DOZER_ROUNDS: int = 3
 const HATCH_HINT: String = "Wait for the hatch to glow, then land on it"
 const FOLLOW_HINT: String = "After him!"
@@ -349,10 +355,20 @@ func _enter_section(index: int) -> void:
 		_camera.limit_bottom = int(area.get_meta("b"))
 		if _phase == Phase.AFTERMATH and index == 5:
 			_camera.limit_right = int((_section_areas[6] as Area2D).get_meta("r"))
+	if index >= STARTER_BOX_SECTION:
+		_grant_starter_boxes()
 	var title: String = str(area.get_meta("title"))
 	if not title.is_empty() and not _seen.has(index):
 		_hud.call("show_banner", title, 2.0)
 	_seen[index] = true
+
+
+func _grant_starter_boxes() -> void:
+	if Game.starter_boxes_announced:
+		return
+	Game.starter_boxes_announced = true
+	for tier: String in STARTER_BOX_TIERS:
+		Game.announce_box(tier)
 
 
 func _unlock(id: String) -> void:
@@ -595,8 +611,18 @@ func _on_safe_zone_exited(body: Node2D) -> void:
 
 func _on_mordecai_done() -> void:
 	_talked = true
+	_grant_starter_boxes()
 	for box: Node in _boxes.get_children():
 		box.call("summon", _player, _mordecai.global_position + Vector2(0.0, -30.0))
+	var slot: int = LOOT_BOX_COUNT
+	for tier: String in Game.take_earned_boxes():
+		var earned: Area2D = LOOT_BOX_SCENE.instantiate() as Area2D
+		earned.set("tier", tier)
+		earned.set("kit", EARNED_BOX_KIT)
+		earned.set("slot", slot)
+		slot += 1
+		_boxes.add_child(earned)
+		earned.call("summon", _player, _mordecai.global_position + Vector2(0.0, -30.0))
 	_check_exit_ready()
 
 
@@ -629,12 +655,18 @@ func _on_exit_entered(body: Node2D) -> void:
 	section = 7
 	Game.register_tutorial_complete()
 	Game.set_hint("")
+	_feed_donut_biscuit()
 	Game.clear_checkpoint()
 	Game.carry_player_state(_player)
 	_player.set("control_enabled", false)
 	_hud.call("show_banner", "LEVEL 0 COMPLETE", 0.0)
 	await get_tree().create_timer(EXIT_DELAY).timeout
 	get_tree().change_scene_to_file(NEXT_LEVEL)
+
+
+func _feed_donut_biscuit() -> void:
+	if Inventory.consume_item(PET_BISCUIT_ID) > 0:
+		SystemVoice.announce("DONUT ATE IT", PET_BISCUIT_LINE, 3.5)
 
 
 func _setup_doors() -> void:
@@ -648,6 +680,7 @@ func dev_goto(target: String) -> bool:
 		"surface":
 			Game.clear_checkpoint()
 			Game.reset_run()
+			Game.reset_boxes()
 			return true
 		"stairtop":
 			index = 0

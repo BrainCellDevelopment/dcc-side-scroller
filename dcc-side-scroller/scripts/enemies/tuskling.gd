@@ -111,6 +111,7 @@ func _faint(push: float) -> void:
 	velocity = Vector2(push * 70.0, -120.0)
 	collision_layer = 0
 	PlayerStats.award_kill(self)
+	Game.report_mob_kill(self)
 	died.emit(self)
 	var tween: Tween = create_tween()
 	tween.tween_interval(0.9)
