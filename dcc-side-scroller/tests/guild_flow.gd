@@ -77,8 +77,17 @@ func _guild() -> void:
 	_check(_level.get("_exit_ready"), "exit ready after boxes")
 	await _shot("guild_exit_open")
 	_check(not _level.get("complete"), "not complete while still in the room")
+	_check(Inventory.has_item("legendary_pet_biscuit"), "the Legendary box gave the Pet Biscuit")
+	for i: int in Inventory.slots.size():
+		if not Inventory.slots[i].is_empty() and str(Inventory.slots[i]["id"]) == "legendary_pet_biscuit":
+			Inventory.equip_from(i)
+			break
+	Inventory.assign_hotbar(0, "legendary_pet_biscuit")
+	_check(Inventory.is_equipped("legendary_pet_biscuit"), "biscuit is worn before leaving")
 	player.global_position = entry.global_position + Vector2(-6.0, -2.0)
 	await _frames(10)
 	_check(_level.get("complete"), "level complete when leaving through the entry door")
+	_check(not Inventory.has_item("legendary_pet_biscuit") and not Inventory.is_equipped("legendary_pet_biscuit"), "Donut ate the biscuit: gone from the bag and gear")
+	_check(Inventory.hotbar[0] == "", "biscuit hotbar slot cleared")
 	_check(Game.carried_health > 0, "health carried to next level")
 	await _shot("guild_complete")

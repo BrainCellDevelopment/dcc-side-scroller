@@ -50,6 +50,26 @@ func remove_at(index: int, count: int = 1) -> Dictionary:
 	return removed
 
 
+## Removes every copy of an item from the bag, the worn gear and the hotbar. Returns how many were removed.
+func consume_item(id: String) -> int:
+	var removed: int = 0
+	for i: int in slots.size():
+		if not slots[i].is_empty() and str(slots[i]["id"]) == id:
+			removed += int(slots[i]["count"])
+			slots[i] = {}
+	for slot_name: String in EQUIP_SLOTS:
+		var worn: Dictionary = equipped[slot_name]
+		if not worn.is_empty() and str(worn["id"]) == id:
+			removed += 1
+			equipped[slot_name] = {}
+	for i: int in HOTBAR_SIZE:
+		if hotbar[i] == id:
+			hotbar[i] = ""
+	if removed > 0:
+		changed.emit()
+	return removed
+
+
 func has_item(id: String) -> bool:
 	for slot: Dictionary in slots:
 		if not slot.is_empty() and str(slot["id"]) == id:

@@ -50,6 +50,8 @@ enum Focus { INVENTORY, DOLL, STATS }
 var _panel: PanelContainer
 var _inv_region: VBoxContainer
 var _inv_title: Label
+var _title_row: HBoxContainer
+var _boxes_button: Button
 var _body: HBoxContainer
 var _grid: GridContainer
 var _cells: Array[PanelContainer] = []
@@ -86,8 +88,17 @@ func _ready() -> void:
 	_inv_region.size_flags_stretch_ratio = 4.0
 	_inv_region.add_theme_constant_override("separation", 4)
 	vbox.add_child(_inv_region)
+	_title_row = HBoxContainer.new()
+	_inv_region.add_child(_title_row)
 	_inv_title = _make_label("INVENTORY", 10, GOLD)
-	_inv_region.add_child(_inv_title)
+	_inv_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title_row.add_child(_inv_title)
+	_boxes_button = Button.new()
+	_boxes_button.focus_mode = Control.FOCUS_NONE
+	_boxes_button.add_theme_font_size_override("font_size", 8)
+	_boxes_button.pressed.connect(_open_loot_boxes)
+	_title_row.add_child(_boxes_button)
+	Game.safe_zone_changed.connect(func(_active: bool) -> void: _refresh())
 	_body = HBoxContainer.new()
 	_body.add_theme_constant_override("separation", 6)
 	_inv_region.add_child(_body)
@@ -141,6 +152,15 @@ func _ready() -> void:
 		var cap: Label = _make_label(SLOT_CAPTIONS[DEFAULT_SLOTS[i]], 6, Color(0.6, 0.62, 0.7))
 		cap.name = "Caption"
 		eq_box.add_child(cap)
+		var eq_icon: TextureRect = TextureRect.new()
+		eq_icon.name = "Icon"
+		eq_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		eq_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		eq_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		eq_icon.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		eq_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		eq_icon.visible = false
+		eq_box.add_child(eq_icon)
 		var nm: Label = _make_label("", 7, Color.WHITE)
 		nm.name = "Name"
 		nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -229,7 +249,7 @@ func _layout() -> void:
 	_panel.position = Vector2(floorf((vp.x - size.x) * 0.5), floorf(vp.y * 0.02))
 	var inner_w: float = size.x - 16.0
 	var region_h: float = (size.y - 16.0) * 4.0 / 6.0
-	var title_h: float = _inv_title.get_combined_minimum_size().y
+	var title_h: float = _title_row.get_combined_minimum_size().y
 	var body_h: float = floorf(region_h - title_h - 12.0 - 8.0)
 	var grid_w: float = floorf(inner_w * GRID_FRACTION)
 	var cell_w: float = floorf((grid_w - GAP * (COLS - 1)) / COLS)
@@ -321,9 +341,35 @@ func _unhandled_input(event: InputEvent) -> void:
 				_move(1, 0)
 			KEY_ENTER, KEY_KP_ENTER, KEY_E:
 				_activate()
+			KEY_O:
+				_open_loot_boxes()
 			KEY_1, KEY_2, KEY_3, KEY_4, KEY_5:
 				_assign_hotbar(key.keycode - KEY_1)
 		get_viewport().set_input_as_handled()
+
+
+func _loot_boxes() -> Array[Node]:
+	var boxes: Array[Node] = []
+	for node: Node in get_tree().get_nodes_in_group("loot_boxes"):
+		if bool(node.get("summoned")) and not bool(node.get("is_open")):
+			boxes.append(node)
+	return boxes
+
+
+func _open_loot_boxes() -> void:
+	if not Game.in_safe_zone:
+		Game.set_hint("Loot boxes can only be opened in a safe room.")
+		return
+	for node: Node in _loot_boxes():
+		node.call("open_now")
+	_refresh()
+
+
+func _refresh_boxes_button() -> void:
+	var count: int = _loot_boxes().size()
+	_boxes_button.text = "Open Loot Boxes [O] (%d)" % count
+	_boxes_button.disabled = count == 0 or not Game.in_safe_zone
+	_boxes_button.tooltip_text = "" if Game.in_safe_zone else "Safe rooms only"
 
 
 func _selected_item() -> Dictionary:
@@ -451,6 +497,7 @@ func _tier_color(item: Dictionary) -> Color:
 func _refresh() -> void:
 	if not _panel.visible:
 		return
+	_refresh_boxes_button()
 	_inv_title.add_theme_color_override("font_color", GOLD if _focus == Focus.INVENTORY else Color(0.5, 0.45, 0.3))
 	var name_avail: Vector2 = Vector2(_cell_size.x - 6.0, _cell_size.y - 4.0 - 9.0)
 	for i: int in _cells.size():
@@ -484,6 +531,11 @@ func _refresh() -> void:
 		var selected: bool = _focus == Focus.DOLL and i == _selected_doll
 		var border: Color = _tier_color(item) if filled else EMPTY_BORDER
 		var nm: Label = _doll_boxes[i].get_node("Box/Name") as Label
+		var eq_icon: TextureRect = _doll_boxes[i].get_node("Box/Icon") as TextureRect
+		var icon: Texture2D = ItemIcon.get_icon(str(item.get("id", ""))) if filled else null
+		eq_icon.texture = icon
+		eq_icon.visible = icon != null
+		nm.visible = icon == null
 		if filled:
 			_fit_name(nm, str(item.get("name", "?")), box_avail, 7)
 		else:

@@ -1,5 +1,7 @@
 extends CanvasLayer
 
+const BOX_TIERS: PackedStringArray = ["Bronze", "Silver", "Gold", "Legendary"]
+
 const LEVELS: Dictionary = {
 	"level0": "res://scenes/level00.tscn",
 	"level1": "res://scenes/level01.tscn",
@@ -94,13 +96,20 @@ func _on_submitted(text: String) -> void:
 	var argument: String = parts[1].to_lower() if parts.size() > 1 else ""
 	match command:
 		"help":
-			_print("goto <section|level0|level1>  list  heal  god [on|off]  kms  stats [floor <n>|xp <n>|spend <stat>|reset]  skins  skin <default|derpy>  intro  unlockskin <id>  resetprofile  help  (` or esc closes)")
+			_print("goto <section|level0|level1>  list  heal  box [tier]  god [on|off]  kms  stats [floor <n>|xp <n>|spend <stat>|reset]  skins  skin <default|derpy>  intro  unlockskin <id>  resetprofile  help  (` or esc closes)")
 		"list":
 			var names: PackedStringArray = SECTIONS
 			var level: Node = get_tree().current_scene
 			if level != null and level.has_method("dev_sections"):
 				names = level.call("dev_sections")
 			_print("sections: " + ", ".join(names) + ", cp<N>  levels: " + ", ".join(LEVELS.keys()))
+		"box":
+			var tier: String = argument.capitalize() if not argument.is_empty() else "Bronze"
+			if not BOX_TIERS.has(tier):
+				_print("usage: box [bronze|silver|gold|legendary]")
+			else:
+				Game.grant_box(tier)
+				_print("granted a %s box; open it in a safe room" % tier)
 		"heal":
 			_heal()
 		"god":
