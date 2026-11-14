@@ -48,6 +48,9 @@ Status: full run passes (about 239 s, 0 deaths): chase, Mordecai, loot boxes, ex
 5. Level 1 scene (exit currently shows "Level 1 coming soon").
 6. Commit on feature/level-0 and push develop + feature/level-0 once the owner agrees.
 
+## Dev console
+Press ` (backtick/tilde) in a debug run: `goto <surface|stairs|hall|tunnels|tunnels2|tunnels3|arena|chase|guildhall|cpN>`, `list`, `heal`, `help`. Esc or ` closes. Disabled in release exports. Code: scripts/autoload/dev_console.gd and `dev_goto` in level00.gd.
+
 ## Gotchas
 - Python generators in `art-src/` hardcode paths now repointed to this repo; generators need Pillow (use a venv, e.g. /tmp/artvenv/bin/python); `build_level00.py` writes `scenes/level00.tscn` and must keep `uid://dsypb287qo2hi` (it does) or the main scene fails to load.
 - `build_level00.py` has a built-in linter (reachability: gaps up to 64 px, step-up up to 48 px). Keep it at 0 errors.
