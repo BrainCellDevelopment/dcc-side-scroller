@@ -9,21 +9,27 @@ const TEXTURES: Array = [
 	preload("res://assets/tiles/tiles_iron.png"),
 	preload("res://assets/tiles/tiles_stone.png"),
 	preload("res://assets/tiles/tiles_wood.png"),
+	preload("res://assets/tiles/tiles_brick.png"),
+	preload("res://assets/tiles/tiles_wetstone.png"),
+	preload("res://assets/tiles/tiles_plank.png"),
 ]
 const OUTLINES: Array = [
 	Color(0.1059, 0.0706, 0.149),
 	Color(0.0706, 0.0627, 0.1098),
 	Color(0.0706, 0.0627, 0.1216),
 	Color(0.1216, 0.0784, 0.0627),
+	Color(0.0471, 0.0196, 0.0314),
+	Color(0.0471, 0.0706, 0.0863),
+	Color(0.0706, 0.0392, 0.0314),
 ]
 
 @export var size: Vector2 = Vector2(64, 16):
 	set(value):
 		size = Vector2(maxf(value.x, 1.0), maxf(value.y, 1.0))
 		_refresh()
-@export_enum("Rubble", "Iron", "Stone", "Wood") var style: int = 2:
+@export_enum("Rubble", "Iron", "Stone", "Wood", "Brick", "WetStone", "Plank") var style: int = 2:
 	set(value):
-		style = clampi(value, 0, 3)
+		style = clampi(value, 0, TEXTURES.size() - 1)
 		_refresh()
 @export var one_way: bool = false:
 	set(value):
