@@ -3,8 +3,11 @@ from PIL import Image
 from pxl import *
 import carl
 
-FW, FH = 64, 56
-OUTDIR = os.environ.get("DCC_ASSETS", "/Users/mychal.smith/brain-cell-gaming/dcc-side-scroller/dcc-side-scroller/assets/characters")
+FW, FH = 64, 64
+SHEET_FH = 80
+SHEET_FW = 80
+SHEET_COLS = 8
+OUTDIR = os.environ.get("DCC_ASSETS", os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "dcc-side-scroller", "assets", "characters")))
 PV = os.environ.get("DCC_PREVIEW", os.path.join(os.path.dirname(os.path.abspath(__file__)), "_pv"))
 
 D_IDLE = [dict(tail="up", eyes="open"), dict(tail="swish_l", eyes="open"), dict(tail="up", eyes="blink", ears="side"), dict(tail="swish_r", eyes="open")]
@@ -25,7 +28,12 @@ def build():
     crow = []
     for r, dr in zip(carl.CARL_ROWS, D_ROWS):
         crow.append([carl.build_carl(p, d)[0] for p, d in zip(r, dr)])
-    cs = sheet(crow, FW, FH, 6)
+    flat = sheet(crow, FW, FH, 6)
+    rows = len(crow)
+    cs = Image.new("RGBA", (SHEET_FW * SHEET_COLS, SHEET_FH * rows), (0, 0, 0, 0))
+    for r in range(rows):
+        for c in range(flat.width // FW):
+            cs.paste(flat.crop((c * FW, r * FH, (c + 1) * FW, (r + 1) * FH)), (c * SHEET_FW + (SHEET_FW - FW) // 2, r * SHEET_FH + SHEET_FH - FH))
     ds = Image.new("RGBA", cs.size, (0, 0, 0, 0))
     return cs, ds
 
@@ -36,5 +44,8 @@ if __name__ == "__main__":
     os.makedirs(PV, exist_ok=True)
     cs.save(os.path.join(OUTDIR, "carl.png"))
     ds.save(os.path.join(OUTDIR, "donut.png"))
-    preview(cs, os.path.join(PV, "carl.png"), 6, fw=FW, fh=FH)
+    preview(cs, os.path.join(PV, "carl.png"), 6, fw=SHEET_FW, fh=SHEET_FH)
     print(cs.size, count_colors(cs))
+    import import_row
+    import_row.SHEET = os.path.join(OUTDIR, "carl.png")
+    import_row.main([])

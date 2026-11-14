@@ -1,10 +1,11 @@
+import os
 import sys
 import importlib
 from PIL import Image
 from pix import ncolors
 from bgkit import EXT, force_rows
 
-OUT = "/Users/mychal.smith/brain-cell-gaming/dcc-side-scroller/dcc-side-scroller/assets/bg/"
+OUT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "dcc-side-scroller", "assets", "bg")) + "/"
 STYLES = {"street": "bg_street", "stairwell": "bg_stairwell", "tunnel": "bg_tunnel", "guildhall": "bg_guildhall"}
 
 if __name__ == "__main__":

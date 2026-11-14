@@ -1,54 +1,81 @@
 import math
+import numpy as np
 from pxl import Canvas, ik, put, tf, sheet, OUT
 import donut
 
-SKIN = ("#ffd9a8", "#f8b873", "#e0904f", "#9a5448")
-HAIR = ("#f0a060", "#d07840", "#a04e2c", "#4a2a26")
-TANK = ("#8a8494", "#6a6474", "#4a4654", "#34303e")
-JACK = ("#c4a0d4", "#94689e", "#623e6c", "#38203e")
-SHORT = ("#ffffff", "#f6f0f8", "#e2d8ea", "#b8a8c8")
-RED = ("#ff9a74", "#f0584a", "#e03c48", "#a52a42")
-SOLE = "#f4eefa"
-EYE = "#2a1630"
+SKIN = ("#ffe0b8", "#f6bf96", "#d48c62", "#8c4a3c")
+HAIR = ("#f07a48", "#c4472a", "#8a2a1c", "#4c1614")
+JACK = ("#9a877c", "#6e5d5c", "#4a3d42", "#2a2028")
+SHIRT = ("#463e44", "#2c262c", "#1a161c")
+BOOT = ("#8a777a", "#584a50", "#382c34", "#1e161c")
+SHORT = ("#ffffff", "#f4f0f6", "#d8d0e2", "#a89cb8")
+HEART = "#e23344"
+EYE = "#24121c"
 WHITE = "#ffffff"
-MOUTH = "#7a2a3c"
-GROUND = 37.1
+MOUTH = "#6a2030"
+MOUTH_DARK = "#3a1220"
+TONGUE = "#e0564e"
+CX = 24.0
+GROUND = 54.4
+HIP = (CX, 40.4)
+TORSO = 8.0
+BOOT_H = 3.6
+
 
 def leg_target(spec):
     if len(spec) == 3 and spec[2] == "abs":
-        return spec[0], spec[1], 1.05, 0.0
+        return spec[0], spec[1], 1.04, None
     fx, lift = spec[0], spec[1]
-    slack = spec[2] if len(spec) > 2 else 1.06
-    toe = spec[3] if len(spec) > 3 else (0.4 if lift > 2 else 0.0)
-    return 24 + fx, GROUND - lift, slack, toe
+    slack = spec[2] if len(spec) > 2 else 1.05
+    toe = spec[3] if len(spec) > 3 else (0.45 if lift > 2 else 0.0)
+    return CX + fx, GROUND - lift, slack, toe
 
 
 def draw_leg(c, hip_j, spec):
     fx, fy, slack, toe = leg_target(spec)
-    ankle = (fx, fy - 0.6)
+    lying = toe is None
+    ankle = (fx, fy) if lying else (fx - math.sin(toe) * 1.5, fy - BOOT_H)
     d = math.hypot(ankle[0] - hip_j[0], ankle[1] - hip_j[1])
-    seg = max(d / 2 * slack, 1.2)
+    seg = max(d / 2 * slack, 1.5)
     knee, ankle = ik(hip_j, ankle, seg, seg, -1)
-    m = c.capsule(hip_j, knee, 2.2, 2.0) | c.capsule(knee, ankle, 2.0, 1.7)
-    c.stamp(m, SKIN)
-    shoe = c.ell(fx + 1.3, fy + 0.2, 3.7, 2.1, toe)
-    c.stamp(shoe, RED)
-    sole = c.ell(fx + 1.3, fy + 0.2, 3.7, 2.1, toe) & ~c.ell(fx + 1.3, fy - 0.9, 3.7, 2.1, toe)
-    c.fill(sole & shoe, SOLE)
-    return m
+    c.stamp(c.capsule(hip_j, knee, 2.5, 2.2) | c.capsule(knee, ankle, 2.1, 1.9), SKIN)
+    mid = (ankle[0] + (knee[0] - ankle[0]) * 0.12, ankle[1] + (knee[1] - ankle[1]) * 0.12)
+    if lying:
+        boot = c.capsule(mid, ankle, 2.5, 2.7) | c.ell(ankle[0] + 1.4, ankle[1] - 2.2, 2.4, 3.2)
+        c.stamp(boot, BOOT)
+    else:
+        heel = (fx - 0.4, fy - 2.2)
+        boot = c.capsule(mid, heel, 2.4, 2.5) | c.ell(fx + 1.8, fy - 1.9, 3.4, 2.0, toe)
+        boot &= c.py < fy + 0.2 + abs(toe) * 4.0
+        c.stamp(boot, BOOT)
+        cuff = c.capsule(mid, (mid[0] + (heel[0] - mid[0]) * 0.2, mid[1] + (heel[1] - mid[1]) * 0.2), 2.5) & boot
+        c.fill(cuff & ~c.capsule(mid, heel, 1.4), BOOT[0])
+        if abs(toe) < 0.1:
+            c.fill(boot & (c.py > fy - 1.0), BOOT[3])
+    cuff_end = (hip_j[0] + (knee[0] - hip_j[0]) * 0.5, hip_j[1] + (knee[1] - hip_j[1]) * 0.5)
+    leg_short = c.capsule(hip_j, cuff_end, 2.9, 3.0)
+    c.stamp(leg_short, SHORT)
+    heart(c, hip_j[0] + (cuff_end[0] - hip_j[0]) * 0.75, hip_j[1] + (cuff_end[1] - hip_j[1]) * 0.75, leg_short)
+    return leg_short
 
 
-def draw_arm(c, sh, hand, fist_r, slack=1.12):
+def heart(c, x, y, clip=None):
+    x, y = int(math.floor(x)), int(math.floor(y))
+    for dx, dy in ((-1, -1), (1, -1), (-1, 0), (0, 0), (1, 0), (0, 1)):
+        X, Y = x + dx + c.ox, y + dy + c.oy
+        if 0 <= X < c.w and 0 <= Y < c.h and (clip is None or clip[Y, X]):
+            c.dot(x + dx, y + dy, HEART)
+
+
+def draw_arm(c, sh, hand, fist_r, slack=1.1, bend=1):
     d = math.hypot(hand[0] - sh[0], hand[1] - sh[1])
-    seg = max(d / 2 * slack, 1.2)
-    elbow, hand = ik(sh, hand, seg, seg, 1)
-    fm = c.capsule(elbow, hand, 2.2, 1.9)
-    c.stamp(fm, SKIN)
-    um = c.capsule(sh, elbow, 3.0, 2.7)
-    c.stamp(um, JACK)
-    m = um | fm
-    f = c.disc(hand[0], hand[1], fist_r * 1.15)
-    c.stamp(f, SKIN)
+    seg = max(d / 2 * slack, 1.5)
+    elbow, hand = ik(sh, hand, seg, seg, bend)
+    c.stamp(c.capsule(elbow, hand, 2.7, 2.3), JACK)
+    c.stamp(c.capsule(sh, elbow, 3.2, 2.8), JACK)
+    wrist = (elbow[0] + (hand[0] - elbow[0]) * 0.8, elbow[1] + (hand[1] - elbow[1]) * 0.8)
+    c.fill(c.capsule(wrist, hand, 2.3) & c.capsule(elbow, hand, 2.7, 2.3) & ~c.capsule(wrist, hand, 1.2), JACK[3])
+    c.stamp(c.disc(hand[0], hand[1], fist_r), SKIN)
     return hand
 
 
@@ -59,166 +86,156 @@ def rect(c, H, ang, x0, y0, x1, y1):
 
 def face(c, H, ang, p):
     kind = p.get("eyes", "open")
-    ex = p.get("eye_dx", 0.0)
     R = lambda *a: rect(c, H, ang, *a)
-    for x0, far in ((2.0 + ex, False), (-4.4 + ex, True)):
+    for x0, w, pw in ((0.2, 3.2, 1.5), (4.5, 2.0, 1.1)):
         if kind in ("open", "wide", "squint"):
-            top = -1.0 if kind == "wide" else -0.4
-            bot = 2.0 if kind != "squint" else 0.8
-            if kind == "squint":
-                top = 0.0
-            c.fill(R(x0, top, x0 + 4.0, bot), WHITE)
-            px0 = x0 + 2.0 if not far else x0 + 1.6
-            c.fill(R(px0, top, px0 + 2.0, min(bot, top + 2.4)), EYE)
+            top = -1.4 if kind == "wide" else (0.2 if kind == "squint" else -0.6)
+            bot = 1.6 if kind != "squint" else 1.3
+            c.fill(R(x0, top, x0 + w, bot), WHITE)
+            c.fill(R(x0 + w - pw, top, x0 + w, bot), EYE)
         elif kind == "blink":
-            c.fill(R(x0, 1.0, x0 + 4.0, 2.0), EYE)
+            c.fill(R(x0, 0.4, x0 + w, 1.4), EYE)
         elif kind == "x":
             for dx, dy in ((0, 0), (2, 0), (1, 1), (0, 2), (2, 2)):
-                gx, gy = tf(H[0], H[1], ang, x0 + 0.5 + dx, -0.4 + dy)
+                gx, gy = tf(H[0], H[1], ang, x0 + 0.5 + dx * w / 3.2, -0.8 + dy)
                 c.dot(gx, gy, EYE)
     brow = p.get("brow", "angry")
-    bc = EYE
     if brow == "angry":
-        c.fill(R(1.2 + ex, -2.2, 3.6 + ex, -0.6), bc)
-        c.fill(R(3.6 + ex, -3.4, 6.6 + ex, -1.8), bc)
-        c.fill(R(-5.0 + ex, -3.4, -2.0 + ex, -1.8), bc)
-        c.fill(R(-2.0 + ex, -2.2, 0.4 + ex, -0.6), bc)
+        c.fill(R(-1.2, -3.2, 1.4, -1.6), HAIR[3])
+        c.fill(R(1.4, -2.4, 4.0, -0.6), HAIR[3])
+        c.fill(R(4.0, -2.4, 5.2, -0.6), HAIR[3])
+        c.fill(R(5.2, -3.0, 6.6, -1.6), HAIR[3])
     elif brow == "up":
-        c.fill(R(2.0 + ex, -2.6, 6.0 + ex, -1.6), bc)
-        c.fill(R(-4.4 + ex, -2.6, -0.4 + ex, -1.6), bc)
+        c.fill(R(0.0, -3.4, 3.4, -2.2), HAIR[3])
+        c.fill(R(4.4, -3.4, 6.4, -2.2), HAIR[3])
     elif brow == "hurt":
-        c.fill(R(1.4 + ex, -2.0, 3.6 + ex, -1.0), bc)
-        c.fill(R(3.6 + ex, -3.0, 6.0 + ex, -2.0), bc)
-        c.fill(R(-4.4 + ex, -3.0, -2.0 + ex, -2.0), bc)
-        c.fill(R(-2.0 + ex, -2.0, 0.2 + ex, -1.0), bc)
-    mouth = p.get("mouth", "line")
-    MD = "#3a1222"
+        c.fill(R(-0.6, -2.2, 1.6, -1.0), HAIR[3])
+        c.fill(R(1.6, -3.2, 3.6, -2.0), HAIR[3])
+        c.fill(R(4.2, -3.2, 5.4, -2.0), HAIR[3])
+        c.fill(R(5.4, -2.2, 6.6, -1.0), HAIR[3])
+    c.fill(R(6.2, 1.6, 7.2, 2.6), SKIN[2])
+    mouth = p.get("mouth", "grit")
     if mouth in ("line", "flat"):
-        c.fill(R(-1.0 + ex, 3.8, 4.0 + ex, 4.8), MOUTH)
+        c.fill(R(2.0, 3.6, 6.0, 4.6), MOUTH)
     elif mouth == "grit":
-        c.fill(R(-1.4 + ex, 2.8, 4.6 + ex, 6.0), MD)
-        c.fill(R(-1.0 + ex, 2.8, 4.2 + ex, 4.0), WHITE)
-        c.fill(R(-1.0 + ex, 4.8, 4.2 + ex, 5.8), WHITE)
+        c.fill(R(1.4, 2.8, 6.4, 5.2), MOUTH_DARK)
+        c.fill(R(2.0, 3.2, 6.0, 4.6), WHITE)
+        c.fill(R(3.8, 3.2, 4.4, 4.6), SKIN[3])
     elif mouth == "shout":
-        c.fill(R(-1.4 + ex, 2.6, 4.6 + ex, 6.6), MD)
-        c.fill(R(-1.0 + ex, 2.6, 4.2 + ex, 3.8), WHITE)
-        c.fill(R(-0.2 + ex, 5.2, 3.4 + ex, 6.4), RED[1])
+        c.fill(R(1.6, 2.6, 6.4, 5.8), MOUTH_DARK)
+        c.fill(R(2.2, 2.8, 6.0, 3.8), WHITE)
+        c.fill(R(2.6, 4.6, 5.6, 5.6), TONGUE)
     elif mouth in ("open", "o"):
-        c.fill(R(-0.6 + ex, 3.0, 3.4 + ex, 6.2), MD)
-        c.fill(R(-0.2 + ex, 5.0, 3.0 + ex, 6.0), RED[1])
-    stub = {"s": HAIR[2]}
-    put(c, H[0], H[1], ang, -5.0, 3.6, ["s.s.", ".s.s"], stub)
+        c.fill(R(2.6, 2.8, 5.8, 5.6), MOUTH_DARK)
+        c.fill(R(3.0, 4.4, 5.4, 5.4), TONGUE)
+    put(c, H[0], H[1], ang, -2.2, 3.4, ["s.s", ".s."], {"s": SKIN[2]})
 
 
 def hair(c, H, ang, head, p):
     lx, ly = c.local(H[0], H[1], ang)
-    sw = p.get("sway", 0.0) * 0.4
-    cap = head & ((ly < -4.8) | ((lx < -5.0) & (ly < 1.8)))
-    m = cap
-    m |= c.tri(H[0], H[1], ang, (-7.4, -1.6), (-4.4, -5.4), (-10.0 - sw, -5.6))
-    m |= c.tri(H[0], H[1], ang, (-6.4, -4.4), (-2.4, -6.0), (-6.6 - sw, -9.6))
-    m |= c.tri(H[0], H[1], ang, (-3.0, -5.6), (1.6, -5.8), (-2.0 - sw * 0.5, -10.0))
-    m |= c.tri(H[0], H[1], ang, (1.0, -5.8), (5.0, -5.2), (3.6 + sw * 0.5, -10.0))
-    m |= c.tri(H[0], H[1], ang, (4.2, -5.0), (7.8, -2.6), (10.4 + sw * 0.5, -7.4))
+    sw = p.get("sway", 0.0) * 0.5
+    m = head & ((ly < -3.4) | ((lx < -3.2) & (ly < 0.6)) | ((lx < -4.6) & (ly < 2.6)))
+    T = lambda a, b, t: c.tri(H[0], H[1], ang, a, b, t)
+    m |= T((-6.2, 1.0), (-3.6, -3.0), (-10.4 - sw, -1.6))
+    m |= T((-6.4, -1.6), (-3.0, -5.0), (-10.6 - sw, -6.4))
+    m |= T((-5.4, -4.0), (-1.2, -5.6), (-7.4 - sw, -10.6))
+    m |= T((-3.0, -5.0), (1.4, -5.6), (-2.4 - sw * 0.6, -11.6))
+    m |= T((0.0, -5.4), (4.0, -4.8), (2.4, -11.2))
+    m |= T((2.6, -5.0), (6.4, -2.6), (7.4 + sw * 0.4, -9.4))
+    m |= T((4.6, -4.0), (6.6, -2.0), (9.6 + sw * 0.4, -5.4))
     c.stamp(m, HAIR)
+    for a, b in (((-4.0, -4.0), (-7.4, -8.0)), ((-1.0, -5.0), (-2.2, -9.0)), ((2.4, -5.0), (2.6, -8.6)), ((-5.0, -1.0), (-8.0, -3.4))):
+        for k in range(4):
+            t = k / 3.0
+            gx, gy = tf(H[0], H[1], ang, a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
+            X, Y = int(math.floor(gx)) + c.ox, int(math.floor(gy)) + c.oy
+            if 0 <= X < c.w and 0 <= Y < c.h and m[Y, X]:
+                c.dot(gx, gy, HAIR[0])
     return m
 
 
 def build_carl(p, cat=None):
-    c = Canvas(64, 56, 8, 16)
-    ang = p.get("lean", 0.05)
-    hip = p.get("hip", (24.0, 31.2))
-    if not any(len(v) == 3 and v[2] == "abs" for v in p["legs"].values()):
-        hip = (hip[0], hip[1] - 4.2)
+    c = Canvas(64, 64, 8, 8)
+    ang = p.get("lean", 0.06)
+    hip = p.get("hip", HIP)
+    lying = abs(ang) > 1.2
     u = (math.sin(ang), -math.cos(ang))
     rt = (math.cos(ang), math.sin(ang))
-    tl = 6.4 + p.get("breath", 0.0) * 0.5
+    tl = TORSO + p.get("breath", 0.0) * 0.6
     S = (hip[0] + u[0] * tl, hip[1] + u[1] * tl)
     hang = ang + p.get("head_rot", 0.0)
     hf, hu = p.get("head_off", (1.2, 0.0))
-    hu_ = 7.6 + hu
+    hu_ = 6.6 + hu
     H = (S[0] + u[0] * hu_ + rt[0] * hf, S[1] + u[1] * hu_ + rt[1] * hf)
 
-    hj_b = (hip[0] - rt[0] * 2.4, hip[1] + 1.8)
-    hj_a = (hip[0] + rt[0] * 2.6, hip[1] + 1.8)
-    sh_b = (S[0] - rt[0] * 4.8, S[1] - rt[1] * 4.8 + 1.4)
-    sh_a = (S[0] + rt[0] * 4.4, S[1] + rt[1] * 4.4 + 1.4)
+    hj_b = (hip[0] + rt[0] * 2.6 - u[0] * 1.2, hip[1] + rt[1] * 2.6 - u[1] * 1.2)
+    hj_a = (hip[0] - rt[0] * 2.4 - u[0] * 1.2, hip[1] - rt[1] * 2.4 - u[1] * 1.2)
+    sh_b = (S[0] + rt[0] * 3.6 - u[0] * 1.6, S[1] + rt[1] * 3.6 - u[1] * 1.6)
+    sh_a = (S[0] - rt[0] * 3.2 - u[0] * 1.8, S[1] - rt[1] * 3.2 - u[1] * 1.8)
 
     arms = p["arms"]
-    fr = p.get("fist", (2.5, 2.4))
+    fr = p.get("fist", (2.6, 2.4))
+    bends = p.get("bend", (1, 1))
+    draw_arm(c, sh_b, (sh_b[0] + arms["b"][0], sh_b[1] + arms["b"][1]), fr[1], bend=bends[1])
     draw_leg(c, hj_b, p["legs"]["b"])
-    hb = draw_arm(c, sh_b, (sh_b[0] + arms["b"][0], sh_b[1] + arms["b"][1]), fr[1])
     draw_leg(c, hj_a, p["legs"]["a"])
 
-    def B(lx, ly, o=hip):
-        return tf(o[0], o[1], ang, lx, ly)
+    def B(lx, ly):
+        return tf(hip[0], hip[1], ang, lx, ly)
 
-    neck = c.capsule(S, (S[0] + u[0] * 3.0, S[1] + u[1] * 3.0), 3.0)
+    pelvis = c.poly([B(-5.2, -2.2), B(5.4, -2.2), B(5.8, 2.6), B(0.6, 3.4), B(-5.6, 2.6)])
+    c.stamp(pelvis, SHORT)
+    c.fill(c.poly([B(-5.2, -2.2), B(5.4, -2.2), B(5.4, -1.4), B(-5.2, -1.4)]) & pelvis, SHORT[2])
+    heart(c, *B(1.2, 1.2), pelvis)
+    heart(c, *B(-3.4, 0.6), pelvis)
+    heart(c, *B(5.0, 0.4), pelvis)
+
+    neck = c.capsule(S, (S[0] + u[0] * 2.6 + rt[0], S[1] + u[1] * 2.6 + rt[1]), 2.6)
     c.stamp(neck, SKIN)
-    torso = c.poly([B(-3.6, 0.8), B(3.6, 0.8), B(6.2, -tl + 1.4), B(4.2, -tl - 0.2), B(-4.2, -tl - 0.2), B(-6.2, -tl + 1.4)])
-    torso |= c.disc(*B(-4.8, -tl + 1.4), 2.4) | c.disc(*B(4.8, -tl + 1.4), 2.4)
-    c.stamp(torso, JACK)
-    shirt = c.poly([B(-2.8, 0.8), B(2.8, 0.8), B(3.0, -tl + 0.6), B(-3.0, -tl + 0.6)]) & torso
-    c.stamp(shirt, TANK, outline=False)
-    vs = c.tri(S[0], S[1], ang, (-1.8, -1.6), (1.8, -1.6), (0.0, 2.0)) & shirt
-    c.fill(vs, SKIN[1])
-
-    bang = ang if abs(ang) > 0.7 else ang * 0.7
-    shorts = c.poly([B(-5.0, -1.6), B(5.0, -1.6), B(6.4, 4.0), B(-6.4, 4.0)])
-    shorts |= c.disc(*B(5.4, 3.2), 1.0) | c.disc(*B(-5.4, 3.2), 1.0)
-    if abs(ang) > 1.2:
-        shorts = c.ell(hip[0], hip[1] + 0.8, 3.8, 6.0, bang)
-    c.stamp(shorts, SHORT)
-    HRT = ["R.R", "RRR", ".R."]
-    for hxo, hyo in ((-4.0, 0.8), (0.0, 1.0), (4.0, 0.8)):
-        hx, hy = tf(hip[0], hip[1] + 1.8, bang, hxo, hyo)
-        c.pattern(int(math.floor(hx)) - 1, int(math.floor(hy)) - 1, HRT, {"R": RED[1]})
-    if abs(ang) < 1.2:
-        for sg in (-1, 1):
-            for k in range(7):
-                t = k / 6.0
-                fx, fy = B(sg * (4.4 - t * 0.5), -tl + 1.2 + t * (tl - 0.8))
-                if torso[int(fy) + c.oy if False else min(max(int(math.floor(fy)) + c.oy, 0), c.h - 1), min(max(int(math.floor(fx)) + c.ox, 0), c.w - 1)]:
-                    c.dot(fx, fy, JACK[3])
-                    c.dot(fx + sg * 1.0, fy, JACK[0])
-                gx, gy = B(sg * (5.8 - t * 0.4), -tl + 2.2 + t * (tl - 3.0))
-                c.dot(gx, gy, JACK[2])
-    flaps = c.poly([B(-6.4, -tl + 1.4), B(-2.9, -tl + 0.6), B(-2.9, 0.4), B(-5.6, 1.0)]) | c.poly([B(6.4, -tl + 1.4), B(2.9, -tl + 0.6), B(2.9, 0.4), B(5.6, 1.0)])
-    if abs(ang) < 1.2:
-        c.stamp(flaps & ~c.poly([B(-2.8, 3), B(2.8, 3), B(2.8, -tl), B(-2.8, -tl)]), JACK, outline=False)
+    torso = c.poly([B(-4.6, -1.4), B(4.8, -1.4), B(6.2, -tl + 1.8), B(4.4, -tl - 0.8), B(-4.6, -tl - 0.8), B(-6.4, -tl + 1.8)])
+    torso |= c.disc(*B(-4.8, -tl + 1.4), 2.6) | c.disc(*B(4.6, -tl + 1.4), 2.6)
+    hood = c.ell(*B(-3.4, -tl - 0.6), 3.4, 2.4, ang)
+    c.stamp(torso | hood, JACK)
+    shirt = c.poly([B(1.0, -1.4), B(4.4, -1.4), B(5.0, -tl + 1.4), B(3.6, -tl - 0.6), B(1.6, -tl - 0.6)]) & torso
+    c.stamp(shirt, SHIRT, outline=False, spec=False)
+    c.fill(c.tri(S[0], S[1], ang, (0.6, -1.4), (4.0, -1.4), (2.6, 1.6)) & shirt, SKIN[2])
+    c.fill(c.poly([B(0.2, -1.4), B(1.2, -1.4), B(1.8, -tl - 0.4), B(0.8, -tl - 0.4)]) & torso, JACK[0])
+    c.fill(c.poly([B(-4.6, -2.6), B(1.0, -2.6), B(1.0, -1.4), B(-4.6, -1.4)]) & torso, JACK[3])
 
     lx, ly = c.local(H[0], H[1], hang)
-    head = (((lx / 7.0) ** 2 + (ly / 6.5) ** 2) <= 1.0) | ((abs(lx - 0.4) <= 6.3) & (ly >= 0.0) & (ly <= 6.4)) | (((lx - 6.8) / 1.3) ** 2 + ((ly - 1.0) / 1.3) ** 2 <= 1.0)
-    head &= ~((lx > 5.4) & (ly > 4.2))
-    c.under(torso, head, 0, 2, TANK[3])
-    c.stamp(head, SKIN, lt=1, st=1)
-    lx2, ly2 = lx, ly
-    em = ((lx2 + 7.0) / 1.2) ** 2 + ((ly2 - 1.0) / 2.0) ** 2 <= 1.0
-    c.fill(em & head, SKIN[2])
-    hm = hair(c, H, hang, head, p)
+    head = ((lx / 6.4) ** 2 + (ly / 6.0) ** 2) <= 1.0
+    head |= (lx >= -5.0) & (lx <= 6.2) & (ly >= 0.0) & (ly <= 5.8)
+    head |= ((lx - 6.6) / 1.2) ** 2 + ((ly - 1.8) / 1.2) ** 2 <= 1.0
+    head &= ~((lx > 5.2) & (ly > 4.8)) & ~((lx < -3.8) & (ly > 4.6))
+    c.under(torso, head, 0, 1, JACK[3])
+    c.stamp(head, SKIN)
+    c.fill(head & (ly > 4.6) & (lx < 4.0), SKIN[2])
+    ear = ((lx + 3.6) / 1.4) ** 2 + ((ly - 1.2) / 2.0) ** 2 <= 1.0
+    c.fill(ear & head, SKIN[2])
+    c.fill(ear & head & (lx < -3.6), SKIN[3])
+    hair(c, H, hang, head, p)
     face(c, H, hang, p)
 
     if cat is not None:
         if "cat_abs" in p:
             donut.draw_cat(c, p["cat_abs"], 0.0, cat)
         else:
-            P = tf(H[0], H[1], hang, 0.4, -10.6 + p.get("cat_dy", 0.0))
+            P = tf(H[0], H[1], hang, -0.8, -11.4 + p.get("cat_dy", 0.0))
             donut.draw_cat(c, P, hang * 0.85, cat)
 
-    ha = draw_arm(c, sh_a, (sh_a[0] + arms["a"][0], sh_a[1] + arms["a"][1]), fr[0])
+    ha = draw_arm(c, sh_a, (sh_a[0] + arms["a"][0], sh_a[1] + arms["a"][1]), fr[0], bend=bends[0])
     if p.get("knuckles"):
         for k in range(3):
-            c.dot(ha[0] + 1.0, ha[1] - 1.0 + k * 1.2, SKIN[3])
+            c.dot(ha[0] + 1.6, ha[1] - 1.4 + k * 1.3, SKIN[3])
     for s in p.get("streaks", []):
         for i in range(s[2]):
-            c.dot(s[0] - i, s[1], WHITE)
+            c.dot(s[0] - i, s[1], WHITE if i < s[2] - 2 else "#c8b8ff")
     for s in p.get("sweat", []):
         c.dot(s[0], s[1], "#9fd8ff")
         c.dot(s[0], s[1] + 1, "#9fd8ff")
     for s in p.get("stars", []):
         for dx, dy in ((0, 0), (-1, 0), (1, 0), (0, -1), (0, 1)):
             c.dot(s[0] + dx, s[1] + dy, "#ffe45e")
-    import numpy as np
     for _ in range(6):
         if c.a[:, 0, 3].any() or c.a[:, 1, 3].any():
             c.a = np.roll(c.a, 1, axis=1)
@@ -227,87 +244,75 @@ def build_carl(p, cat=None):
     return c, anchor
 
 
-def shift_mask(c, m):
-    from pxl import shift
-    return shift(m, 0, 1)
-
-
 def lst(**kw):
     return kw
 
 
-IDLE_ARMS = {"a": (5.2, 5.0), "b": (-3.0, 6.4)}
-
-
 def idle_frames():
     out = []
-    for i, (br, eyes) in enumerate([(0.0, "open"), (1.0, "open"), (1.0, "blink"), (0.0, "open")]):
-        out.append(lst(lean=0.06, breath=br, eyes=eyes, brow="angry", mouth="shout", sway=[0, 0.6, 1.2, 0.6][i],
-                       arms={"a": (5.2, 5.0 - br * 0.0), "b": (-3.0, 6.4)},
-                       legs={"a": (4.2, 0), "b": (-3.6, 0)}, fist=(2.5, 2.4)))
+    for br, eyes, bob in [(0.0, "open", 0.0), (1.0, "open", 0.6), (1.0, "blink", 0.6), (0.0, "open", 0.0)]:
+        out.append(lst(lean=0.1, hip=(23.4, 41.4), breath=br, eyes=eyes, brow="angry", mouth="grit", sway=bob,
+                       arms={"a": (6.2, 2.4 - bob), "b": (5.6, -1.6 - bob)},
+                       legs={"a": (-6.0, 0, 1.05), "b": (6.6, 0, 1.12)}, fist=(2.7, 2.5)))
     return out
 
 
 def run_frames():
-    L = 0.2
-    fr = [
-        lst(lean=L, hip=(24, 31.4), legs={"a": (6.5, 0, 1.0), "b": (-6, 1.6, 1.0)},
-            arms={"a": (-4.5, 3.5), "b": (6.0, -0.5)}),
-        lst(lean=L + 0.04, hip=(24, 32.4), legs={"a": (2.5, 0, 1.3), "b": (-6, 4.5, 1.25)},
-            arms={"a": (-4.0, 4.6), "b": (4.5, 2.0)}),
-        lst(lean=L, hip=(24, 30.4), legs={"a": (-1.5, 0, 1.03), "b": (2.5, 4.5, 1.5)},
-            arms={"a": (-2.0, 6.0), "b": (1.5, 5.5)}),
-        lst(lean=L, hip=(24, 31.4), legs={"b": (6.5, 0, 1.0), "a": (-6, 1.6, 1.0)},
-            arms={"b": (-4.5, 3.5), "a": (6.0, -0.5)}),
-        lst(lean=L + 0.04, hip=(24, 32.4), legs={"b": (2.5, 0, 1.3), "a": (-6, 4.5, 1.25)},
-            arms={"b": (-4.0, 4.6), "a": (4.5, 2.0)}),
-        lst(lean=L, hip=(24, 30.4), legs={"b": (-1.5, 0, 1.03), "a": (2.5, 4.5, 1.5)},
-            arms={"b": (-2.0, 6.0), "a": (1.5, 5.5)}),
+    L = 0.24
+    steps = [
+        (40.6, (8.0, 0.5, 1.02), (-8.0, 2.4, 1.05), (-5.0, 4.0), (6.4, 0.6)),
+        (41.6, (3.0, 0, 1.25), (-7.0, 6.0, 1.3), (-3.6, 5.6), (4.6, 2.6)),
+        (39.8, (-2.0, 0, 1.04), (3.0, 6.0, 1.5), (0.6, 6.4), (1.0, 5.0)),
     ]
+    fr = []
+    for near, far in (("a", "b"), ("b", "a")):
+        for hy, down, up, back, fwd in steps:
+            fr.append(lst(lean=L, hip=(23.6, hy), legs={near: down, far: up}, arms={far: back, near: fwd}))
     for f in fr:
-        f.update(eyes="open", brow="angry", mouth="grit", fist=(2.5, 2.4), head_off=(2.4, 0.0), sway=1.4)
+        f.update(eyes="open", brow="angry", mouth="shout", fist=(2.6, 2.5), head_off=(2.0, 0.0), sway=1.6)
     return fr
 
 
-JUMP = lst(lean=0.12, hip=(24, 30.2), legs={"a": (3.5, 5.0, 1.7, 0.5), "b": (-3.0, 3.0, 1.5, 0.4)},
-           arms={"a": (4.0, -6.0), "b": (-5.0, -3.0)}, eyes="open", brow="up", mouth="open",
-           fist=(2.6, 2.4), sway=2.0, head_off=(2.0, 0.0))
-FALL = lst(lean=-0.04, hip=(24, 30.2), legs={"a": (5.0, 1.8, 1.1, -0.2), "b": (-4.5, 3.0, 1.15, 0.3)},
-           arms={"a": (6.0, -3.5), "b": (-6.0, -3.2)}, eyes="wide", brow="up", mouth="o",
-           fist=(2.6, 2.4), sway=-1.5, head_off=(1.4, 0.0), cat_dy=1.0)
+JUMP = lst(lean=0.14, hip=(24, 40.0), legs={"a": (-4.0, 4.0, 1.45, 0.5), "b": (4.6, 7.0, 1.7, 0.3)},
+           arms={"a": (5.0, -5.6), "b": (6.0, -6.6)}, eyes="open", brow="angry", mouth="shout",
+           fist=(2.7, 2.5), sway=2.0, head_off=(1.8, 0.0))
+FALL = lst(lean=-0.04, hip=(24, 40.0), legs={"a": (-5.6, 3.0, 1.12, 0.3), "b": (5.6, 1.6, 1.1, -0.2)},
+           arms={"a": (-5.6, -5.0), "b": (6.4, -5.4)}, bend=(-1, 1), eyes="wide", brow="up", mouth="o",
+           fist=(2.7, 2.5), sway=-1.6, head_off=(1.2, 0.0), cat_dy=1.0)
 
 PUNCH = [
-    lst(lean=-0.16, hip=(22.6, 31.8), legs={"a": (6.0, 0, 1.0), "b": (-6.0, 0, 1.35)},
-        arms={"a": (-5.6, 1.6), "b": (5.0, -1.0)}, eyes="open", brow="angry", mouth="grit",
-        fist=(3.0, 2.4), head_off=(1.4, 0.0), sway=-1.0),
-    lst(lean=0.26, hip=(25.0, 31.6), legs={"a": (8.5, 0, 1.0), "b": (-6.5, 0, 1.05)},
-        arms={"a": (10.5, 2.0), "b": (-4.0, 3.5)}, eyes="open", brow="angry", mouth="grit",
-        fist=(3.4, 2.4), head_off=(2.2, 0.0), sway=1.8, streaks=[(34, 24, 3), (33, 27, 4)], knuckles=False),
-    lst(lean=0.32, hip=(25.2, 31.8), legs={"a": (9.5, 0, 1.15), "b": (-5.0, 0.4, 1.0)},
-        arms={"a": (10.2, 1.2), "b": (-4.5, 3.0)}, eyes="open", brow="angry", mouth="grit",
-        fist=(3.9, 2.4), head_off=(2.4, 0.0), sway=2.2, knuckles=True),
-    lst(lean=0.12, hip=(24.6, 31.4), legs={"a": (6.0, 0, 1.0), "b": (-5.0, 0, 1.1)},
-        arms={"a": (7.0, 1.5), "b": (-3.0, 5.0)}, eyes="open", brow="angry", mouth="line",
-        fist=(3.0, 2.4), head_off=(1.8, 0.0), sway=1.0),
+    lst(lean=-0.08, hip=(22.6, 41.4), legs={"a": (-6.4, 0, 1.2), "b": (6.4, 0, 1.04)},
+        arms={"a": (-1.6, 2.6), "b": (6.4, -1.0)}, eyes="open", brow="angry", mouth="grit",
+        fist=(2.9, 2.5), head_off=(1.2, 0.0), sway=-1.0),
+    lst(lean=0.3, hip=(25.0, 41.4), legs={"a": (-6.4, 0, 1.03), "b": (8.6, 0, 1.12)},
+        arms={"a": (16.5, -0.4), "b": (0.0, 3.0)}, eyes="open", brow="angry", mouth="shout",
+        fist=(3.2, 2.5), head_off=(1.8, 0.0), sway=1.8, slack_a=1.0,
+        streaks=[(27, 31, 5), (25, 34, 6), (28, 37, 4)]),
+    lst(lean=0.36, hip=(25.4, 41.6), legs={"a": (-6.0, 0.4, 1.02), "b": (9.4, 0, 1.16)},
+        arms={"a": (17.0, 0.0), "b": (-0.6, 3.2)}, eyes="open", brow="angry", mouth="shout",
+        fist=(3.6, 2.5), head_off=(2.0, 0.0), sway=2.2, knuckles=True),
+    lst(lean=0.16, hip=(24.2, 41.2), legs={"a": (-6.0, 0, 1.06), "b": (7.0, 0, 1.1)},
+        arms={"a": (9.0, 1.6), "b": (4.0, 0.6)}, eyes="open", brow="angry", mouth="grit",
+        fist=(2.9, 2.5), head_off=(1.4, 0.0), sway=1.0),
 ]
 
-HURT = lst(lean=-0.3, hip=(22.2, 30.6), legs={"a": (3.0, 2.5, 1.35, 0.3), "b": (-6.5, 0, 1.0)},
-           arms={"a": (7.0, 2.5), "b": (-7.0, 1.0)}, eyes="squint", brow="hurt", mouth="open",
-           fist=(2.6, 2.4), head_rot=-0.2, head_off=(1.0, 0.0), sway=-2.0, sweat=[(40, 9), (38, 12)])
+HURT = lst(lean=-0.32, hip=(22.6, 40.8), legs={"a": (-7.0, 0, 1.04), "b": (3.6, 2.6, 1.3, 0.3)},
+           arms={"a": (6.0, 4.0), "b": (7.0, 1.0)}, eyes="squint", brow="hurt", mouth="open",
+           fist=(2.7, 2.5), head_rot=-0.2, head_off=(1.0, 0.0), sway=-2.0, sweat=[(41, 20), (39, 23)])
 
 DIE = [
-    lst(lean=-0.5, hip=(22.4, 29.6), legs={"a": (3.0, 3.5, 1.3, 0.4), "b": (-5.0, 0.0, 1.1)},
-        arms={"a": (6.0, 4.0), "b": (-6.5, 2.5)}, eyes="squint", brow="hurt", mouth="open",
-        fist=(2.6, 2.4), head_rot=-0.25, head_off=(1.0, 0.0), sway=-2.5),
-    lst(lean=-1.0, hip=(26.0, 29.0), legs={"a": (31.0, 26.0, "abs"), "b": (28.0, 31.0, "abs")},
-        arms={"a": (-4.0, -6.0), "b": (-6.0, 3.0)}, eyes="x", brow="hurt", mouth="open",
-        fist=(2.6, 2.4), head_rot=0.5, head_off=(1.0, 0.0), sway=-2.5),
-    lst(lean=-1.45, hip=(27.0, 29.0), legs={"a": (38.0, 28.0, "abs"), "b": (37.0, 32.5, "abs")},
-        arms={"a": (-2.0, -5.0), "b": (5.0, 4.0)}, eyes="x", brow="hurt", mouth="o",
-        fist=(2.6, 2.4), head_rot=1.0, head_off=(1.2, 0.0), sway=-1.0, cat_abs=(28, 22.5)),
-    lst(lean=-1.55, hip=(27.5, 29.8), legs={"a": (38.5, 29.5, "abs"), "b": (38.0, 33.5, "abs")},
-        arms={"a": (-4.0, 3.5), "b": (5.0, 4.5)}, eyes="x", brow="hurt", mouth="line",
-        fist=(2.6, 2.4), head_rot=1.1, head_off=(1.2, 0.0), sway=-0.5, stars=[(8, 14), (13, 11)], cat_abs=(24, 23.5)),
+    lst(lean=-0.55, hip=(22.6, 41.4), legs={"a": (-5.0, 0.0, 1.1), "b": (4.0, 3.6, 1.3, 0.4)},
+        arms={"a": (5.0, 5.0), "b": (7.0, 2.0)}, eyes="squint", brow="hurt", mouth="open",
+        fist=(2.7, 2.5), head_rot=-0.25, head_off=(1.0, 0.0), sway=-2.5),
+    lst(lean=-1.0, hip=(26.0, 45.6), legs={"a": (33.0, 50.4, "abs"), "b": (35.0, 46.0, "abs")},
+        arms={"a": (-3.0, 7.0), "b": (2.0, -7.0)}, eyes="x", brow="hurt", mouth="open",
+        fist=(2.7, 2.5), head_rot=0.4, head_off=(1.0, 0.0), sway=-2.5),
+    lst(lean=-1.45, hip=(27.0, 49.2), legs={"a": (38.4, 51.6, "abs"), "b": (39.0, 47.0, "abs")},
+        arms={"a": (2.0, 5.0), "b": (4.0, -6.0)}, eyes="x", brow="hurt", mouth="o",
+        fist=(2.7, 2.5), head_rot=0.2, head_off=(1.0, 0.0), sway=-1.0, cat_abs=(42, 54.0)),
+    lst(lean=-1.52, hip=(27.4, 50.4), legs={"a": (39.0, 52.0, "abs"), "b": (39.6, 48.4, "abs")},
+        arms={"a": (4.0, 3.6), "b": (6.0, -3.0)}, eyes="x", brow="hurt", mouth="line",
+        fist=(2.7, 2.5), head_rot=0.1, head_off=(1.0, 0.0), sway=-0.5, stars=[(4, 38), (9, 34)], cat_abs=(42, 54.4)),
 ]
 
 CARL_ROWS = [idle_frames(), run_frames(), [JUMP], [FALL], PUNCH, [HURT], DIE]

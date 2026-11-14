@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 OL = (27, 18, 38)
-ASSETS = "/Users/mychal.smith/brain-cell-gaming/dcc-side-scroller/dcc-side-scroller/assets"
+ASSETS = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "dcc-side-scroller", "assets"))
 
 
 def R(*hexes):

@@ -4,6 +4,8 @@ signal achievement_unlocked(title: String, description: String)
 signal player_health_changed(current: int, maximum: int)
 signal boss_health_changed(boss_name: String, current: int, maximum: int)
 signal boss_cleared()
+signal player_stamina_changed(current: int, maximum: int)
+signal stamina_denied()
 signal combat_changed(active: bool)
 signal safe_zone_changed(active: bool)
 signal loot_box_opened(tier: String)
@@ -17,9 +19,27 @@ const ACTION_DEADZONE: float = 0.5
 const SAVE_PATH: String = "user://profile.cfg"
 const TUTORIAL_DEATHS_FOR_SKIN: int = 5
 const DEFAULT_SKIN: String = "default"
+const ANIMS_8: Dictionary = {
+	"idle": {"row": 0, "count": 8, "fps": 10.0, "loop": true},
+	"run": {"row": 1, "count": 8, "fps": 16.0, "loop": true},
+	"jump": {"row": 2, "count": 1, "fps": 1.0, "loop": false},
+	"fall": {"row": 3, "count": 1, "fps": 1.0, "loop": false},
+	"punch": {"row": 4, "count": 8, "fps": 44.0, "loop": false},
+	"hurt": {"row": 5, "count": 3, "fps": 15.0, "loop": false},
+	"die": {"row": 6, "count": 8, "fps": 8.0, "loop": false},
+}
+const ANIMS_4: Dictionary = {
+	"idle": {"row": 0, "count": 4, "fps": 5.0, "loop": true},
+	"run": {"row": 1, "count": 6, "fps": 12.0, "loop": true},
+	"jump": {"row": 2, "count": 1, "fps": 1.0, "loop": false},
+	"fall": {"row": 3, "count": 1, "fps": 1.0, "loop": false},
+	"punch": {"row": 4, "count": 4, "fps": 22.0, "loop": false},
+	"hurt": {"row": 5, "count": 1, "fps": 1.0, "loop": false},
+	"die": {"row": 6, "count": 4, "fps": 8.0, "loop": false},
+}
 const SKINS: Dictionary = {
-	"default": {"name": "Carl", "sheet": "res://assets/characters/carl.png", "frame": Vector2i(64, 56)},
-	"day_one": {"name": "Day One Carl", "sheet": "res://assets/characters/skins/carl_day_one.png", "frame": Vector2i(64, 56)},
+	"default": {"name": "Carl", "sheet": "res://assets/characters/carl.png", "frame": Vector2i(136, 136), "scale": 0.5, "anims": ANIMS_8},
+	"day_one": {"name": "Day One Carl", "sheet": "res://assets/characters/skins/carl_day_one.png", "frame": Vector2i(64, 56), "scale": 1.0, "anims": ANIMS_4},
 }
 
 var in_combat: bool = false
@@ -73,6 +93,14 @@ func set_safe_zone(active: bool) -> void:
 
 func report_player_health(current: int, maximum: int) -> void:
 	player_health_changed.emit(current, maximum)
+
+
+func report_player_stamina(current: int, maximum: int) -> void:
+	player_stamina_changed.emit(current, maximum)
+
+
+func deny_stamina() -> void:
+	stamina_denied.emit()
 
 
 func report_boss_health(boss_name: String, current: int, maximum: int) -> void:
@@ -137,6 +165,14 @@ func skin_sheet() -> Texture2D:
 
 func skin_frame() -> Vector2i:
 	return SKINS[selected_skin]["frame"] as Vector2i
+
+
+func skin_scale() -> float:
+	return float(SKINS[selected_skin]["scale"])
+
+
+func skin_anims() -> Dictionary:
+	return SKINS[selected_skin]["anims"] as Dictionary
 
 
 func register_tutorial_death() -> void:
@@ -234,6 +270,10 @@ func _register_inputs() -> void:
 		_key(KEY_X),
 		_joy_button(JOY_BUTTON_X),
 	]
+	var sprint_events: Array[InputEvent] = [
+		_key(KEY_SHIFT),
+		_joy_button(JOY_BUTTON_RIGHT_SHOULDER),
+	]
 	var interact_events: Array[InputEvent] = [
 		_key(KEY_E),
 		_joy_button(JOY_BUTTON_Y),
@@ -242,6 +282,7 @@ func _register_inputs() -> void:
 	_add_action(&"move_right", move_right_events)
 	_add_action(&"jump", jump_events)
 	_add_action(&"attack", attack_events)
+	_add_action(&"sprint", sprint_events)
 	_add_action(&"interact", interact_events)
 
 
