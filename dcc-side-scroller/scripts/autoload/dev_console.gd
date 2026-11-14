@@ -84,11 +84,15 @@ func _on_submitted(text: String) -> void:
 	var argument: String = parts[1].to_lower() if parts.size() > 1 else ""
 	match command:
 		"help":
-			_print("goto <section>  list  heal  skins  skin <default|derpy>  unlockskin <id>  resetprofile  help  (` or esc closes)")
+			_print("goto <section>  list  heal  god [on|off]  kms  skins  skin <default|derpy>  unlockskin <id>  resetprofile  help  (` or esc closes)")
 		"list":
 			_print("sections: " + ", ".join(SECTIONS) + ", cp<N>")
 		"heal":
 			_heal()
+		"god":
+			_god(argument)
+		"kms":
+			_kms()
 		"goto":
 			_goto(argument)
 		"skins":
@@ -105,6 +109,37 @@ func _on_submitted(text: String) -> void:
 			_print("profile reset")
 		_:
 			_print("unknown command: " + command)
+
+
+func _god(argument: String) -> void:
+	var active: bool = not Game.god_mode
+	if argument == "on":
+		active = true
+	elif argument == "off":
+		active = false
+	elif not argument.is_empty():
+		_print("usage: god [on|off]")
+		return
+	Game.set_god_mode(active)
+	if active:
+		_print("god mode on: no damage, infinite stamina, pits rescue you. Stays on across deaths and reloads until you turn it off.")
+	else:
+		_print("god mode off")
+
+
+func _kms() -> void:
+	var player: Node = get_tree().get_first_node_in_group("player")
+	if player == null:
+		_print("no player")
+		return
+	if bool(player.call("is_dead")):
+		_print("already dead")
+		return
+	player.call("kill", true)
+	_print("killed")
+	_panel.visible = false
+	_line.release_focus()
+	get_tree().paused = false
 
 
 func _heal() -> void:

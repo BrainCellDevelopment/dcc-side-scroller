@@ -16,6 +16,7 @@ var _banner_token: int = 0
 var _item_queue: Array[String] = []
 var _item_busy: bool = false
 var _item_label: Label = null
+var _god_label: Label = null
 
 @onready var health_fill: ColorRect = $HealthBarBg/HealthFill
 @onready var stamina_fill: ColorRect = $StaminaBarBg/StaminaFill
@@ -46,11 +47,30 @@ func _ready() -> void:
 	Game.hint_changed.connect(_on_hint_changed)
 	Game.item_added.connect(_on_item_added)
 	_build_item_label()
+	_build_god_label()
 	_update_timer()
 
 
 func _process(_delta: float) -> void:
 	_update_timer()
+
+
+func _build_god_label() -> void:
+	_god_label = Label.new()
+	_god_label.text = "GOD MODE"
+	_god_label.position = Vector2(92.0, 14.0)
+	_god_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_god_label.add_theme_font_size_override("font_size", 8)
+	_god_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+	_god_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_god_label.add_theme_constant_override("outline_size", 3)
+	_god_label.visible = Game.god_mode
+	add_child(_god_label)
+	Game.god_mode_changed.connect(_on_god_mode_changed)
+
+
+func _on_god_mode_changed(active: bool) -> void:
+	_god_label.visible = active
 
 
 func _build_item_label() -> void:

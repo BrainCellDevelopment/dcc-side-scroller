@@ -7,6 +7,7 @@ signal boss_cleared()
 signal player_stamina_changed(current: int, maximum: int)
 signal stamina_denied()
 signal combat_changed(active: bool)
+signal god_mode_changed(active: bool)
 signal safe_zone_changed(active: bool)
 signal loot_box_opened(tier: String)
 signal hint_changed(text: String)
@@ -44,6 +45,7 @@ const SKINS: Dictionary = {
 }
 
 var in_combat: bool = false
+var god_mode: bool = false
 var in_safe_zone: bool = false
 var floor_time_left: float = FLOOR_TIME
 var checkpoint_index: int = -1
@@ -83,6 +85,13 @@ func enemy_engaged() -> void:
 func enemy_disengaged() -> void:
 	_engaged_enemies = maxi(_engaged_enemies - 1, 0)
 	_refresh_combat()
+
+
+func set_god_mode(active: bool) -> void:
+	if god_mode == active:
+		return
+	god_mode = active
+	god_mode_changed.emit(active)
 
 
 func set_safe_zone(active: bool) -> void:
