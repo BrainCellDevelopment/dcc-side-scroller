@@ -4,10 +4,11 @@ import re
 import sys
 from PIL import Image, ImageDraw
 
-PROJECT = "/Users/mychal.smith/brain-cell-gaming/dcc-side-scroller/dcc-side-scroller"
+ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+PROJECT = ROOT + "/dcc-side-scroller"
 OUT = PROJECT + "/scenes/level00.tscn"
-MAP = "/Users/mychal.smith/brain-cell-gaming/dcc-side-scroller/art-src/level/level00_map.png"
-CONTRACT2 = "/Users/mychal.smith/brain-cell-gaming/dcc-side-scroller/docs/contract-art.md"
+MAP = ROOT + "/art-src/level/level00_map.png"
+CONTRACT2 = ROOT + "/docs/contract-art.md"
 
 RES = {
     "player": "res://scenes/player/player.tscn",
@@ -23,7 +24,7 @@ RES = {
     "background": "res://scenes/level/background.tscn",
 }
 for _k in ["torch", "lichen", "fire", "burnt_tree", "bike_rack", "moped", "rubble", "big_door", "rug", "fireplace",
-           "bed", "desk", "bookshelf", "guildmaster", "stair_rail", "crate", "sign_arrow"]:
+           "bed", "desk", "bookshelf", "guildmaster", "stair_rail", "crate", "sign_arrow", "street_lamp", "street_lamp_bent", "street_sign", "stop_sign"]:
     RES["prop_" + _k] = "res://scenes/props/%s.tscn" % _k
 RES["door"] = "res://scenes/props/door.tscn"
 RES["mordecai"] = "res://scenes/props/mordecai.tscn"
@@ -72,7 +73,7 @@ def add_kill(x, y, w, h):
 
 
 PROP_W = {"prop_bike_rack": 40, "prop_moped": 40, "prop_rubble": 32, "prop_crate": 40, "prop_burnt_tree": 48,
-          "prop_sign_arrow": 32, "prop_stair_rail": 64, "prop_fire": 32, "prop_big_door": 96}
+          "prop_sign_arrow": 32, "prop_street_lamp": 40, "prop_street_lamp_bent": 48, "prop_street_sign": 40, "prop_stop_sign": 32, "prop_stair_rail": 64, "prop_fire": 32, "prop_big_door": 96}
 
 
 def add_prop(key, x, y, free=False):
@@ -218,6 +219,10 @@ def build():
         add_prop("prop_fire", x, 304)
     for x in (150, 760, 1330, 2150, 2800, 3300, 3950):
         add_prop("prop_burnt_tree", x, 304)
+    for x, k in ((520, "prop_street_lamp"), (1230, "prop_street_lamp_bent"), (2050, "prop_street_lamp"), (2760, "prop_street_lamp"),
+                 (3480, "prop_street_lamp_bent"), (4260, "prop_street_lamp"), (460, "prop_street_sign"), (1590, "prop_stop_sign"),
+                 (2420, "prop_street_sign"), (3180, "prop_stop_sign"), (3870, "prop_street_sign")):
+        add_prop(k, x, 304)
     for x, k in ((380, "prop_moped"), (900, "prop_bike_rack"), (1450, "prop_rubble"), (1900, "prop_moped"),
                  (2480, "prop_bike_rack"), (3180, "prop_rubble"), (3600, "prop_bike_rack"), (4100, "prop_rubble"),
                  (4300, "prop_rubble"), (700, "prop_rubble"), (120, "prop_bike_rack")):
