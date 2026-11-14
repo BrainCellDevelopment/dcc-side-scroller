@@ -79,6 +79,24 @@ Reuse: goblin grunt and thrower, Engineer arena flow, projectile and targeting h
 ## Look and palette (Floor 1)
 Dark brick red, green lichen glow, torch orange, bone white. Arteries are wide and torch-lit; corridors are low and lichen-lit. Accents: garbage browns for the Hoarder, steam and coal for the workshop, rave black-light purple for the boss dome. See #49.
 
+### Palette sheet (source of truth: `art-src/floor1/palette.py`, image: `docs/reference/floor1/palette.png`)
+Ramps are dark to light. Use these for every new Floor 1 asset so neighborhoods stay consistent.
+
+| Family | Ramp |
+|---|---|
+| Brick red | `#1a0a10` `#2e1218` `#4a1c20` `#6b2b2a` `#8f4034` `#b85c42` |
+| Lichen green | `#0e2620` `#1c523a` `#3a9448` `#86dc68` `#c8f5a0` (glow `#46b868`) |
+| Torch orange | `#6e1f1c` `#c8481e` `#f5882a` `#ffc45a` `#fff0b0` |
+| Bone white | `#4a3838` `#8a7866` `#c8b692` `#eee2c0` `#fffaf0` |
+| Wet stone | `#141c20` `#22323a` `#3a5256` `#5f8280` `#9ac0b8` |
+| Plank | `#1e120e` `#3a2218` `#5a3622` `#80502e` `#aa7640` |
+| Iron | `#161218` `#2e2a36` `#4e4a5c` `#7c7888` `#aeaab8` |
+| Outline | `#0c0508` |
+
+Neighborhood accents sit on top of the ramps above and never replace them: garbage (Hoarder) `#3a2c1a` `#5e4a28` `#8a7440`; workshop steam and coal `#1c1a1c` `#6a6e74` `#d8dce0`; rave dome black light `#1a0a3a` `#6a2ad0` `#d070ff`.
+
+Kit and usage: see "Floor 1 art kit (#49)" in [contract-art.md](contract-art.md). Screenshots at 1280x720 and 960x540 are in `docs/reference/floor1/`. Pick a background with `Background.set_style(4)` (tunnel), `5` (artery) or `6` (corridor); platforms use `style` 4 to 6.
+
 ## Adaptation decisions
 - **Tone.** Jokes in the System voice, real grief when it counts (the Hoarder, the collapse). The goblin chieftain's lair and the baby-bombing scene are skipped entirely (#61).
 - **Linear level.** The book's open grid becomes a right-to-left line; fog of war and the minimap are out of scope.
