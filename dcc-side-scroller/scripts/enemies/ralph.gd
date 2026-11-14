@@ -208,7 +208,6 @@ func _die() -> void:
 	set_deferred("collision_layer", 0)
 	_set_engaged(false)
 	PlayerStats.award_kill(self)
-	Game.report_mob_kill(self)
 	var tween: Tween = create_tween()
 	tween.tween_property(self, "_fade", 0.0, 0.9)
 	defeated.emit.call_deferred(self)

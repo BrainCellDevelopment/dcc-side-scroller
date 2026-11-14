@@ -12,6 +12,7 @@ const ZONE_HEIGHT: float = 120.0
 const DOOR_OPEN_RANGE: float = 70.0
 const DOOR_CLOSE_RANGE: float = 48.0
 const DOOR_STAND_CLEAR: float = 20.0
+const EARNED_BOX_KIT: String = "floor1"
 const HALL_TEXT: String = "Mobs in the hallway"
 const ENEMY_MASK: int = 12
 const PLAYER_MASK: int = 2
@@ -92,10 +93,10 @@ func restore(player: Node) -> void:
 		player.call("restore_all")
 
 
-func add_box(tier: String = "Bronze") -> Area2D:
+func add_box(tier: String = "Bronze", kit: String = "") -> Area2D:
 	var box: Area2D = LOOT_BOX.instantiate() as Area2D
 	box.set("tier", tier)
-	box.set("kit", box_kit)
+	box.set("kit", kit if not kit.is_empty() else box_kit)
 	box.set("slot", get_tree().get_nodes_in_group("loot_boxes").size())
 	add_child(box)
 	box.global_position = box_spot.global_position
@@ -136,7 +137,7 @@ func _on_zone_entered(body: Node2D) -> void:
 
 func _give_earned_boxes() -> void:
 	for tier: String in Game.take_earned_boxes():
-		add_box(tier)
+		add_box(tier, EARNED_BOX_KIT)
 
 
 func _on_zone_exited(body: Node2D) -> void:
