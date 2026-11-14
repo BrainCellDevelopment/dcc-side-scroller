@@ -24,6 +24,7 @@ const ANIMS: Dictionary = {
 }
 const DUST_COOLDOWN: float = 0.18
 const LAND_SPEED: float = 140.0
+const STOMP_MIN_FALL: float = 40.0
 
 @export var speed: float = 130.0
 @export var sprint_multiplier: float = 1.5
@@ -39,6 +40,8 @@ const LAND_SPEED: float = 140.0
 @export var jump_velocity: float = -330.0
 @export var max_health: int = 10
 @export var attack_damage: int = 1
+@export var stomp_damage: int = 1
+@export var stomp_bounce: float = 250.0
 @export var attack_time: float = 0.32
 @export var attack_cooldown: float = 0.42
 @export var knockback: Vector2 = Vector2(160.0, -140.0)
@@ -128,11 +131,23 @@ func _slide_off_enemies() -> void:
 		var c: KinematicCollision2D = get_slide_collision(i)
 		var other: Node2D = c.get_collider() as Node2D
 		if other != null and other.is_in_group("enemies") and c.get_normal().y < -0.5:
+			if _prev_vy >= STOMP_MIN_FALL and other.has_method("take_damage"):
+				_stomp(other)
+				return
 			var away: float = signf(global_position.x - other.global_position.x)
 			if is_zero_approx(away):
 				away = -float(facing)
 			velocity = Vector2(away * 110.0, -140.0)
 			return
+
+
+func _stomp(enemy: Node2D) -> void:
+	enemy.call("take_damage", stomp_damage, global_position)
+	var holding_jump: bool = Input.is_action_pressed("jump")
+	velocity.y = jump_velocity * 0.85 if holding_jump else -stomp_bounce
+	_jumping = holding_jump
+	_coyote_left = 0.0
+	_spawn_fx(HIT_SPARK, global_position + Vector2(0.0, -2.0))
 
 
 func take_damage(amount: int, from: Vector2) -> void:
