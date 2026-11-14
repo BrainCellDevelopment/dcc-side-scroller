@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="10_door"]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="11_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="12_hud"]
+[ext_resource type="PackedScene" path="res://scenes/props/dynamite_pickup.tscn" id="99_dynpick"]
 
 [sub_resource type="RectangleShape2D" id="shape_40x140"]
 size = Vector2(40, 140)
@@ -479,3 +480,10 @@ metadata/floor_y = 304
 
 [node name="Shape" type="CollisionShape2D" parent="Triggers/Sec6"]
 shape = SubResource("shape_640x1900")
+
+[node name="DynamitePickupA" parent="." instance=ExtResource("99_dynpick")]
+position = Vector2(5270, 304)
+
+[node name="DynamitePickupB" parent="." instance=ExtResource("99_dynpick")]
+position = Vector2(4560, 304)
+count = 3

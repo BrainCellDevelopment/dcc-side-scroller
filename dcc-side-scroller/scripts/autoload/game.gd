@@ -350,6 +350,11 @@ func _register_inputs() -> void:
 	_add_action(&"sprint", sprint_events)
 	_add_action(&"interact", interact_events)
 	_add_action(&"spell", spell_events)
+	var throw_events: Array[InputEvent] = [
+		_key(KEY_G),
+		_joy_button(JOY_BUTTON_LEFT_SHOULDER),
+	]
+	_add_action(&"throw", throw_events)
 
 
 func _add_action(action: StringName, events: Array[InputEvent]) -> void:
