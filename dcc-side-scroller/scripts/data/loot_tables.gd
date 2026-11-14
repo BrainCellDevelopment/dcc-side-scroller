@@ -6,6 +6,9 @@ extends RefCounted
 
 const DEFAULT_KIT: String = ""
 const FLOOR1_KIT: String = "floor1"
+## "floor1_room" is the fast-food safe room's own kit (#71): it is the only safe room, so its Bronze box is
+## a guaranteed lifeline (two healing potions) and its Silver box is food (cookie or toast).
+const ROOM_KIT: String = "floor1_room"
 const TIER_FALLBACK: String = "Bronze"
 
 ## Each entry: [item id, weight, count].
@@ -23,6 +26,10 @@ const KITS: Dictionary = {
 		"Gold": [["spiked_kneepads", 3, 1], ["lucky_boxers", 2, 1], ["dynamite", 2, 5], ["healing_potion", 2, 4]],
 		"Legendary": [["legendary_pet_biscuit", 1, 1]],
 		"Boss": [["nightgaunt_cloak", 1, 1], ["trollskin_shirt", 1, 1], ["spiked_kneepads", 1, 1]],
+	},
+	"floor1_room": {
+		"Bronze": [["healing_potion", 1, 2]],
+		"Silver": [["experience_cookie", 1, 1], ["mana_toast", 1, 2]],
 	},
 }
 

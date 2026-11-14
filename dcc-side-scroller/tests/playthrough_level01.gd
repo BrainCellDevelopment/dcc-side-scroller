@@ -2,10 +2,19 @@ extends Node
 
 const LEVEL: PackedScene = preload("res://scenes/level01.tscn")
 const TIME_LIMIT: float = 600.0
-const BOT_HEALTH: int = 999
+# Pacing: bot seconds to first-time-player seconds. The bot never reads text, never stops to look and never
+# misjudges a jump, so walking and small fights take a human about 3 to 5 times as long. Boss fights are paced
+# by the boss's own timers, so a human needs about 1.5 to 2 times the bot. The hand-off is text, about 2 times.
+const WALK_FACTOR: Vector2 = Vector2(3.0, 5.0)
+const BOSS_FACTOR: Vector2 = Vector2(1.5, 2.0)
+const TEXT_FACTOR: Vector2 = Vector2(1.5, 2.5)
+const SECTION_NAMES: PackedStringArray = ["tunnel", "rats", "saferoom", "hoarder", "workshop", "swine", "collapse", "handoff"]
+# The bot plays with the health the game gives it. DCC_BOT_HEALTH only exists to debug later sections.
+const HEAL_BELOW: int = 4
+const FACING: int = -1
+const BOX_PATIENCE: float = 20.0
 const STUCK_LIMIT: float = 25.0
 const MAX_DEATHS: int = 12
-const FACING: int = -1
 const DOOR_STANDOFF: float = 100.0
 const Explosives: GDScript = preload("res://scripts/combat/explosives.gd")
 
@@ -30,6 +39,16 @@ var _swine_tick: int = -1
 var _stage: int = 0
 var _stage_time: float = 0.0
 var _carry_health: int = 0
+var _stats: Dictionary = {}
+var _last_hp: int = -1
+var _potion_cooldown: float = 0.0
+var _room_wait: float = 0.0
+var _room_done: bool = Game.has_meta("bot_room_done")
+var _shot_dir: String = OS.get_environment("DCC_SHOT_DIR")
+var _shot_label: String = ""
+var _shot_wait: float = 0.0
+var _shots: Dictionary = {}
+var _swine_hp: int = -1
 
 
 func _ready() -> void:
@@ -52,9 +71,89 @@ func _ready() -> void:
 		add_child(_level)
 	FloorHandoff.scene_changer = Callable(self, "_swap")
 	_player = _level.get_node("Player") as CharacterBody2D
-	_player.set("health", BOT_HEALTH)
+	var health_text: String = OS.get_environment("DCC_BOT_HEALTH")
+	if not health_text.is_empty():
+		_player.set("health", int(health_text))
+	_stats = _load_stats()
+	_last_hp = int(_player.get("health"))
+	Game.player_health_changed.connect(_on_health)
 	_player.connect("died", _on_died)
 	Game.achievement_unlocked.connect(_on_achievement)
+
+
+func _load_stats() -> Dictionary:
+	if not Game.has_meta("bot_stats"):
+		var fresh: Dictionary = {}
+		for key: String in SECTION_NAMES:
+			fresh[key] = {"time": 0.0, "dmg": 0, "heal_potion": 0, "heal_room": 0, "heal_regen": 0, "deaths": 0, "hp_in": -1, "hp_out": -1, "low": 99, "potions": 0}
+		Game.set_meta("bot_stats", fresh)
+	return Game.get_meta("bot_stats") as Dictionary
+
+
+func _unopened_boxes() -> int:
+	var count: int = 0
+	for node: Node in get_tree().get_nodes_in_group("loot_boxes"):
+		if bool(node.get("summoned")) and not bool(node.get("is_open")):
+			count += 1
+	return count
+
+
+func _total_damage() -> int:
+	var total: int = 0
+	for key: String in SECTION_NAMES:
+		total += int((_stats[key] as Dictionary)["dmg"])
+	return total
+
+
+func _row() -> Dictionary:
+	var key: String = SECTION_NAMES[clampi(_section, 0, SECTION_NAMES.size() - 1)] if _stage == 0 else "handoff"
+	return _stats[key] as Dictionary
+
+
+func _on_health(current: int, _maximum: int) -> void:
+	var previous: int = _last_hp
+	_last_hp = current
+	if not _stats.is_empty() and current > 0:
+		_row()["low"] = mini(int(_row()["low"]), current)
+	if previous <= 0 or _stats.is_empty():
+		return
+	var row: Dictionary = _row()
+	if current < previous:
+		row["dmg"] = int(row["dmg"]) + previous - current
+	elif Game.in_safe_zone:
+		row["heal_room"] = int(row["heal_room"]) + current - previous
+	elif _potion_cooldown > 0.0:
+		row["heal_potion"] = int(row["heal_potion"]) + current - previous
+	else:
+		row["heal_regen"] = int(row["heal_regen"]) + current - previous
+
+
+func _shot(label: String) -> void:
+	if _shot_dir.is_empty() or _shots.has(label):
+		return
+	_shots[label] = true
+	var image: Image = get_viewport().get_texture().get_image()
+	if image != null:
+		image.save_png(_shot_dir.path_join(label + ".png"))
+
+
+func _report() -> void:
+	_log("section report (bot seconds, real damage taken, healing by source, deaths, health in/out):")
+	var total_time: float = 0.0
+	var total_dmg: int = 0
+	for key: String in SECTION_NAMES:
+		var row: Dictionary = _stats[key]
+		total_time += float(row["time"])
+		total_dmg += int(row["dmg"])
+		_log("  %-9s %6.1fs  dmg %2d  healed potion %d room %d regen %d  deaths %d  hp %d -> %d (low %d)" % [key, float(row["time"]), int(row["dmg"]), int(row["heal_potion"]), int(row["heal_room"]), int(row["heal_regen"]), int(row["deaths"]), int(row["hp_in"]), int(row["hp_out"]), int(row["low"])])
+	var low: float = 0.0
+	var high: float = 0.0
+	for key: String in SECTION_NAMES:
+		var seconds: float = float((_stats[key] as Dictionary)["time"])
+		var factor: Vector2 = BOSS_FACTOR if key == "hoarder" or key == "swine" else (TEXT_FACTOR if key == "handoff" else WALK_FACTOR)
+		low += seconds * factor.x
+		high += seconds * factor.y
+	_log("  total     %6.1fs  dmg %2d; first-time player estimate %.1f to %.1f minutes (walk x%.0f-%.0f, boss x%.1f-%.1f, text x%.1f-%.1f)" % [total_time, total_dmg, low / 60.0, high / 60.0, WALK_FACTOR.x, WALK_FACTOR.y, BOSS_FACTOR.x, BOSS_FACTOR.y, TEXT_FACTOR.x, TEXT_FACTOR.y])
 
 
 func _llamas_alive() -> int:
@@ -84,6 +183,7 @@ func _log(text: String) -> void:
 
 func _on_died() -> void:
 	Game.set_meta("bot_deaths", _deaths() + 1)
+	_row()["deaths"] = int(_row()["deaths"]) + 1
 	Game.set_meta("bot_elapsed", _elapsed)
 	_log("DIED #%d at (%.0f, %.0f) section %d" % [_deaths(), _player.global_position.x, _player.global_position.y, _section])
 	if _deaths() > MAX_DEATHS:
@@ -99,6 +199,7 @@ func _finish(passed: bool, text: String) -> void:
 		return
 	_finished = true
 	Game.clear_checkpoint()
+	_report()
 	_log("%s: %s (deaths %d)" % ["PASS" if passed else "FAIL", text, _deaths()])
 	get_tree().quit(0 if passed else 1)
 
@@ -142,15 +243,24 @@ func _physics_process(delta: float) -> void:
 	var pos: Vector2 = _player.global_position
 	var section: int = int(_level.get("section"))
 	if section != _section:
+		if _section >= 0:
+			_row()["hp_out"] = int(_player.get("health"))
 		_section = section
-		_log("section %d %s at (%.0f, %.0f)" % [section, _keys[section], pos.x, pos.y])
-		if section == 4 and int(_player.get("health")) < int(_player.get("max_health")):
-			_player.set("health", int(_player.get("max_health")))
-			_log("bot health restored after the Hoarder (no safe room between her and the Ball of Swine)")
+		_row()["hp_in"] = int(_player.get("health"))
+		_log("section %d %s at (%.0f, %.0f), health %d/%d, potions %d, dynamite %d, unopened boxes %d" % [section, _keys[section], pos.x, pos.y, int(_player.get("health")), int(_player.get("max_health")), Inventory.count_of("healing_potion"), Explosives.stack_count(), _unopened_boxes()])
+		_shot_label = "%d_%s" % [section, _keys[section]]
+		_shot_wait = 1.5
 		if section == 1:
 			_log("llama alleys left behind with %d of 2 llamas alive, health %d" % [_llamas_alive(), int(_player.get("health"))])
 		if section == 5:
 			_log("workshop left behind with %d of 2 bomb bards and %d of 1 shamanka alive" % [_count_variant(2), _count_variant(3)])
+	_row()["time"] = float(_row()["time"]) + delta
+	if _shot_wait > 0.0:
+		_shot_wait -= delta
+		if _shot_wait <= 0.0:
+			_shot(_shot_label)
+	_potion_cooldown = maxf(_potion_cooldown - delta, 0.0)
+	_manage_items(delta)
 	if section == 2 and Game.in_safe_zone and not _room_seen:
 		_room_seen = true
 		Game.set_meta("bot_room_seen", true)
@@ -163,12 +273,77 @@ func _physics_process(delta: float) -> void:
 		return
 	if bool(_level.get("complete")):
 		_move(0)
-		_log("Floor 1 complete: collapse beat running, damage taken %d, level %d xp %d, smush %d" % [BOT_HEALTH - int(_player.get("health")), PlayerStats.character_level, PlayerStats.xp, PlayerStats.smush_count])
+		_log("Floor 1 complete: collapse beat running, health %d/%d, level %d xp %d, smush %d" % [int(_player.get("health")), int(_player.get("max_health")), PlayerStats.character_level, PlayerStats.xp, PlayerStats.smush_count])
+		_shot("6_collapse_end")
+		_row()["hp_out"] = int(_player.get("health"))
 		_stage = 1
 		return
 	_track_progress(delta, pos)
+	if _room_step(delta):
+		_hold(&"jump", false)
+		return
 	_navigate(pos)
 	_hold(&"jump", _jump_hold > 0.0)
+
+
+# What a player would do with the bag: wear gear, eat cookies, drink a healing potion when low.
+func _manage_items(_delta: float) -> void:
+	for i: int in Inventory.slots.size():
+		var item: Dictionary = Inventory.slots[i]
+		if item.is_empty():
+			continue
+		var slot_name: String = str(item.get("slot", ""))
+		if not slot_name.is_empty() and Inventory.equipped.get(slot_name, {}).is_empty():
+			if Inventory.equip_from(i):
+				_log("equipped %s" % str(item.get("name", item["id"])))
+				return
+	if Game.in_safe_zone and Inventory.count_of("experience_cookie") > 0:
+		_use("experience_cookie")
+	var hp: int = int(_player.get("health"))
+	if hp > 0 and hp <= HEAL_BELOW and _potion_cooldown <= 0.0 and Inventory.count_of("healing_potion") > 0:
+		_use("healing_potion")
+
+
+func _use(item_id: String) -> void:
+	for i: int in Inventory.slots.size():
+		if not Inventory.slots[i].is_empty() and str(Inventory.slots[i]["id"]) == item_id:
+			_potion_cooldown = 0.2
+			var before: int = int(_player.get("health"))
+			if Inventory.use_item(i):
+				_row()["potions"] = int(_row()["potions"]) + 1
+				_log("used %s, health %d -> %d, level %d xp %d" % [item_id, before, int(_player.get("health")), PlayerStats.character_level, PlayerStats.xp])
+			return
+
+
+# Safe room: stand still and open every loot box (E), the way a player would, before moving on.
+func _room_step(delta: float) -> bool:
+	if _room_done or _section != 2 or not Game.in_safe_zone:
+		return false
+	_move(0)
+	_room_wait += delta
+	var waiting: int = 0
+	for node: Node in get_tree().get_nodes_in_group("loot_boxes"):
+		if bool(node.get("summoned")) and not bool(node.get("is_open")):
+			waiting += 1
+	if _room_wait > 1.0 and waiting > 0 and _room_wait < BOX_PATIENCE and fmod(_room_wait, 0.8) < delta:
+		_tap(&"interact")
+	if (waiting == 0 and _room_wait > 3.0) or _room_wait >= BOX_PATIENCE:
+		_log("safe room done after %.1fs: %d boxes left, bag potions %d mana potions %d toast %d dynamite %d, health %d/%d" % [_room_wait, waiting, Inventory.count_of("healing_potion"), Inventory.count_of("mana_potion"), Inventory.count_of("mana_toast"), Explosives.stack_count(), int(_player.get("health")), int(_player.get("max_health"))])
+		_room_done = true
+		Game.set_meta("bot_room_done", true)
+		if OS.get_environment("DCC_BOT_LOOT") == "none":
+			_strip_consumables()
+		return false
+	return true
+
+
+# Debug knob for the worst-case measurement: the box rolls came up empty.
+func _strip_consumables() -> void:
+	for i: int in Inventory.slots.size():
+		var item: Dictionary = Inventory.slots[i]
+		if not item.is_empty() and str(item.get("use", "")) == "heal":
+			Inventory.remove_at(i, int(item["count"]))
+	_log("DCC_BOT_LOOT=none: healing potions dropped from the bag")
 
 
 func _boss_fight_on() -> bool:
@@ -225,6 +400,7 @@ func _swap(path: String) -> void:
 
 func _hand_off(delta: float) -> void:
 	_stage_time += delta
+	_row()["time"] = float(_row()["time"]) + delta
 	_stuck_time = 0.0
 	if _stage_time > 60.0:
 		_finish(false, "hand-off stalled in stage %d" % _stage)
@@ -237,7 +413,7 @@ func _hand_off(delta: float) -> void:
 		if bool(_level.get("complete")):
 			_move(0)
 			var carried_ok: bool = int(_player.get("health")) > 0 and _carry_health > 0 and PlayerStats.floor_number == 2
-			_finish(carried_ok, "reached the Level 2 stub, health %d (carried %d), level %d xp %d, damage taken %d" % [int(_player.get("health")), _carry_health, PlayerStats.character_level, PlayerStats.xp, BOT_HEALTH - int(_player.get("health"))])
+			_finish(carried_ok, "reached the Level 2 stub, health %d (carried %d), level %d xp %d, total damage taken %d" % [int(_player.get("health")), _carry_health, PlayerStats.character_level, PlayerStats.xp, _total_damage()])
 			return
 		_move(1)
 		if _player.is_on_floor() and _jump_hold <= 0.0 and _ray(_player.global_position + Vector2(0.0, -8.0), _player.global_position + Vector2(22.0, -8.0)):

@@ -20,7 +20,7 @@ width = 640.0
 checkpoint_index = 2
 hall_depth = 56.0
 box_tiers = PackedStringArray("Bronze", "Silver")
-box_kit = "floor1"
+box_kit = "floor1_room"
 
 [node name="Zone" type="Area2D" parent="."]
 
