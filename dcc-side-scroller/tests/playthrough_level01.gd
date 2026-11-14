@@ -19,6 +19,7 @@ var _section: int = -1
 var _best_x: float = 1.0e9
 var _stuck_time: float = 0.0
 var _finished: bool = false
+var _room_seen: bool = Game.has_meta("bot_room_seen")
 var _keys: PackedStringArray = PackedStringArray()
 
 
@@ -123,6 +124,13 @@ func _physics_process(delta: float) -> void:
 		_log("section %d %s at (%.0f, %.0f)" % [section, _keys[section], pos.x, pos.y])
 		if section == 1:
 			_log("llama alleys left behind with %d of 2 llamas alive, health %d" % [_llamas_alive(), int(_player.get("health"))])
+	if section == 2 and Game.in_safe_zone and not _room_seen:
+		_room_seen = true
+		Game.set_meta("bot_room_seen", true)
+		_log("safe room entered, checkpoint %d, health %d" % [Game.checkpoint_index, int(_player.get("health"))])
+	if section >= 3 and not _room_seen and not Game.has_meta("bot_started"):
+		_finish(false, "left the safe room section without entering the room")
+		return
 	if _elapsed > TIME_LIMIT:
 		_finish(false, "timed out in section %d at (%.0f, %.0f)" % [section, pos.x, pos.y])
 		return

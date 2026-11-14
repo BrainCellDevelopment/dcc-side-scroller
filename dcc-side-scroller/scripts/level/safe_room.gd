@@ -127,7 +127,8 @@ func _on_zone_entered(body: Node2D) -> void:
 	if not _boxes_given:
 		_boxes_given = true
 		for tier: String in box_tiers:
-			add_box(tier)
+			add_box.call_deferred(tier)
+	SystemVoice.fire("first_safe_room")
 	entered.emit()
 
 

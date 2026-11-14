@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/props/caretaker.tscn" id="1_care"]
+[ext_resource type="Script" path="res://scripts/props/tally.gd" id="2_tally"]
+
+[node name="Tally" instance=ExtResource("1_care")]
+script = ExtResource("2_tally")
+lines = PackedStringArray("Tally sees Crawler walk in alive. Tally is surprised, but not rude about it.", "Door was shut to the hallway. Nothing with teeth gets past Tally's door. Tally checks twice.", "Playground is for resting. Slide is for sulking. Beds are free, nobody is charging, this is not that kind of restaurant.")
+perk_line = "Hat for the road. Tally folded it from a napkin, it is lucky, a little. Now sit, Tally will feed you."
+repeat_line = "Tally has nothing more to say. Boxes by the counter, soda is not for drinking, trust Tally."
+meal_lines = PackedStringArray("Vindaloo, as ordered by the look on your face. Hot enough to make a goblin weep. Eat, you are healed.", "For Your Highness, salmon. No bones. Tally counted the bones himself, twice, then counted again.", "Crawler is Well Fed. Go. Come back with fewer holes in you, if possible.")
+meal_done_line = "Plate is empty and Tally is flattered. Boxes are over there. Mind the slide."

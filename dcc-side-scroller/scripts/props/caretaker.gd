@@ -45,6 +45,7 @@ func _ready() -> void:
 	_sprite.play("idle")
 	_prompt.visible = false
 	_speech.visible = false
+	add_to_group("caretakers")
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 

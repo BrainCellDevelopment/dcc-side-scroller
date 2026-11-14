@@ -23,7 +23,7 @@ All text is original. Style: short rude title, one mocking sentence, a little hi
 | `first_bathroom`, `bathroom_beat` | bathroom door entered / used | #56 |
 | `first_charm` | a charm lands | charm issue |
 | `first_box`, `all_boxes_open` | first box opened / all opened | #52 |
-| `first_safe_room` | SafeRoom entered | #50 |
+| `first_safe_room` | SafeRoom entered (fired by `safe_room.gd`, wired in #59) | #50 |
 | `first_potion` | consumable used | inventory |
 | `first_door` | any door opens | doors |
 | `workshop_found` | workshop reached | Floor 1 plan |
