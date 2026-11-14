@@ -128,6 +128,9 @@ func _physics_process(delta: float) -> void:
 	if section != _section:
 		_section = section
 		_log("section %d %s at (%.0f, %.0f)" % [section, _keys[section], pos.x, pos.y])
+		if section == 4 and int(_player.get("health")) < int(_player.get("max_health")):
+			_player.set("health", int(_player.get("max_health")))
+			_log("bot health restored after the Hoarder (no safe room between her and the Ball of Swine)")
 		if section == 1:
 			_log("llama alleys left behind with %d of 2 llamas alive, health %d" % [_llamas_alive(), int(_player.get("health"))])
 	if section == 2 and Game.in_safe_zone and not _room_seen:
@@ -160,7 +163,7 @@ func _boss_fight_on() -> bool:
 func _blast_door_step(pos: Vector2) -> bool:
 	for node: Node in get_tree().get_nodes_in_group("destructibles"):
 		var door: Node2D = node as Node2D
-		if door == null or bool(door.get("is_open")):
+		if door == null or door.get("is_open") != false:
 			continue
 		var ahead: float = (door.global_position.x - pos.x) * float(FACING)
 		if ahead < 0.0 or ahead > 150.0 or absf(door.global_position.y - pos.y) > 40.0:
