@@ -26,10 +26,10 @@ func _ready() -> void:
 	_make_wall(half_width + 24.0, true)
 	boss = BOSS.new() as Node2D
 	boss.name = "Krakaren"
-	boss.set("arena_left", -half_width + 24.0)
-	boss.set("arena_right", half_width - 24.0)
+	boss.set("arena_left", global_position.x - half_width + 24.0)
+	boss.set("arena_right", global_position.x + half_width - 24.0)
 	add_child(boss)
-	boss.position = Vector2(half_width - 8.0, 0.0)
+	boss.position = Vector2(half_width - 60.0, 0.0)
 	boss_arena = BOSS_ARENA.new() as Node2D
 	boss_arena.name = "BossArena"
 	boss_arena.set("boss_name", "Krakaren Clone")

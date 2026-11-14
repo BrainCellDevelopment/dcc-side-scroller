@@ -45,6 +45,9 @@ RES = {
     "dingo": "res://scenes/enemies/dingo.tscn",
     "storm_shelter": "res://scenes/level/storm_shelter.tscn",
     "krakaren_lair": "res://scenes/level/krakaren_lair.tscn",
+    "kobold_rider": "res://scenes/enemies/kobold_rider.tscn",
+    "grub_storm": "res://scenes/level/grub_storm.tscn",
+    "dogpound_lair": "res://scenes/level/dogpound_lair.tscn",
     "smoothie_bench": "res://scenes/props/smoothie_bench.tscn",
     "hud": "res://scenes/ui/hud.tscn",
     "platform": "res://scenes/level/platform.tscn",
@@ -88,12 +91,16 @@ def clurichaun(x, y=None):
     kit.add_enemy("clurichaun", x, cur["y"] if y is None else y)
 
 
+def kobold(x, y=None):
+    kit.add_enemy("kobold_rider", x, cur["y"] if y is None else y)
+
+
 def dingo(x, y=None):
     kit.add_enemy("dingo", x, cur["y"] if y is None else y)
 
 
 def emit_critters(w):
-    counts = {"grub": 0, "dingo": 0, "clurichaun": 0}
+    counts = {"grub": 0, "dingo": 0, "clurichaun": 0, "kobold_rider": 0}
     for e in kit.enemies:
         if e["kind"] in counts:
             counts[e["kind"]] += 1
@@ -194,30 +201,43 @@ def emit_lair(w):
     w.inst("KrakarenLair", ".", "krakaren_lair", position=vec(LAIR["center"], FLOOR))
 
 
+STORM = {}
+POUND = {}
+
+
 def section_grubstorm(x0):
-    # Janitor grubs swarm after the boss fight (M4).
+    # Janitor grubs swarm after the boss fight (grub_storm.gd spawns waves while the player crosses the zone;
+    # pupae mounds ring the walls). A couple of kobold riders patrol the far end.
     flat(384)
     cp(4, x0 + 96, 4)
-    grunt(x0 + 280)
     pit(48)
     flat(320)
-    grunt(x0 + 620)
     flat(272)
+    STORM["x"] = x0
     furnish(x0, x0 + 1024, crates=(500,))
     kit.trig("BgGrubStorm", "bg", "9", x0, x0 + 1024, FLOOR - 300, FLOOR + 120)
 
 
+def emit_storm(w):
+    w.inst("GrubStorm", ".", "grub_storm", position=vec(STORM["x"], FLOOR), zone_length="1024.0")
+
+
 def section_dogpound(x0):
-    # Kobold quadrant leading to the dog pound and Ralph's arena (M4).
+    # Kobold quadrant leading to the dog pound: kobold riders on dingoes, then Ralph's arena
+    # (dogpound_lair.gd builds the boss, lock and trigger).
     flat(384)
     cp(5, x0 + 96, 5)
-    thrower(x0 + 300)
-    flat(320)
-    kit.add_plat(x0 + 416, FLOOR - 64, 96, 16, CINDER, kind="upper", one_way=True)
-    flat(320)
-    furnish(x0, x0 + 1024, crates=(600,))
+    kobold(x0 + 260)
+    kit.add_plat(x0 + 192, FLOOR - 64, 96, 16, CINDER, kind="upper", one_way=True)
+    flat(640)
+    POUND["center"] = x0 + 384 + 320
+    kobold(x0 + 420)
     kit.add_prop("prop_skull_sconce", x0 + 200, FLOOR - 118, free=True)
     kit.trig("BgDogPound", "bg", "8", x0, x0 + 1024, FLOOR - 300, FLOOR + 120)
+
+
+def emit_pound(w):
+    w.inst("DogPoundLair", ".", "dogpound_lair", position=vec(POUND["center"], FLOOR))
 
 
 def section_stairwell(x0):
@@ -270,6 +290,8 @@ def write_tscn():
     emit_shelter(w)
     emit_bench(w)
     emit_lair(w)
+    emit_storm(w)
+    emit_pound(w)
     inst("Player", ".", "player", position=vec(START_U, FLOOR - 2))
     raw("Camera2D", "Camera2D", ".", [
         "position = %s" % vec(START_U, 184), "limit_left = 0", "limit_top = -116", "limit_right = %d" % WIDTH,

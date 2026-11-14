@@ -314,6 +314,43 @@ def dingo(kind, i):
     return img
 
 
+ARMOR = (150, 156, 168, 255)
+ARMOR_D = (96, 102, 116, 255)
+ARMOR_L = (206, 212, 222, 255)
+PLUME = (214, 60, 52, 255)
+LANCE = (190, 150, 90, 255)
+
+
+def kobold(kind, i):
+    """Kobold Rider: a Danger Dingo with an armoured chihuahua knight on its back and a lance."""
+    img = dingo(kind, i)
+    if kind == "die":
+        d = ImageDraw.Draw(img)
+        d.rectangle((9, 24, 15, 27), fill=ARMOR)
+        d.point([(14, 24)], fill=PLUME)
+        outline(img)
+        return img
+    d = ImageDraw.Draw(img)
+    bob = {"idle": (0, 1)[i % 2], "walk": (0, -1, 0, -1)[i % 4]}.get(kind, 0)
+    crouch = (2, 3)[i % 2] if kind == "windup" else 0
+    lunge = (2, 3)[i % 2] if kind == "attack" else ((-2, -3)[i % 2] if kind == "windup" else 0)
+    top = bob + crouch
+    ox = lunge
+    # rider: tiny armoured knight with plume, on the dingo's back
+    d.rectangle((9 + ox, 9 + top, 15 + ox, 17 + top), fill=ARMOR)
+    d.rectangle((9 + ox, 9 + top, 15 + ox, 10 + top), fill=ARMOR_L)
+    d.rectangle((10 + ox, 14 + top, 14 + ox, 17 + top), fill=ARMOR_D)
+    d.rectangle((10 + ox, 4 + top, 14 + ox, 9 + top), fill=ARMOR_L)
+    d.point([(13 + ox, 6 + top)], fill=INK)
+    d.line([(12 + ox, 4 + top), (10 + ox, 1 + top)], fill=PLUME, width=1)
+    # lance forward
+    reach = 8 if kind == "attack" else 5
+    d.line([(14 + ox, 12 + top), (14 + ox + reach, 10 + top)], fill=LANCE, width=1)
+    d.point([(14 + ox + reach + 1, 10 + top)], fill=ARMOR_L)
+    outline(img)
+    return img
+
+
 def sheet(rows, fn, name):
     w = 4 * 32
     h = len(rows) * 32
@@ -331,3 +368,4 @@ if __name__ == "__main__":
     sheet([("idle", 2), ("walk", 4), ("die", 3)], scatterer, "scatterer.png")
     sheet([("idle", 2), ("walk", 4), ("die", 3)], grub, "grub.png")
     sheet([("idle", 2), ("walk", 4), ("windup", 2), ("attack", 2), ("die", 3)], dingo, "dingo.png")
+    sheet([("idle", 2), ("walk", 4), ("windup", 2), ("attack", 2), ("die", 3)], kobold, "kobold.png")

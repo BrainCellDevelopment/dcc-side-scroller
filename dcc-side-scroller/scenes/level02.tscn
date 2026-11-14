@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3 uid="uid://c4lv2nastyfl2"]
+[gd_scene load_steps=38 format=3 uid="uid://c4lv2nastyfl2"]
 
 [ext_resource type="Script" path="res://scripts/levels/level02.gd" id="1_level"]
 [ext_resource type="PackedScene" path="res://scenes/level/background.tscn" id="2_background"]
@@ -12,14 +12,17 @@
 [ext_resource type="PackedScene" path="res://scenes/level/spikes.tscn" id="10_spikes"]
 [ext_resource type="PackedScene" path="res://scenes/level/kill_zone.tscn" id="11_killzone"]
 [ext_resource type="PackedScene" path="res://scenes/level/checkpoint.tscn" id="12_checkpoint"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/goblin.tscn" id="13_goblin"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/grub.tscn" id="14_grub"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/dingo.tscn" id="15_dingo"]
-[ext_resource type="PackedScene" path="res://scenes/level/storm_shelter.tscn" id="16_storm_shelter"]
-[ext_resource type="PackedScene" path="res://scenes/props/smoothie_bench.tscn" id="17_smoothie_bench"]
-[ext_resource type="PackedScene" path="res://scenes/level/krakaren_lair.tscn" id="18_krakaren_lair"]
-[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="19_player"]
-[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="20_hud"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/grub.tscn" id="13_grub"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/dingo.tscn" id="14_dingo"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/goblin.tscn" id="15_goblin"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/kobold_rider.tscn" id="16_kobold_rider"]
+[ext_resource type="PackedScene" path="res://scenes/level/storm_shelter.tscn" id="17_storm_shelter"]
+[ext_resource type="PackedScene" path="res://scenes/props/smoothie_bench.tscn" id="18_smoothie_bench"]
+[ext_resource type="PackedScene" path="res://scenes/level/krakaren_lair.tscn" id="19_krakaren_lair"]
+[ext_resource type="PackedScene" path="res://scenes/level/grub_storm.tscn" id="20_grub_storm"]
+[ext_resource type="PackedScene" path="res://scenes/level/dogpound_lair.tscn" id="21_dogpound_lair"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="22_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="23_hud"]
 
 [sub_resource type="RectangleShape2D" id="shape_1600x420"]
 size = Vector2(1600, 420)
@@ -161,34 +164,19 @@ position = Vector2(5640, 194)
 [node name="D024" parent="Deco" instance=ExtResource("4_p_crate")]
 position = Vector2(5300, 304)
 
-[node name="D025" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(5944, 194)
-
-[node name="D026" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(6184, 194)
-
-[node name="D027" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(6424, 194)
-
-[node name="D028" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(6664, 194)
-
-[node name="D029" parent="Deco" instance=ExtResource("4_p_crate")]
-position = Vector2(6424, 304)
-
-[node name="D030" parent="Deco" instance=ExtResource("7_p_skull_sconce")]
+[node name="D025" parent="Deco" instance=ExtResource("7_p_skull_sconce")]
 position = Vector2(6024, 186)
 
-[node name="D031" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D026" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(6968, 194)
 
-[node name="D032" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D027" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(7208, 194)
 
-[node name="D033" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D028" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(7448, 194)
 
-[node name="D034" parent="Deco" instance=ExtResource("8_p_sign_hazard")]
+[node name="D029" parent="Deco" instance=ExtResource("8_p_sign_hazard")]
 position = Vector2(7368, 304)
 
 [node name="P001" parent="Platforms" instance=ExtResource("9_platform")]
@@ -304,22 +292,17 @@ size = Vector2(384, 64)
 style = 7
 
 [node name="P023" parent="Platforms" instance=ExtResource("9_platform")]
-position = Vector2(6208, 304)
-size = Vector2(320, 64)
-style = 7
-
-[node name="P024" parent="Platforms" instance=ExtResource("9_platform")]
-position = Vector2(6240, 240)
+position = Vector2(6016, 240)
 size = Vector2(96, 16)
 style = 7
 one_way = true
 
-[node name="P025" parent="Platforms" instance=ExtResource("9_platform")]
-position = Vector2(6528, 304)
-size = Vector2(320, 64)
+[node name="P024" parent="Platforms" instance=ExtResource("9_platform")]
+position = Vector2(6208, 304)
+size = Vector2(640, 64)
 style = 7
 
-[node name="P026" parent="Platforms" instance=ExtResource("9_platform")]
+[node name="P025" parent="Platforms" instance=ExtResource("9_platform")]
 position = Vector2(6848, 304)
 size = Vector2(640, 64)
 style = 8
@@ -479,63 +462,66 @@ collision_mask = 0
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/RightBound"]
 shape = SubResource("shape_16x720")
 
-[node name="G01" parent="Goblins" instance=ExtResource("13_goblin")]
-position = Vector2(5080, 302)
-
-[node name="G02" parent="Goblins" instance=ExtResource("13_goblin")]
-position = Vector2(5420, 302)
-
-[node name="G03" parent="Goblins" instance=ExtResource("13_goblin")]
-position = Vector2(6124, 302)
-variant = 1
-
-[node name="Grub01" parent="Goblins" instance=ExtResource("14_grub")]
+[node name="Grub01" parent="Goblins" instance=ExtResource("13_grub")]
 position = Vector2(340, 302)
 
-[node name="Grub02" parent="Goblins" instance=ExtResource("14_grub")]
+[node name="Grub02" parent="Goblins" instance=ExtResource("13_grub")]
 position = Vector2(392, 302)
 
-[node name="Grub03" parent="Goblins" instance=ExtResource("14_grub")]
+[node name="Grub03" parent="Goblins" instance=ExtResource("13_grub")]
 position = Vector2(560, 222)
 
-[node name="Grub04" parent="Goblins" instance=ExtResource("14_grub")]
+[node name="Grub04" parent="Goblins" instance=ExtResource("13_grub")]
 position = Vector2(600, 302)
 
-[node name="Dingo01" parent="Goblins" instance=ExtResource("15_dingo")]
+[node name="Dingo01" parent="Goblins" instance=ExtResource("14_dingo")]
 position = Vector2(1000, 302)
 
-[node name="Grub05" parent="Goblins" instance=ExtResource("14_grub")]
+[node name="Grub05" parent="Goblins" instance=ExtResource("13_grub")]
 position = Vector2(1210, 302)
 
-[node name="Dingo02" parent="Goblins" instance=ExtResource("15_dingo")]
+[node name="Dingo02" parent="Goblins" instance=ExtResource("14_dingo")]
 position = Vector2(1500, 302)
 
-[node name="Clurichaun01" parent="Goblins" instance=ExtResource("13_goblin")]
+[node name="Clurichaun01" parent="Goblins" instance=ExtResource("15_goblin")]
 position = Vector2(2668, 302)
 variant = 4
 
-[node name="Clurichaun02" parent="Goblins" instance=ExtResource("13_goblin")]
+[node name="Clurichaun02" parent="Goblins" instance=ExtResource("15_goblin")]
 position = Vector2(2928, 222)
 variant = 4
 
-[node name="Clurichaun03" parent="Goblins" instance=ExtResource("13_goblin")]
+[node name="Clurichaun03" parent="Goblins" instance=ExtResource("15_goblin")]
 position = Vector2(3368, 302)
 variant = 4
 
-[node name="Clurichaun04" parent="Goblins" instance=ExtResource("13_goblin")]
+[node name="Clurichaun04" parent="Goblins" instance=ExtResource("15_goblin")]
 position = Vector2(3608, 302)
 variant = 4
 
-[node name="StormShelter" parent="." instance=ExtResource("16_storm_shelter")]
+[node name="Kobold_rider01" parent="Goblins" instance=ExtResource("16_kobold_rider")]
+position = Vector2(6084, 302)
+
+[node name="Kobold_rider02" parent="Goblins" instance=ExtResource("16_kobold_rider")]
+position = Vector2(6244, 302)
+
+[node name="StormShelter" parent="." instance=ExtResource("17_storm_shelter")]
 position = Vector2(1984, 304)
 
-[node name="SmoothieBench" parent="." instance=ExtResource("17_smoothie_bench")]
+[node name="SmoothieBench" parent="." instance=ExtResource("18_smoothie_bench")]
 position = Vector2(3712, 304)
 
-[node name="KrakarenLair" parent="." instance=ExtResource("18_krakaren_lair")]
+[node name="KrakarenLair" parent="." instance=ExtResource("19_krakaren_lair")]
 position = Vector2(4480, 304)
 
-[node name="Player" parent="." instance=ExtResource("19_player")]
+[node name="GrubStorm" parent="." instance=ExtResource("20_grub_storm")]
+position = Vector2(4800, 304)
+zone_length = 1024.0
+
+[node name="DogPoundLair" parent="." instance=ExtResource("21_dogpound_lair")]
+position = Vector2(6528, 304)
+
+[node name="Player" parent="." instance=ExtResource("22_player")]
 position = Vector2(96, 302)
 
 [node name="Camera2D" type="Camera2D" parent="."]
@@ -548,7 +534,7 @@ limit_smoothed = true
 position_smoothing_enabled = true
 position_smoothing_speed = 6.0
 
-[node name="HUD" parent="." instance=ExtResource("20_hud")]
+[node name="HUD" parent="." instance=ExtResource("23_hud")]
 
 [node name="Sec0" type="Area2D" parent="Triggers"]
 position = Vector2(800, 550)

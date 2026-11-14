@@ -28,8 +28,8 @@ enum State { IDLE, WAIT, STRIKE, SPIT, DEAD }
 @export var enemy_level: int = 10
 @export var xp_value: int = -1
 @export var is_boss: bool = true
-@export var arena_left: float = -300.0
-@export var arena_right: float = 300.0
+@export var arena_left: float = 0.0
+@export var arena_right: float = 0.0
 
 var active: bool = false
 var health: int = 0
@@ -130,7 +130,7 @@ func _next_attack() -> void:
 	var count: int = 2 if is_enraged() else 1
 	for i: int in count:
 		var x: float = player.global_position.x + (0.0 if i == 0 else 56.0 * (1.0 if randf() < 0.5 else -1.0))
-		x = clampf(x, global_position.x + arena_left, global_position.x + arena_right)
+		x = clampf(x, arena_left, arena_right)
 		(_tentacles[i] as Node).call("strike", x, tele + 0.15 * float(i))
 
 

@@ -11,6 +11,7 @@ const RAT_SHEET: Texture2D = preload("res://assets/characters/rat.png")
 const SCATTERER_SHEET: Texture2D = preload("res://assets/characters/scatterer.png")
 const GRUB_SHEET: Texture2D = preload("res://assets/characters/grub.png")
 const DINGO_SHEET: Texture2D = preload("res://assets/characters/dingo.png")
+const KOBOLD_SHEET: Texture2D = preload("res://assets/characters/kobold.png")
 const FRAME: Vector2i = Vector2i(32, 32)
 const RAT_ANIMS: Dictionary = {
 	"idle": {"row": 0, "count": 2, "fps": 4.0, "loop": true},
@@ -46,7 +47,7 @@ const ALERT_TIME: float = 5.0
 const DROPLETS: int = 9
 const DROP_COLOR: Color = Color(0.49, 0.69, 0.7, 1.0)
 
-@export_enum("Rat", "Scatterer", "Grub", "Dingo") var kind: int = 0
+@export_enum("Rat", "Scatterer", "Grub", "Dingo", "KoboldRider") var kind: int = 0
 @export var enemy_level: int = 2
 @export var xp_value: int = -1
 @export var is_boss: bool = false
@@ -101,6 +102,9 @@ func _ready() -> void:
 	elif kind == 3:
 		poisonous = false
 		sprite = SpriteUtil.make_sprite(DINGO_SHEET, FRAME, DINGO_ANIMS)
+	elif kind == 4:
+		poisonous = false
+		sprite = SpriteUtil.make_sprite(KOBOLD_SHEET, FRAME, DINGO_ANIMS)
 	else:
 		sprite = SpriteUtil.make_sprite(RAT_SHEET, FRAME, RAT_ANIMS)
 	sprite.name = "Sprite"
