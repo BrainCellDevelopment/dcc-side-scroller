@@ -77,7 +77,6 @@ func _close_if_passed() -> void:
 	if player == null:
 		return
 	if (player.global_position.x - global_position.x) * close_side > close_distance:
-		locked_text = sealed_text
 		close()
 
 
@@ -111,6 +110,8 @@ func close(animated: bool = true) -> void:
 		return
 	is_open = false
 	locked = true
+	if close_behind:
+		locked_text = sealed_text
 	_body_shape.set_deferred("disabled", false)
 	if animated:
 		_sprite.play_backwards("open")

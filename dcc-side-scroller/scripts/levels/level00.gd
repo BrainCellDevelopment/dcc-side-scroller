@@ -542,8 +542,9 @@ func _on_dozer_destroyed() -> void:
 	_camera.limit_right = int((_section_areas[6] as Area2D).get_meta("r"))
 	Game.set_hint("Head right.")
 	_unlock("dozer_down")
-	_guild_entry_door.call("unlock")
-	_guild_entry_door.call("open")
+	if _player.global_position.x <= _guild_entry_door.global_position.x + SHELTER_PAD:
+		_guild_entry_door.call("unlock")
+		_guild_entry_door.call("open")
 
 
 func _on_safe_zone_entered(body: Node2D) -> void:
