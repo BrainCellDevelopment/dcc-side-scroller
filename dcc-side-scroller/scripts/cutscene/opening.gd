@@ -5,20 +5,14 @@ signal finished
 const SpriteUtil: GDScript = preload("res://scripts/util/sprite_util.gd")
 const DIR: String = "res://assets/cutscene/"
 const ROOM_SIZE: Vector2 = Vector2(640.0, 360.0)
-const CARL_FRAME: Vector2i = Vector2i(64, 56)
-const DONUT_FRAME: Vector2i = Vector2i(32, 32)
-const CARL_ANIMS: Dictionary = {
-	"sit": {"row": 0, "count": 2, "fps": 1.5, "loop": true},
-	"stand": {"row": 1, "count": 1, "fps": 1.0, "loop": false},
-	"run": {"row": 2, "count": 6, "fps": 12.0, "loop": true},
-	"shock": {"row": 3, "count": 1, "fps": 1.0, "loop": false},
-	"stagger": {"row": 4, "count": 1, "fps": 1.0, "loop": false},
-}
+const DONUT_FRAME: Vector2i = Vector2i(56, 48)
+const DONUT_SCALE: float = 0.5
+const HEAD_TOP: float = 78.0
 const DONUT_ANIMS: Dictionary = {
 	"sit": {"row": 0, "count": 3, "fps": 3.0, "loop": true},
-	"leap": {"row": 1, "count": 2, "fps": 6.0, "loop": false},
-	"head": {"row": 2, "count": 1, "fps": 1.0, "loop": false},
-	"tree": {"row": 3, "count": 1, "fps": 1.0, "loop": false},
+	"leap": {"row": 0, "count": 2, "fps": 6.0, "loop": false},
+	"head": {"row": 0, "count": 1, "fps": 1.0, "loop": false},
+	"tree": {"row": 0, "count": 1, "fps": 1.0, "loop": false},
 }
 const CARL_SIT_POS: Vector2 = Vector2(215.0, 318.0)
 const CARL_ROOM_SCALE: float = 2.0
@@ -32,7 +26,7 @@ const TREE_OFFSET: float = 75.0
 const GLYPH_LETTERS: String = "DUNGEOSCRLA"
 const GLYPH_SMALL: Dictionary = {"y": 0, "cell": Vector2(100.0, 85.0), "n": 5.0, "advance": [65, 65, 65, 65, 60, 70, 60, 65, 70, 55, 75]}
 const GLYPH_LARGE: Dictionary = {"y": 85, "cell": Vector2(160.0, 136.0), "n": 8.0, "advance": [104, 104, 104, 104, 96, 112, 96, 104, 112, 88, 120]}
-const TITLE_LINES: Array = [["DUNGEON", "small", -98.0], ["SCROLLER", "small", -32.0], ["CARL", "large", 66.0]]
+const TITLE_LINES: Array = [["DUNGEON", "small", -126.0], ["SCROLLER", "small", -44.0], ["CARL", "large", 66.0]]
 const TITLE_CENTER_OFFSET: float = 8.0
 const TITLE_FALL: float = 280.0
 const TITLE_LETTER_STEP: float = 0.055
@@ -194,15 +188,14 @@ func _interior() -> void:
 	room_sprite.texture = _tex("apt_room", Vector2i(640, 360), Color(0.12, 0.1, 0.2))
 	room_sprite.centered = false
 	_room.add_child(room_sprite)
-	var carl_tex: Texture2D = _tex("cutscene_carl", Vector2i(512, 280), Color(0.8, 0.6, 0.4))
-	_carl = SpriteUtil.make_sprite(carl_tex, CARL_FRAME, CARL_ANIMS)
+	_carl = _gameplay_carl()
 	_carl.position = CARL_SIT_POS
-	_carl.scale = Vector2.ONE * CARL_ROOM_SCALE
+	_carl.scale = Vector2.ONE * CARL_ROOM_SCALE * Game.skin_scale()
 	_room.add_child(_carl)
-	_carl.play("sit")
-	var donut_tex: Texture2D = _tex("cutscene_donut", Vector2i(128, 128), Color(0.4, 0.25, 0.15))
-	_donut = SpriteUtil.make_sprite(donut_tex, DONUT_FRAME, DONUT_ANIMS)
+	_carl.play("idle")
+	_donut = _gameplay_donut()
 	_donut.position = DONUT_SILL_POS
+	_donut.scale = Vector2.ONE * CARL_ROOM_SCALE * DONUT_SCALE
 	_room.add_child(_donut)
 	_donut.play("sit")
 	var caption: Label = _bubble(_room, "SEATTLE  -  2:23 AM", Vector2(18.0, 14.0))
@@ -220,7 +213,7 @@ func _interior() -> void:
 	leap.tween_property(_donut, "position:x", 548.0, 0.55).set_trans(Tween.TRANS_SINE)
 	leap.parallel().tween_property(_donut, "position:y", 128.0, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	leap.tween_property(_donut, "position:y", 150.0, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	leap.parallel().tween_property(_donut, "scale", Vector2.ONE * 0.55, 0.3)
+	leap.parallel().tween_property(_donut, "scale", Vector2.ONE * CARL_ROOM_SCALE * DONUT_SCALE * 0.55, 0.3)
 	leap.parallel().tween_property(_donut, "modulate:a", 0.0, 0.3)
 	await _wait(1.2)
 	if _skipped:
@@ -228,9 +221,8 @@ func _interior() -> void:
 	var shout: Label = _bubble(_room, "Goddamnit, Donut.", CARL_SIT_POS + Vector2(-60.0, -128.0))
 	await _wait(1.5)
 	shout.queue_free()
-	_carl.play("stand")
 	await _wait(0.5)
-	_carl.scale.x = -CARL_ROOM_SCALE
+	_carl.scale.x = -absf(_carl.scale.x)
 	_carl.play("run")
 	var walk: Tween = _tween()
 	walk.tween_property(_carl, "position:x", DOOR_X, 1.15)
@@ -268,13 +260,13 @@ func _street() -> void:
 	tree.position = Vector2(_start.x + TREE_OFFSET, ground)
 	tree.z_index = -20
 	_actors.add_child(tree)
-	var donut_tex: Texture2D = _tex("cutscene_donut", Vector2i(128, 128), Color(0.4, 0.25, 0.15))
-	var cat: AnimatedSprite2D = SpriteUtil.make_sprite(donut_tex, DONUT_FRAME, DONUT_ANIMS)
+	var cat: AnimatedSprite2D = _gameplay_donut()
+	cat.scale = Vector2.ONE * DONUT_SCALE
 	cat.position = tree.position + Vector2(TREE_BRANCH.x - tree_tex.get_width() * 0.5, TREE_BRANCH.y - tree_tex.get_height())
 	_actors.add_child(cat)
 	cat.play("tree")
-	var carl_tex: Texture2D = _tex("cutscene_carl", Vector2i(512, 280), Color(0.8, 0.6, 0.4))
-	var carl: AnimatedSprite2D = SpriteUtil.make_sprite(carl_tex, CARL_FRAME, CARL_ANIMS)
+	var carl: AnimatedSprite2D = _gameplay_carl()
+	carl.scale = Vector2.ONE * Game.skin_scale()
 	carl.position = Vector2(cam_left - 50.0, ground)
 	_actors.add_child(carl)
 	carl.play("run")
@@ -304,6 +296,32 @@ func _street() -> void:
 		return
 	_tween().tween_property(carl, "position:x", _start.x, 0.3)
 	carl.play("stand")
+
+
+func _gameplay_carl() -> AnimatedSprite2D:
+	var sheet: Texture2D = Game.skin_sheet()
+	if Game.selected_skin == Game.DEFAULT_SKIN:
+		sheet = load(DIR + "carl_nodonut.png") as Texture2D
+	var sprite: AnimatedSprite2D = SpriteUtil.make_sprite(sheet, Game.skin_frame(), Game.skin_anims())
+	var frames: SpriteFrames = sprite.sprite_frames
+	_alias_pose(frames, &"stand", &"idle", 0)
+	_alias_pose(frames, &"shock", &"hurt", 0)
+	_alias_pose(frames, &"stagger", &"hurt", frames.get_frame_count(&"hurt") - 1)
+	return sprite
+
+
+func _gameplay_donut() -> AnimatedSprite2D:
+	var tex: Texture2D = load(DIR + "donut_cat.png") as Texture2D
+	var sprite: AnimatedSprite2D = SpriteUtil.make_sprite(tex, DONUT_FRAME, DONUT_ANIMS)
+	sprite.play("sit")
+	return sprite
+
+
+func _alias_pose(frames: SpriteFrames, pose: StringName, source: StringName, index: int) -> void:
+	frames.add_animation(pose)
+	frames.set_animation_speed(pose, 1.0)
+	frames.set_animation_loop(pose, false)
+	frames.add_frame(pose, frames.get_frame_texture(source, index))
 
 
 func _dust(at: Vector2, width: float) -> void:
@@ -473,7 +491,7 @@ func _shine_title() -> void:
 
 
 func _donut_hops_onto_head() -> void:
-	var landing: Vector2 = _carl.position + Vector2(0.0, -50.0)
+	var landing: Vector2 = _carl.position + Vector2(0.0, -HEAD_TOP * Game.skin_scale())
 	_donut.play("leap")
 	_donut.frame = 0
 	await _wait(0.2)
@@ -484,6 +502,15 @@ func _donut_hops_onto_head() -> void:
 	hop.tween_property(_donut, "position:y", landing.y, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	await _wait(0.6)
 	_donut.play("head")
+	await _wait(0.3)
+	var original: AnimatedSprite2D = SpriteUtil.make_sprite(Game.skin_sheet(), Game.skin_frame(), Game.skin_anims())
+	original.position = _carl.position
+	original.scale = _carl.scale
+	_carl.get_parent().add_child(original)
+	_carl.queue_free()
+	_donut.queue_free()
+	_carl = original
+	_carl.play("idle")
 	await _wait(0.5)
 
 
