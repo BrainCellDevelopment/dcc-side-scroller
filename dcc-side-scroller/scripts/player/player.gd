@@ -26,6 +26,7 @@ const DUST_COOLDOWN: float = 0.18
 const LAND_SPEED: float = 140.0
 
 @export var speed: float = 130.0
+@export var sprint_multiplier: float = 1.5
 @export var acceleration: float = 1100.0
 @export var friction: float = 1400.0
 @export var jump_velocity: float = -330.0
@@ -163,7 +164,8 @@ func _handle_input(delta: float) -> void:
 	if is_zero_approx(axis):
 		velocity.x = move_toward(velocity.x, 0.0, friction * delta)
 	else:
-		velocity.x = move_toward(velocity.x, axis * speed, acceleration * delta)
+		var top_speed: float = speed * (sprint_multiplier if Input.is_action_pressed("sprint") else 1.0)
+		velocity.x = move_toward(velocity.x, axis * top_speed, acceleration * delta)
 		_set_facing(1 if axis > 0.0 else -1)
 
 	if Input.is_action_just_pressed("jump"):
@@ -257,7 +259,7 @@ func _update_animation() -> void:
 	elif not is_on_floor():
 		_play(&"jump" if velocity.y < 0.0 else &"fall")
 	elif absf(velocity.x) > 12.0:
-		_play(&"run", clampf(absf(velocity.x) / maxf(speed, 1.0), 0.5, 1.3))
+		_play(&"run", clampf(absf(velocity.x) / maxf(speed, 1.0), 0.5, sprint_multiplier + 0.1))
 	else:
 		_play(&"idle")
 

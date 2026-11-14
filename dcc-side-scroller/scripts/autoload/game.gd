@@ -151,6 +151,10 @@ func _register_inputs() -> void:
 		_key(KEY_X),
 		_joy_button(JOY_BUTTON_X),
 	]
+	var sprint_events: Array[InputEvent] = [
+		_key(KEY_SHIFT),
+		_joy_button(JOY_BUTTON_RIGHT_SHOULDER),
+	]
 	var interact_events: Array[InputEvent] = [
 		_key(KEY_E),
 		_joy_button(JOY_BUTTON_Y),
@@ -159,6 +163,7 @@ func _register_inputs() -> void:
 	_add_action(&"move_right", move_right_events)
 	_add_action(&"jump", jump_events)
 	_add_action(&"attack", attack_events)
+	_add_action(&"sprint", sprint_events)
 	_add_action(&"interact", interact_events)
 
 

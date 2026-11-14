@@ -202,7 +202,7 @@ def build():
     grunt(3568 + 520)
     grunt(3568 + 580)
     cp(0, 4376, 0)
-    hint("H_move", 0, 400, "A / D or arrows: move")
+    hint("H_move", 0, 400, "A / D or arrows: move. Hold Shift to sprint")
     hint("H_jump", 440, 600, "Space: jump over it")
     hint("H_gap", 960, 1110, "Hold Space for a longer jump. Fire is not friendly.")
     hint("H_spikes", 1400, 1630, "Rebar hurts. Jump over the spikes.")
