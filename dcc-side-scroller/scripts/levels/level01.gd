@@ -36,6 +36,7 @@ var _shake_time: float = 0.0
 var _shake_total: float = 0.01
 
 @onready var _player: CharacterBody2D = $Player
+@onready var _background: CanvasLayer = $Background
 @onready var _camera: Camera2D = $Camera2D
 @onready var _hud: CanvasLayer = $HUD
 @onready var _triggers: Node2D = $Triggers
@@ -114,6 +115,7 @@ func _enter_section(index: int) -> void:
 		_camera.limit_right = int(area.get_meta("r"))
 		_camera.limit_top = int(area.get_meta("t"))
 		_camera.limit_bottom = int(area.get_meta("b"))
+		_background.call("set_style", int(area.get_meta("bg")))
 	var title: String = str(area.get_meta("title"))
 	if not title.is_empty() and not _seen.has(index):
 		_hud.call("show_banner", title, TITLE_SECONDS)
@@ -225,6 +227,8 @@ func _on_trigger_entered(body: Node2D, area: Area2D) -> void:
 	match str(area.get_meta("kind")):
 		"section":
 			_enter_section(int(str(area.get_meta("arg"))))
+		"bg":
+			_background.call("set_style", int(str(area.get_meta("arg"))))
 		"hint":
 			_hint_owner = area
 			Game.set_hint(str(area.get_meta("arg")))

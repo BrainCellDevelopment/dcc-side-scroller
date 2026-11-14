@@ -46,6 +46,14 @@ func _ready() -> void:
 	Game.achievement_unlocked.connect(_on_achievement)
 
 
+func _llamas_alive() -> int:
+	var alive: int = 0
+	for foe: Node2D in _foes():
+		if foe.has_method("is_asleep"):
+			alive += 1
+	return alive
+
+
 func _deaths() -> int:
 	return int(Game.get_meta("bot_deaths")) if Game.has_meta("bot_deaths") else 0
 
@@ -113,6 +121,8 @@ func _physics_process(delta: float) -> void:
 	if section != _section:
 		_section = section
 		_log("section %d %s at (%.0f, %.0f)" % [section, _keys[section], pos.x, pos.y])
+		if section == 1:
+			_log("llama alleys left behind with %d of 2 llamas alive, health %d" % [_llamas_alive(), int(_player.get("health"))])
 	if _elapsed > TIME_LIMIT:
 		_finish(false, "timed out in section %d at (%.0f, %.0f)" % [section, pos.x, pos.y])
 		return
