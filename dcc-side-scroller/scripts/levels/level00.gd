@@ -16,6 +16,7 @@ const GATES: Array[Dictionary] = [
 ]
 const VEIL_PLAYER_Z: int = 41
 const VEIL_NEAR: float = 320.0
+const BOSS_ARENA: GDScript = preload("res://scripts/level/boss_arena.gd")
 const ENGINEER_NAME: String = "Goblin Engineer"
 const GOBLIN_THROWER: int = 1
 const NEXT_LEVEL: String = "res://scenes/level01.tscn"
@@ -73,6 +74,7 @@ var _kills: int = 0
 var _rounds_cleared: int = 0
 var _reinforced: bool = false
 var _engineer_fleeing: bool = false
+var _boss_arena: Node2D = null
 var _start_round: int = 0
 var _countdown: float = -1.0
 var _door_shut: bool = false
@@ -118,7 +120,15 @@ func _enter_tree() -> void:
 func _ready() -> void:
 	_camera.process_callback = Camera2D.CAMERA2D_PROCESS_PHYSICS
 	_player.connect("died", _on_player_died)
-	_engineer.connect("defeated", _on_engineer_defeated)
+	_boss_arena = BOSS_ARENA.new() as Node2D
+	_boss_arena.set("boss_name", ENGINEER_NAME)
+	_boss_arena.set("tooltip", "He fixes things. Mostly with a knife.")
+	_boss_arena.set("announcement", "GOBLIN ENGINEER")
+	_boss_arena.set("hud", _hud)
+	add_child(_boss_arena)
+	var locks: Array[CollisionShape2D] = [_arena_left, _arena_right]
+	_boss_arena.call("setup", _engineer, locks)
+	_boss_arena.connect("boss_defeated", _on_engineer_defeated)
 	_dozer.connect("round_cleared", _on_dozer_round_cleared)
 	_dozer.connect("round_started", _on_dozer_round_started)
 	_dozer.connect("destroyed", _on_dozer_destroyed)
@@ -406,12 +416,9 @@ func _start_arena() -> void:
 	_camera.limit_right = int(_arena_right_body.global_position.x)
 	_camera.limit_top = int(area.get_meta("t"))
 	_camera.limit_bottom = int(area.get_meta("b"))
-	_arena_left.set_deferred("disabled", false)
-	_arena_right.set_deferred("disabled", false)
 	_engineer.set("arena_left", _arena_left_body.global_position.x + 90.0)
 	_engineer.set("arena_right", _arena_right_body.global_position.x - 12.0)
-	_engineer.call("activate")
-	_hud.call("show_banner", "GOBLIN ENGINEER", 2.0)
+	_boss_arena.call("start")
 
 
 func _on_boss_health_changed(boss_name: String, current: int, maximum: int) -> void:
@@ -433,9 +440,6 @@ func _on_engineer_defeated(_engineer_node: Node) -> void:
 	_phase = Phase.PLAY
 	_unlock("engineer_down")
 	_engineer.set("scripted", true)
-	Game.clear_boss()
-	_arena_left.set_deferred("disabled", true)
-	_arena_right.set_deferred("disabled", true)
 	_enter_section(5)
 	Game.set_checkpoint(RUN_CHECKPOINT, _arena_checkpoint(), STAGE_RUN)
 	var visual: Node2D = _engineer.get_node("Visual") as Node2D
