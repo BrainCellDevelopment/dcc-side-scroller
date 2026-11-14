@@ -1,0 +1,48 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/level/safe_room.gd" id="1_room"]
+[ext_resource type="PackedScene" path="res://scenes/props/gate_door.tscn" id="2_door"]
+[ext_resource type="PackedScene" path="res://scenes/level/checkpoint.tscn" id="3_cp"]
+[ext_resource type="PackedScene" path="res://scenes/props/caretaker.tscn" id="4_care"]
+
+[node name="SafeRoom" type="Node2D"]
+script = ExtResource("1_room")
+
+[node name="Zone" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Zone"]
+
+[node name="HallEntry" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HallEntry"]
+
+[node name="HallExit" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HallExit"]
+
+[node name="PropSlots" type="Node2D" parent="."]
+
+[node name="Back" type="Marker2D" parent="PropSlots"]
+position = Vector2(0, -40)
+
+[node name="Left" type="Marker2D" parent="PropSlots"]
+position = Vector2(-150, 0)
+
+[node name="Mid" type="Marker2D" parent="PropSlots"]
+position = Vector2(-40, 0)
+
+[node name="Right" type="Marker2D" parent="PropSlots"]
+position = Vector2(150, 0)
+
+[node name="Checkpoint" parent="." instance=ExtResource("3_cp")]
+position = Vector2(100, 0)
+
+[node name="Caretaker" parent="." instance=ExtResource("4_care")]
+position = Vector2(-90, 0)
+
+[node name="BoxSpot" type="Marker2D" parent="."]
+position = Vector2(40, -20)
+
+[node name="EntryDoor" parent="." instance=ExtResource("2_door")]
+
+[node name="ExitDoor" parent="." instance=ExtResource("2_door")]

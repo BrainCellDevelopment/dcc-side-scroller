@@ -205,6 +205,21 @@ func kill(force: bool = false) -> void:
 	_die()
 
 
+func restore_all() -> void:
+	if _dead:
+		return
+	health = max_health
+	Game.report_player_health(health, max_health)
+	stamina = max_stamina
+	_exhausted = false
+	_stamina_shown = -1
+	_report_stamina()
+	mana = max_mana
+	_mana_shown = -1
+	_report_mana()
+	PlayerStats.restore_mana(PlayerStats.max_mana())
+
+
 func is_dead() -> bool:
 	return _dead
 
