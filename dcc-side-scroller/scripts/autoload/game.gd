@@ -205,6 +205,7 @@ func reset_run() -> void:
 	_refresh_combat()
 	set_safe_zone(false)
 	floor_time_left = FLOOR_TIME
+	SystemVoice.end_floor()
 	Inventory.clear()
 	set_hint("")
 

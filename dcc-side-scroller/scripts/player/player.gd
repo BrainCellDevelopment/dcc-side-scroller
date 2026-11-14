@@ -165,6 +165,7 @@ func _slide_off_enemies() -> void:
 
 func _stomp(enemy: Node2D) -> void:
 	enemy.call("take_damage", stomp_damage, global_position)
+	SystemVoice.count("stomp")
 	var holding_jump: bool = Game.action_pressed("jump")
 	velocity.y = jump_velocity * 0.85 if holding_jump else -stomp_bounce
 	_jumping = holding_jump
@@ -569,6 +570,7 @@ func _die() -> void:
 	if _dead:
 		return
 	_dead = true
+	SystemVoice.count("death")
 	control_enabled = false
 	_stop_blink()
 	_end_attack()

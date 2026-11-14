@@ -18,6 +18,9 @@ var _current_popup: Dictionary = {}
 var _popup_showing: bool = false
 var _popup_tween: Tween = null
 var _banner_token: int = 0
+var _announce_queue: Array[Dictionary] = []
+var _announce_busy: bool = false
+var _survivor_label: Label = null
 var _item_queue: Array[String] = []
 var _item_busy: bool = false
 var _item_label: Label = null
@@ -65,6 +68,8 @@ func _ready() -> void:
 	_build_mana_bar()
 	_build_xp_bar()
 	_build_countdown()
+	_build_survivors()
+	SystemVoice.announced.connect(_on_announced)
 	_update_timer()
 
 
@@ -95,6 +100,50 @@ func _build_countdown() -> void:
 	_flash_rect.color = Color.WHITE
 	_flash_rect.modulate.a = 0.0
 	add_child(_flash_rect)
+
+
+func _build_survivors() -> void:
+	_survivor_label = Label.new()
+	_survivor_label.name = "SurvivorLabel"
+	_survivor_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_survivor_label.anchor_left = 1.0
+	_survivor_label.anchor_right = 1.0
+	_survivor_label.offset_left = -200.0
+	_survivor_label.offset_right = -8.0
+	_survivor_label.offset_top = 19.0
+	_survivor_label.offset_bottom = 31.0
+	_survivor_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_survivor_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_survivor_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_survivor_label.add_theme_font_size_override("font_size", 8)
+	_survivor_label.add_theme_color_override("font_color", Color(0.95, 0.55, 0.5))
+	_survivor_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_survivor_label.add_theme_constant_override("outline_size", 3)
+	add_child(_survivor_label)
+	SystemVoice.survivors_changed.connect(_refresh_survivors)
+	SystemVoice.survivors_visibility_changed.connect(func(_shown: bool) -> void: _refresh_survivors(SystemVoice.survivors))
+	_refresh_survivors(SystemVoice.survivors)
+
+
+func _refresh_survivors(count: int) -> void:
+	_survivor_label.visible = SystemVoice.survivors_visible and SystemVoice.floor_active
+	_survivor_label.text = "Survivors: %s" % SystemVoice.format_count(count)
+
+
+func _on_announced(title: String, body: String, seconds: float) -> void:
+	_announce_queue.append({"title": title, "body": body, "seconds": seconds})
+	_show_next_announcement()
+
+
+func _show_next_announcement() -> void:
+	if _announce_busy or _announce_queue.is_empty():
+		return
+	_announce_busy = true
+	var next: Dictionary = _announce_queue.pop_front()
+	show_system_message(str(next["title"]), str(next["body"]), float(next["seconds"]))
+	await get_tree().create_timer(float(next["seconds"]) + 0.3).timeout
+	_announce_busy = false
+	_show_next_announcement()
 
 
 func show_countdown(seconds: float) -> void:
@@ -298,7 +347,6 @@ func _build_xp_bar() -> void:
 	_level_label.add_theme_constant_override("outline_size", 3)
 	add_child(_level_label)
 	PlayerStats.stats_changed.connect(_refresh_xp)
-	PlayerStats.leveled_up.connect(_on_leveled_up)
 	_refresh_xp()
 
 
@@ -313,11 +361,6 @@ func _refresh_xp() -> void:
 	_level_label.text = "LV %d  %d/%d" % [PlayerStats.character_level, PlayerStats.xp, need]
 
 
-func _on_leveled_up(level: int) -> void:
-	var points: String = "%d unspent attribute points." % PlayerStats.unspent_points
-	if not PlayerStats.class_chosen:
-		points += " They stay locked until you choose a race and class."
-	show_system_message("LEVEL UP!", "Congratulations, crawler. You have reached level %d.\n%s" % [level, points], 3.5)
 
 
 func _on_player_mana_changed(current: int, maximum: int) -> void:
