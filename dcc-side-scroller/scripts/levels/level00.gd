@@ -13,7 +13,6 @@ const FRAME_FAR_Z: int = 46
 const DOOR_OFFSET: float = -5.0
 const GATES: Array[Dictionary] = [
 	{"section": 1, "floor_y": 304.0},
-	{"section": 2, "floor_y": 912.0},
 ]
 const VEIL_PLAYER_Z: int = 41
 const VEIL_NEAR: float = 320.0
