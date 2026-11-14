@@ -71,6 +71,10 @@ func _toggle() -> void:
 		_line.release_focus()
 
 
+func visible_panel() -> bool:
+	return _panel != null and _panel.visible
+
+
 func _print(text: String) -> void:
 	_log.append_text(text + "\n")
 
@@ -88,7 +92,7 @@ func _on_submitted(text: String) -> void:
 	var argument: String = parts[1].to_lower() if parts.size() > 1 else ""
 	match command:
 		"help":
-			_print("goto <section|level0|level1>  list  heal  god [on|off]  kms  skins  skin <default|derpy>  unlockskin <id>  resetprofile  help  (` or esc closes)")
+			_print("goto <section|level0|level1>  list  heal  god [on|off]  kms  stats [floor <n>|xp <n>|spend <stat>|reset]  skins  skin <default|derpy>  unlockskin <id>  resetprofile  help  (` or esc closes)")
 		"list":
 			_print("sections: " + ", ".join(SECTIONS) + ", cp<N>  levels: " + ", ".join(LEVELS.keys()))
 		"heal":
@@ -144,6 +148,27 @@ func _kms() -> void:
 	_panel.visible = false
 	_line.release_focus()
 	get_tree().paused = false
+
+
+func _stats(parts: PackedStringArray) -> void:
+	var sub: String = parts[1].to_lower() if parts.size() > 1 else ""
+	var value: String = parts[2].to_lower() if parts.size() > 2 else ""
+	match sub:
+		"floor":
+			PlayerStats.enter_floor(int(value))
+		"xp":
+			PlayerStats.add_xp(int(value))
+		"spend":
+			if not PlayerStats.spend_point(value):
+				_print("cannot spend (inactive, locked before floor %d, no points, or bad stat)" % PlayerStats.CLASS_SELECT_FLOOR)
+		"reset":
+			PlayerStats.reset()
+		"":
+			pass
+		_:
+			_print("usage: stats [floor <n>|xp <n>|spend <stat>|reset]")
+			return
+	_print(PlayerStats.summary())
 
 
 func _heal() -> void:
