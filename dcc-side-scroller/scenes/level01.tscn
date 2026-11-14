@@ -1,148 +1,274 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=21 format=3 uid="uid://dl1fndtn48xq"]
 
-[ext_resource type="Script" path="res://scripts/levels/level01.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/levels/level01.gd" id="1_level"]
 [ext_resource type="PackedScene" path="res://scenes/level/background.tscn" id="2_background"]
-[ext_resource type="PackedScene" path="res://scenes/level/platform.tscn" id="3_platform"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/goblin.tscn" id="4_goblin"]
-[ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="5_door"]
-[ext_resource type="PackedScene" path="res://scenes/props/torch.tscn" id="6_torch"]
-[ext_resource type="PackedScene" path="res://scenes/props/crate.tscn" id="7_crate"]
-[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="8_player"]
-[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="9_hud"]
+[ext_resource type="PackedScene" path="res://scenes/props/torch.tscn" id="3_p_torch"]
+[ext_resource type="PackedScene" path="res://scenes/props/crate.tscn" id="4_p_crate"]
+[ext_resource type="PackedScene" path="res://scenes/level/platform.tscn" id="5_platform"]
+[ext_resource type="PackedScene" path="res://scenes/level/spikes.tscn" id="6_spikes"]
+[ext_resource type="PackedScene" path="res://scenes/level/kill_zone.tscn" id="7_killzone"]
+[ext_resource type="PackedScene" path="res://scenes/level/checkpoint.tscn" id="8_checkpoint"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/goblin.tscn" id="9_goblin"]
+[ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="10_door"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="11_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="12_hud"]
 
-[sub_resource type="RectangleShape2D" id="shape_wall"]
-size = Vector2(16, 720)
-
-[sub_resource type="RectangleShape2D" id="shape_end"]
+[sub_resource type="RectangleShape2D" id="shape_40x140"]
 size = Vector2(40, 140)
 
+[sub_resource type="RectangleShape2D" id="shape_16x720"]
+size = Vector2(16, 720)
+
+[sub_resource type="RectangleShape2D" id="shape_1152x1900"]
+size = Vector2(1152, 1900)
+
+[sub_resource type="RectangleShape2D" id="shape_960x1900"]
+size = Vector2(960, 1900)
+
+[sub_resource type="RectangleShape2D" id="shape_768x1900"]
+size = Vector2(768, 1900)
+
+[sub_resource type="RectangleShape2D" id="shape_896x1900"]
+size = Vector2(896, 1900)
+
+[sub_resource type="RectangleShape2D" id="shape_1024x1900"]
+size = Vector2(1024, 1900)
+
+[sub_resource type="RectangleShape2D" id="shape_640x1900"]
+size = Vector2(640, 1900)
+
 [node name="Level01" type="Node2D"]
-script = ExtResource("1_script")
+script = ExtResource("1_level")
 
 [node name="Background" parent="." instance=ExtResource("2_background")]
 initial_style = 2
 
 [node name="Deco" type="Node2D" parent="."]
+z_index = -2
 
 [node name="Platforms" type="Node2D" parent="."]
 
-[node name="Walls" type="Node2D" parent="."]
+[node name="Hazards" type="Node2D" parent="."]
+
+[node name="Checkpoints" type="Node2D" parent="."]
 
 [node name="Triggers" type="Node2D" parent="."]
+
+[node name="Walls" type="Node2D" parent="."]
 
 [node name="Doors" type="Node2D" parent="."]
 
 [node name="Goblins" type="Node2D" parent="."]
 
-[node name="T00" parent="Deco" instance=ExtResource("6_torch")]
-position = Vector2(3000, 194)
+[node name="D000" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(6088, 194)
 
-[node name="T01" parent="Deco" instance=ExtResource("6_torch")]
-position = Vector2(2760, 194)
+[node name="D001" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(5848, 194)
 
-[node name="T02" parent="Deco" instance=ExtResource("6_torch")]
-position = Vector2(2520, 194)
+[node name="D002" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(5608, 194)
 
-[node name="T03" parent="Deco" instance=ExtResource("6_torch")]
-position = Vector2(2280, 194)
+[node name="D003" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(5368, 194)
 
-[node name="T04" parent="Deco" instance=ExtResource("6_torch")]
-position = Vector2(2040, 194)
+[node name="D004" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(5128, 194)
 
-[node name="T05" parent="Deco" instance=ExtResource("6_torch")]
-position = Vector2(1800, 194)
+[node name="D005" parent="Deco" instance=ExtResource("4_p_crate")]
+position = Vector2(6048, 304)
 
-[node name="T06" parent="Deco" instance=ExtResource("6_torch")]
-position = Vector2(1560, 194)
+[node name="D006" parent="Deco" instance=ExtResource("4_p_crate")]
+position = Vector2(5588, 304)
 
-[node name="T07" parent="Deco" instance=ExtResource("6_torch")]
-position = Vector2(1320, 194)
+[node name="D007" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(4936, 194)
 
-[node name="T08" parent="Deco" instance=ExtResource("6_torch")]
-position = Vector2(1080, 194)
+[node name="D008" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(4696, 194)
 
-[node name="T09" parent="Deco" instance=ExtResource("6_torch")]
-position = Vector2(840, 194)
+[node name="D009" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(4456, 194)
 
-[node name="T10" parent="Deco" instance=ExtResource("6_torch")]
-position = Vector2(600, 194)
+[node name="D010" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(4216, 194)
 
-[node name="T11" parent="Deco" instance=ExtResource("6_torch")]
-position = Vector2(360, 194)
+[node name="D011" parent="Deco" instance=ExtResource("4_p_crate")]
+position = Vector2(4816, 304)
 
-[node name="T12" parent="Deco" instance=ExtResource("6_torch")]
-position = Vector2(120, 194)
+[node name="D012" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(3976, 194)
 
-[node name="C00" parent="Deco" instance=ExtResource("7_crate")]
-position = Vector2(2900, 304)
+[node name="D013" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(3736, 194)
 
-[node name="C01" parent="Deco" instance=ExtResource("7_crate")]
-position = Vector2(2000, 304)
+[node name="D014" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(3496, 194)
 
-[node name="C02" parent="Deco" instance=ExtResource("7_crate")]
-position = Vector2(1250, 304)
+[node name="D015" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(3208, 194)
 
-[node name="C03" parent="Deco" instance=ExtResource("7_crate")]
-position = Vector2(600, 304)
+[node name="D016" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(2968, 194)
 
-[node name="P000" parent="Platforms" instance=ExtResource("3_platform")]
+[node name="D017" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(2728, 194)
+
+[node name="D018" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(2488, 194)
+
+[node name="D019" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(2312, 194)
+
+[node name="D020" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(2072, 194)
+
+[node name="D021" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(1832, 194)
+
+[node name="D022" parent="Deco" instance=ExtResource("4_p_crate")]
+position = Vector2(2232, 304)
+
+[node name="D023" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(1544, 194)
+
+[node name="D024" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(1304, 194)
+
+[node name="D025" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(1064, 194)
+
+[node name="D026" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(824, 194)
+
+[node name="D027" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(520, 194)
+
+[node name="D028" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(280, 194)
+
+[node name="D029" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(40, 194)
+
+[node name="P001" parent="Platforms" instance=ExtResource("5_platform")]
+position = Vector2(5760, 304)
+size = Vector2(448, 64)
+style = 2
+
+[node name="P002" parent="Platforms" instance=ExtResource("5_platform")]
+position = Vector2(5856, 224)
+size = Vector2(64, 16)
+style = 2
+
+[node name="P003" parent="Platforms" instance=ExtResource("5_platform")]
+position = Vector2(5536, 304)
+size = Vector2(224, 64)
+style = 2
+
+[node name="P004" parent="Platforms" instance=ExtResource("5_platform")]
+position = Vector2(5488, 400)
+size = Vector2(48, 16)
+style = 2
+
+[node name="P005" parent="Platforms" instance=ExtResource("5_platform")]
+position = Vector2(5056, 304)
+size = Vector2(432, 64)
+style = 2
+
+[node name="P006" parent="Platforms" instance=ExtResource("5_platform")]
+position = Vector2(4096, 304)
+size = Vector2(960, 64)
+style = 2
+
+[node name="P007" parent="Platforms" instance=ExtResource("5_platform")]
+position = Vector2(3328, 304)
+size = Vector2(768, 64)
+style = 2
+
+[node name="P008" parent="Platforms" instance=ExtResource("5_platform")]
+position = Vector2(2432, 304)
+size = Vector2(896, 64)
+style = 2
+
+[node name="P009" parent="Platforms" instance=ExtResource("5_platform")]
+position = Vector2(1664, 304)
+size = Vector2(768, 64)
+style = 2
+
+[node name="P010" parent="Platforms" instance=ExtResource("5_platform")]
+position = Vector2(640, 304)
+size = Vector2(1024, 64)
+style = 2
+
+[node name="P011" parent="Platforms" instance=ExtResource("5_platform")]
 position = Vector2(0, 304)
-size = Vector2(3200, 64)
+size = Vector2(640, 64)
 style = 2
 
-[node name="P001" parent="Platforms" instance=ExtResource("3_platform")]
-position = Vector2(2500, 220)
-size = Vector2(70, 8)
-style = 2
+[node name="S000" parent="Hazards" instance=ExtResource("6_spikes")]
+position = Vector2(5632, 304)
+width = 32.0
 
-[node name="P002" parent="Platforms" instance=ExtResource("3_platform")]
-position = Vector2(1750, 264)
-size = Vector2(200, 16)
-style = 2
+[node name="S001" parent="Hazards" instance=ExtResource("6_spikes")]
+position = Vector2(5488, 400)
+width = 48.0
 
-[node name="P003" parent="Platforms" instance=ExtResource("3_platform")]
-position = Vector2(1350, 232)
-size = Vector2(160, 16)
-style = 2
+[node name="K000" parent="Hazards" instance=ExtResource("7_killzone")]
+position = Vector2(5488, 380)
+size = Vector2(48, 108)
 
-[node name="P004" parent="Platforms" instance=ExtResource("3_platform")]
-position = Vector2(900, 264)
-size = Vector2(180, 16)
-style = 2
+[node name="CP0" parent="Checkpoints" instance=ExtResource("8_checkpoint")]
+position = Vector2(5976, 304)
+index = 0
+stage = 0
 
-[node name="P005" parent="Platforms" instance=ExtResource("3_platform")]
-position = Vector2(520, 232)
-size = Vector2(150, 16)
-style = 2
+[node name="CP1" parent="Checkpoints" instance=ExtResource("8_checkpoint")]
+position = Vector2(4960, 304)
+index = 1
+stage = 1
 
-[node name="G00" parent="Goblins" instance=ExtResource("4_goblin")]
-position = Vector2(2850, 302)
+[node name="CP2" parent="Checkpoints" instance=ExtResource("8_checkpoint")]
+position = Vector2(4000, 304)
+index = 2
+stage = 2
 
-[node name="G01" parent="Goblins" instance=ExtResource("4_goblin")]
-position = Vector2(1900, 302)
+[node name="CP3" parent="Checkpoints" instance=ExtResource("8_checkpoint")]
+position = Vector2(3232, 304)
+index = 3
+stage = 3
 
-[node name="G02" parent="Goblins" instance=ExtResource("4_goblin")]
-position = Vector2(1500, 302)
+[node name="CP4" parent="Checkpoints" instance=ExtResource("8_checkpoint")]
+position = Vector2(2336, 304)
+index = 4
+stage = 4
 
-[node name="G03" parent="Goblins" instance=ExtResource("4_goblin")]
-position = Vector2(1100, 302)
+[node name="CP5" parent="Checkpoints" instance=ExtResource("8_checkpoint")]
+position = Vector2(1568, 304)
+index = 5
+stage = 5
 
-[node name="G04" parent="Goblins" instance=ExtResource("4_goblin")]
-position = Vector2(700, 302)
+[node name="CP6" parent="Checkpoints" instance=ExtResource("8_checkpoint")]
+position = Vector2(544, 304)
+index = 6
+stage = 6
 
-[node name="G05" parent="Goblins" instance=ExtResource("4_goblin")]
-position = Vector2(400, 302)
+[node name="EndZone" type="Area2D" parent="Triggers"]
+position = Vector2(80, 254)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "end"
+metadata/arg = ""
 
-[node name="IntroThrower" parent="Goblins" instance=ExtResource("4_goblin")]
-position = Vector2(2535, 218)
-variant = 1
+[node name="Shape" type="CollisionShape2D" parent="Triggers/EndZone"]
+shape = SubResource("shape_40x140")
 
-[node name="EntryDoor" parent="Doors" instance=ExtResource("5_door")]
-position = Vector2(3160, 304)
-start_open = true
-close_behind = true
-close_side = -1.0
-sealed_text = "Locked. No way back."
+[node name="RightBound" type="StaticBody2D" parent="Walls"]
+position = Vector2(6216, 54)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/RightBound"]
+shape = SubResource("shape_16x720")
 
 [node name="LeftBound" type="StaticBody2D" parent="Walls"]
 position = Vector2(-8, 54)
@@ -150,35 +276,206 @@ collision_layer = 1
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/LeftBound"]
-shape = SubResource("shape_wall")
+shape = SubResource("shape_16x720")
 
-[node name="RightBound" type="StaticBody2D" parent="Walls"]
-position = Vector2(3208, 54)
-collision_layer = 1
-collision_mask = 0
+[node name="IntroThrower" parent="Goblins" instance=ExtResource("9_goblin")]
+position = Vector2(5888, 222)
+variant = 1
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/RightBound"]
-shape = SubResource("shape_wall")
+[node name="G02" parent="Goblins" instance=ExtResource("9_goblin")]
+position = Vector2(5828, 302)
 
-[node name="EndZone" type="Area2D" parent="Triggers"]
-position = Vector2(90, 254)
-collision_layer = 0
-collision_mask = 2
+[node name="G03" parent="Goblins" instance=ExtResource("9_goblin")]
+position = Vector2(5328, 302)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Triggers/EndZone"]
-shape = SubResource("shape_end")
+[node name="G04" parent="Goblins" instance=ExtResource("9_goblin")]
+position = Vector2(5208, 302)
 
-[node name="Player" parent="." instance=ExtResource("8_player")]
-position = Vector2(3110, 302)
+[node name="G05" parent="Goblins" instance=ExtResource("9_goblin")]
+position = Vector2(4696, 302)
+
+[node name="G06" parent="Goblins" instance=ExtResource("9_goblin")]
+position = Vector2(4496, 302)
+
+[node name="G07" parent="Goblins" instance=ExtResource("9_goblin")]
+position = Vector2(4336, 302)
+
+[node name="G08" parent="Goblins" instance=ExtResource("9_goblin")]
+position = Vector2(1912, 302)
+variant = 1
+
+[node name="EntryDoor" parent="Doors" instance=ExtResource("10_door")]
+position = Vector2(6168, 304)
+start_open = true
+close_behind = true
+close_side = -1.0
+sealed_text = "Locked. No way back."
+
+[node name="Player" parent="." instance=ExtResource("11_player")]
+position = Vector2(6112, 302)
 
 [node name="Camera2D" type="Camera2D" parent="."]
-position = Vector2(3110, 184)
+position = Vector2(6112, 184)
 limit_left = 0
 limit_top = -116
-limit_right = 3200
+limit_right = 6208
 limit_bottom = 364
 limit_smoothed = true
 position_smoothing_enabled = true
 position_smoothing_speed = 6.0
 
-[node name="HUD" parent="." instance=ExtResource("9_hud")]
+[node name="HUD" parent="." instance=ExtResource("12_hud")]
+
+[node name="Sec0" type="Area2D" parent="Triggers"]
+position = Vector2(5632, 550)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "section"
+metadata/arg = "0"
+metadata/l = 4736
+metadata/r = 6208
+metadata/t = -116
+metadata/b = 364
+metadata/bg = 2
+metadata/x0 = 5056
+metadata/x1 = 6208
+metadata/title = "ARTERIAL TUNNEL"
+metadata/key = "tunnel"
+metadata/gate = 0
+metadata/edge = 6208
+metadata/floor_y = 304
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/Sec0"]
+shape = SubResource("shape_1152x1900")
+
+[node name="Sec1" type="Area2D" parent="Triggers"]
+position = Vector2(4576, 550)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "section"
+metadata/arg = "1"
+metadata/l = 3776
+metadata/r = 5376
+metadata/t = -116
+metadata/b = 364
+metadata/bg = 2
+metadata/x0 = 4096
+metadata/x1 = 5056
+metadata/title = "THE RATS' CORRIDOR"
+metadata/key = "rats"
+metadata/gate = 1
+metadata/edge = 5056
+metadata/floor_y = 304
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/Sec1"]
+shape = SubResource("shape_960x1900")
+
+[node name="Sec2" type="Area2D" parent="Triggers"]
+position = Vector2(3712, 550)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "section"
+metadata/arg = "2"
+metadata/l = 3008
+metadata/r = 4416
+metadata/t = -116
+metadata/b = 364
+metadata/bg = 2
+metadata/x0 = 3328
+metadata/x1 = 4096
+metadata/title = "SAFE ROOM"
+metadata/key = "saferoom"
+metadata/gate = 1
+metadata/edge = 4096
+metadata/floor_y = 304
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/Sec2"]
+shape = SubResource("shape_768x1900")
+
+[node name="Sec3" type="Area2D" parent="Triggers"]
+position = Vector2(2880, 550)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "section"
+metadata/arg = "3"
+metadata/l = 2112
+metadata/r = 3648
+metadata/t = -116
+metadata/b = 364
+metadata/bg = 2
+metadata/x0 = 2432
+metadata/x1 = 3328
+metadata/title = "THE HOARDER"
+metadata/key = "hoarder"
+metadata/gate = 1
+metadata/edge = 3328
+metadata/floor_y = 304
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/Sec3"]
+shape = SubResource("shape_896x1900")
+
+[node name="Sec4" type="Area2D" parent="Triggers"]
+position = Vector2(2048, 550)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "section"
+metadata/arg = "4"
+metadata/l = 1344
+metadata/r = 2752
+metadata/t = -116
+metadata/b = 364
+metadata/bg = 2
+metadata/x0 = 1664
+metadata/x1 = 2432
+metadata/title = "GOBLIN WORKSHOP"
+metadata/key = "workshop"
+metadata/gate = 0
+metadata/edge = 2432
+metadata/floor_y = 304
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/Sec4"]
+shape = SubResource("shape_768x1900")
+
+[node name="Sec5" type="Area2D" parent="Triggers"]
+position = Vector2(1152, 550)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "section"
+metadata/arg = "5"
+metadata/l = 320
+metadata/r = 1984
+metadata/t = -116
+metadata/b = 364
+metadata/bg = 2
+metadata/x0 = 640
+metadata/x1 = 1664
+metadata/title = "BALL OF SWINE"
+metadata/key = "swine"
+metadata/gate = 1
+metadata/edge = 1664
+metadata/floor_y = 304
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/Sec5"]
+shape = SubResource("shape_1024x1900")
+
+[node name="Sec6" type="Area2D" parent="Triggers"]
+position = Vector2(320, 550)
+collision_layer = 0
+collision_mask = 2
+metadata/kind = "section"
+metadata/arg = "6"
+metadata/l = 0
+metadata/r = 960
+metadata/t = -116
+metadata/b = 364
+metadata/bg = 2
+metadata/x0 = 0
+metadata/x1 = 640
+metadata/title = "THE COLLAPSE"
+metadata/key = "collapse"
+metadata/gate = 1
+metadata/edge = 640
+metadata/floor_y = 304
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/Sec6"]
+shape = SubResource("shape_640x1900")

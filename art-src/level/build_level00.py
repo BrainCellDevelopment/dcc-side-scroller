@@ -4,6 +4,10 @@ import re
 import sys
 from PIL import Image, ImageDraw
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import levelkit
+from levelkit import Writer, fnum, vec, qstr, RUBBLE, IRON, STONE, WOOD, JUMP_GAP, STEP_UP, PROP_W
+
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 PROJECT = ROOT + "/dcc-side-scroller"
 OUT = PROJECT + "/scenes/level00.tscn"
@@ -30,152 +34,19 @@ RES["door"] = "res://scenes/props/gate_door.tscn"
 RES["mordecai"] = "res://scenes/props/mordecai.tscn"
 EXISTING = ["player", "goblin", "engineer", "dozer", "hud", "lootbox"]
 
-RUBBLE, IRON, STONE, WOOD = 0, 1, 2, 3
+
 ARENA_W = 896
 RUN_W = 416
-JUMP_GAP = 64
-STEP_UP = 48
 
-plats = []
-spikes = []
-kills = []
-cps = []
-enemies = []
-props = []
+kit = levelkit.Kit(PROJECT, CONTRACT2)
+plats, spikes, kills, cps = kit.plats, kit.spikes, kit.kills, kit.cps
+enemies, props, trigs, walls = kit.enemies, kit.props, kit.trigs, kit.walls
+markers, doors, sections, routes, cur = kit.markers, kit.doors, kit.sections, kit.routes, kit.cur
 glow = []
-trigs = []
-walls = []
-markers = []
-doors = []
-sections = []
-routes = {"main": [], "upper": []}
-labels = []
-cur = {"x": 0, "y": 0, "gh": 64, "sec": 0, "style": RUBBLE}
-pid = [0]
-
-
-def snap_up(v, q=16):
-    return int(-(-v // q) * q)
-
-
-def add_plat(x, y, w, h, style, kind="route", one_way=False):
-    pid[0] += 1
-    p = {"id": "P%03d" % pid[0], "x": x, "y": y, "w": w, "h": h, "style": style, "kind": kind,
-         "one_way": one_way, "sec": cur["sec"]}
-    plats.append(p)
-    return p
-
-
-def add_spike(x, y, w, route):
-    spikes.append({"x": x, "y": y, "w": w, "route": route, "sec": cur["sec"]})
-
-
-def add_kill(x, y, w, h):
-    kills.append({"x": x, "y": y, "w": w, "h": h})
-
-
-PROP_W = {"prop_bike_rack": 40, "prop_moped": 40, "prop_rubble": 32, "prop_crate": 40, "prop_burnt_tree": 48,
-          "prop_sign_arrow": 32, "prop_street_lamp": 40, "prop_street_lamp_bent": 48, "prop_street_sign": 40, "prop_stop_sign": 32, "prop_stair_rail": 64, "prop_fire": 32, "prop_big_door": 96}
-
-
-def add_prop(key, x, y, free=False):
-    props.append({"key": key, "x": x, "y": y, "free": free})
-
-
-def add_enemy(kind, x, y):
-    enemies.append({"kind": kind, "x": x, "y": y, "sec": cur["sec"]})
-
-
-def grunt(x, y=None):
-    add_enemy("grunt", x, cur["y"] if y is None else y)
-
-
-def thrower(x, y=None):
-    add_enemy("thrower", x, cur["y"] if y is None else y)
-
-
-def cp(index, x, stage=0, y=None):
-    cps.append({"index": index, "x": x, "y": cur["y"] if y is None else y, "stage": stage})
-
-
-def trig(name, kind, arg, x0, x1, y0, y1, meta=None):
-    trigs.append({"name": name, "kind": kind, "arg": arg, "x0": x0, "x1": x1, "y0": y0, "y1": y1,
-                  "meta": meta or {}})
-
-
-def hint(name, x0, x1, text, y=None):
-    y = cur["y"] if y is None else y
-    trig(name, "hint", text, x0, x1, y - 300, y + 120)
-
-
-def secret(name, piece):
-    trig(name, "ach", "secret_route", piece["x"] + 4, piece["x"] + piece["w"] - 4, piece["y"] - 50, piece["y"] - 2)
-
-
-def ach(name, aid, x, y=None, w=32):
-    y = cur["y"] if y is None else y
-    trig(name, "ach", aid, x, x + w, y - 300, y + 120)
-
-
-def flat(w, spk=(), style=None, h=None):
-    p = add_plat(cur["x"], cur["y"], w, h or cur["gh"], cur["style"] if style is None else style)
-    routes["main"].append(p["id"])
-    for off, sw in spk:
-        add_spike(cur["x"] + off, cur["y"], sw, True)
-    cur["x"] += w
-    return p
-
-
-def block(x, w, h, style=None, y=None):
-    top = (cur["y"] if y is None else y) - h
-    return add_plat(x, top, w, h, cur["style"] if style is None else style, kind="obstacle")
-
-
-def pit(w, fire=False):
-    x, y = cur["x"], cur["y"]
-    if fire:
-        add_prop("prop_fire", x + w // 2, y + 60, free=True)
-        add_kill(x, y + 40, w, 144)
-    else:
-        add_plat(x, y + 96, w, 16, STONE, kind="pitfloor")
-        add_spike(x, y + 96, w, False)
-        add_kill(x, y + 76, w, 108)
-    cur["x"] += w
-
-
-def start_section(idx, name, bg, title, style, bottom, top_off=420):
-    cur["sec"] = idx
-    cur["style"] = style
-    cur["gh"] = max(64, snap_up(bottom - cur["y"]))
-    sections.append({"idx": idx, "name": name, "x0": cur["x"], "bg": bg, "title": title, "bottom": bottom,
-                     "top": cur["y"] - top_off, "y_start": cur["y"]})
-
-
-def end_section():
-    s = sections[-1]
-    s["x1"] = cur["x"]
-
-
-def branch(L, pieces):
-    x, f = cur["x"], cur["y"]
-    t = f + 64
-    s1 = add_plat(x, f + 32, 32, 96, STONE, kind="route")
-    trench = add_plat(x + 32, t, L, 64, STONE, kind="route")
-    xe = x + 32 + L
-    s3 = add_plat(xe, f + 32, 32, 96, STONE, kind="route")
-    routes["main"] += [s1["id"], trench["id"], s3["id"]]
-    ups = []
-    px = x
-    for gap, w, dy in pieces:
-        p = add_plat(px + gap, f + dy, w, 16, STONE, kind="upper", one_way=True)
-        ups.append(p)
-        px = p["x"] + w
-    cur["x"] = xe + 32
-    return {"xb": x, "t": t, "xe": xe, "pieces": ups, "before": routes["main"][-4]}
-
-
-def finish_upper(info):
-    routes["upper"].append([info["before"]] + [p["id"] for p in info["pieces"]] + [routes["main"][-1]])
+add_plat, add_spike, add_kill, add_prop, add_enemy = kit.add_plat, kit.add_spike, kit.add_kill, kit.add_prop, kit.add_enemy
+grunt, thrower, cp, trig, hint, secret, ach = kit.grunt, kit.thrower, kit.cp, kit.trig, kit.hint, kit.secret, kit.ach
+flat, block, pit, start_section, end_section = kit.flat, kit.block, kit.pit, kit.start_section, kit.end_section
+branch, finish_upper = kit.branch, kit.finish_upper
 
 
 def build():
@@ -448,60 +319,11 @@ GUILD = [
 ]
 
 
-# ---------------------------------------------------------------- tscn writer
-class Writer:
-    def __init__(self):
-        self.ext = {}
-        self.sub = {}
-        self.nodes = []
-
-    def ext_id(self, key):
-        if key not in self.ext:
-            self.ext[key] = "%d_%s" % (len(self.ext) + 1, key.replace("prop_", "p_"))
-        return self.ext[key]
-
-    def shape(self, w, h):
-        sid = "shape_%dx%d" % (round(w), round(h))
-        self.sub[sid] = (round(w, 2), round(h, 2))
-        return sid
-
-    def node(self, text):
-        self.nodes.append(text)
-
-
-def fnum(v):
-    if abs(v - round(v)) < 1e-6:
-        return str(int(round(v)))
-    return ("%.2f" % v).rstrip("0").rstrip(".")
-
-
-def vec(x, y):
-    return "Vector2(%s, %s)" % (fnum(x), fnum(y))
-
-
-def qstr(s):
-    return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
-
 
 def write_tscn(info):
     w = Writer()
     w.ext_id("script")
-    out = []
-
-    def inst(name, parent, key, **props_):
-        lines = ['[node name="%s" parent="%s" instance=ExtResource("%s")]' % (name, parent, w.ext_id(key))]
-        for k, v in props_.items():
-            lines.append("%s = %s" % (k, v))
-        w.node("\n".join(lines))
-
-    def raw(name, typ, parent, lines, groups=None):
-        head = '[node name="%s" type="%s"' % (name, typ)
-        if parent:
-            head += ' parent="%s"' % parent
-        if groups:
-            head += " groups=[%s]" % ", ".join(qstr(g) for g in groups)
-        head += "]"
-        w.node("\n".join([head] + lines))
+    inst, raw = w.inst, w.raw
 
     w.node('[node name="Level00" type="Node2D"]\nscript = ExtResource("1_level")')
     inst("Background", ".", "background")
@@ -515,8 +337,7 @@ def write_tscn(info):
     raw("Doors", "Node2D", ".", ["z_index = -2"])
     raw("Goblins", "Node2D", ".", [])
 
-    for i, d in enumerate(props):
-        inst("D%03d" % i, "Deco", d["key"], position=vec(d["x"], d["y"]))
+    kit.emit_props(w)
     for i, b in enumerate(info["banner"]):
         raw("Banner%d" % i, "Polygon2D", "Deco",
             ["position = %s" % vec(b, 912 - 150),
@@ -529,45 +350,8 @@ def write_tscn(info):
         raw("GlowCore%d" % i, "Polygon2D", "Deco",
             ["position = %s" % vec(gx0 + 70, gy0), "color = Color(1, 0.8, 0.4, 0.28)",
              "polygon = PackedVector2Array(0, 0, 160, 0, 130, -70, 30, -70)"])
-    for p in plats:
-        lines = ["position = %s" % vec(p["x"], p["y"]), "size = %s" % vec(p["w"], p["h"]),
-                 "style = %d" % p["style"]]
-        if p["one_way"]:
-            lines.append("one_way = true")
-        inst(p["id"], "Platforms", "platform", **{l.split(" = ")[0]: l.split(" = ")[1] for l in lines})
-    for i, s in enumerate(spikes):
-        inst("S%03d" % i, "Hazards", "spikes", position=vec(s["x"], s["y"]), width=fnum(s["w"]) + ".0")
-    for i, k in enumerate(kills):
-        inst("K%03d" % i, "Hazards", "killzone", position=vec(k["x"], k["y"]), size=vec(k["w"], k["h"]))
-    for c in cps:
-        inst("CP%d" % c["index"], "Checkpoints", "checkpoint", position=vec(c["x"], c["y"]),
-             index=str(c["index"]), stage=str(c["stage"]))
-    for i, t in enumerate(trigs):
-        cx = (t["x0"] + t["x1"]) / 2
-        cy = (t["y0"] + t["y1"]) / 2
-        lines = ["position = %s" % vec(cx, cy), "collision_layer = 0", "collision_mask = 2",
-                 "metadata/kind = %s" % qstr(t["kind"]), "metadata/arg = %s" % qstr(str(t["arg"]))]
-        for k, v in t["meta"].items():
-            lines.append("metadata/%s = %s" % (k, qstr(v) if isinstance(v, str) else str(v)))
-        raw(t["name"], "Area2D", "Triggers", lines)
-        raw("Shape", "CollisionShape2D", "Triggers/" + t["name"],
-            ["shape = SubResource(\"%s\")" % w.shape(t["x1"] - t["x0"], t["y1"] - t["y0"])])
-    for wl in walls:
-        raw(wl["name"], "StaticBody2D", "Walls", ["position = %s" % vec(wl["x"], wl["y"]),
-                                                  "collision_layer = 1", "collision_mask = 0"])
-        lines = ['shape = SubResource("%s")' % w.shape(16, 720)]
-        if wl["kind"] == "arena":
-            lines.append("disabled = true")
-        raw("CollisionShape2D", "CollisionShape2D", "Walls/" + wl["name"], lines)
-    for m in markers:
-        raw(m["name"], "Marker2D", "Markers", ["position = %s" % vec(m["x"], m["y"])])
-
-    gi = 0
-    for e in enemies:
-        if e["kind"] in ("grunt", "thrower"):
-            gi += 1
-            extra = {"variant": "1"} if e["kind"] == "thrower" else {}
-            inst("G%02d" % gi, "Goblins", "goblin", position=vec(e["x"], e["y"] - 2), **extra)
+    kit.emit_geometry(w)
+    kit.emit_enemies(w)
     eng = [e for e in enemies if e["kind"] == "engineer"][0]
     dz = [e for e in enemies if e["kind"] == "dozer"][0]
     inst("Engineer", ".", "engineer", position=vec(eng["x"], eng["y"] - 2), max_health="16")
@@ -618,257 +402,18 @@ def write_tscn(info):
         if s["idx"] == 6:
             r = s["x1"]
         s["l"], s["r"] = l, r
-        meta = {"l": l, "r": r, "t": s["top"], "b": s["bottom"], "bg": s["bg"], "x0": s["x0"], "x1": s["x1"],
-                "title": s["title"]}
-        t = {"name": "Sec%d" % s["idx"], "kind": "section", "arg": str(s["idx"]), "x0": s["x0"], "x1": s["x1"],
-             "y0": -400, "y1": 1500, "meta": meta}
-        trigs.append(t)
-        cx = (t["x0"] + t["x1"]) / 2
-        cy = (t["y0"] + t["y1"]) / 2
-        lines = ["position = %s" % vec(cx, cy), "collision_layer = 0", "collision_mask = 2",
-                 'metadata/kind = "section"', 'metadata/arg = "%d"' % s["idx"]]
-        for k, v in meta.items():
-            lines.append("metadata/%s = %s" % (k, qstr(v) if isinstance(v, str) else str(v)))
-        raw(t["name"], "Area2D", "Triggers", lines)
-        raw("Shape", "CollisionShape2D", "Triggers/" + t["name"],
-            ['shape = SubResource("%s")' % w.shape(t["x1"] - t["x0"], t["y1"] - t["y0"])])
+    kit.emit_section_triggers(w)
 
-    ext_lines = ['[ext_resource type="Script" path="res://scripts/levels/level00.gd" id="1_level"]']
-    for key, eid in w.ext.items():
-        if key == "script":
-            continue
-        ext_lines.append('[ext_resource type="PackedScene" path="%s" id="%s"]' % (RES[key], eid))
-    sub_lines = []
-    for sid, (sw, sh) in w.sub.items():
-        sub_lines.append('[sub_resource type="RectangleShape2D" id="%s"]\nsize = %s\n' % (sid, vec(sw, sh)))
-    total = len(ext_lines) + len(sub_lines) + 1
-    text = "[gd_scene load_steps=%d format=3 uid=\"uid://dsypb287qo2hi\"]\n\n" % total
-    text += "\n".join(ext_lines) + "\n\n" + "\n".join(sub_lines) + "\n"
-    text += "\n\n".join(w.nodes) + "\n"
-    # camera and node text built before ids resolved: ensure Camera2D/other nodes ok
+    text = w.render(RES, "res://scripts/levels/level00.gd", "uid://dsypb287qo2hi")
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w") as f:
         f.write(text)
     return text, w
 
 
-# ---------------------------------------------------------------- linter
 def lint(text, w, info):
-    errs = []
-    notes = []
+    return kit.lint(text, RES, EXISTING)
 
-    ext_def = re.findall(r'^\[ext_resource [^\]]*id="([^"]+)"', text, re.M)
-    sub_def = re.findall(r'^\[sub_resource [^\]]*id="([^"]+)"', text, re.M)
-    ext_use = set(re.findall(r'ExtResource\("([^"]+)"\)', text))
-    sub_use = set(re.findall(r'SubResource\("([^"]+)"\)', text))
-    for i in ext_def:
-        if i not in ext_use:
-            errs.append("unused ext_resource " + i)
-    for i in ext_use:
-        if i not in ext_def:
-            errs.append("undefined ExtResource " + i)
-    for i in sub_def:
-        if i not in sub_use:
-            errs.append("unused sub_resource " + i)
-    for i in sub_use:
-        if i not in sub_def:
-            errs.append("undefined SubResource " + i)
-    if len(set(ext_def)) != len(ext_def) or len(set(sub_def)) != len(sub_def):
-        errs.append("duplicate resource ids")
-    m = re.match(r"\[gd_scene load_steps=(\d+) format=3( uid=\"[^\"]+\")?\]", text)
-    if not m or int(m.group(1)) != len(ext_def) + len(sub_def) + 1:
-        errs.append("load_steps wrong")
-    if text.count("uid=") != 1:
-        errs.append("unexpected uid")
-
-    paths = set()
-    sibs = {}
-    for nm in re.finditer(r'^\[node name="([^"]+)"(?: type="[^"]+")?(?: parent="([^"]*)")?', text, re.M):
-        name, parent = nm.group(1), nm.group(2)
-        if parent is None:
-            paths.add(".")
-            continue
-        if parent != "." and parent not in paths:
-            errs.append("missing parent %s for %s" % (parent, name))
-        full = name if parent == "." else parent + "/" + name
-        key = (parent, name)
-        if key in sibs:
-            errs.append("duplicate sibling %s/%s" % (parent, name))
-        sibs[key] = 1
-        paths.add(full)
-
-    c2 = open(CONTRACT2).read()
-    for key, path in RES.items():
-        if key in EXISTING:
-            if not os.path.exists(PROJECT + "/" + path[6:]):
-                errs.append("missing existing scene " + path)
-        else:
-            base = os.path.basename(path)
-            if base not in c2:
-                errs.append("instanced path not in CONTRACT2: " + path)
-            sub = "/".join(path.split("/")[-2:-1])
-            if "scenes/" + sub + "/" not in c2:
-                errs.append("folder not in CONTRACT2: " + path)
-
-    for p in plats:
-        for k in ("x", "y", "w", "h"):
-            if p[k] % 16:
-                errs.append("platform %s %s=%s not 16 aligned" % (p["id"], k, p[k]))
-    for s in spikes:
-        for k in ("x", "y", "w"):
-            if s[k] % 16:
-                errs.append("spikes at %s %s not aligned" % (s["x"], k))
-    for c in cps:
-        if c["y"] % 16 or c["x"] % 8:
-            errs.append("checkpoint %d misaligned" % c["index"])
-    for k in kills:
-        for v in (k["x"], k["w"]):
-            if v % 16:
-                errs.append("kill zone misaligned %s" % k)
-
-    pmap = {p["id"]: p for p in plats}
-
-    def gap_check(a, b, label):
-        gap = max(0, b["x"] - (a["x"] + a["w"]), a["x"] - (b["x"] + b["w"]))
-        up = a["y"] - b["y"]
-        if b["x"] < a["x"]:
-            errs.append("%s: route goes backwards %s -> %s" % (label, a["id"], b["id"]))
-        if up > STEP_UP:
-            errs.append("%s: step up %d too high %s -> %s" % (label, up, a["id"], b["id"]))
-        lim = JUMP_GAP
-        if up > 32:
-            lim = 32
-        if gap > lim:
-            errs.append("%s: gap %d > %d between %s (x=%d) and %s (x=%d)" % (label, gap, lim, a["id"], a["x"], b["id"], b["x"]))
-        if gap > 0 and -up > 96:
-            errs.append("%s: drop with gap too deep %s -> %s" % (label, a["id"], b["id"]))
-        return gap, up
-
-    main = [pmap[i] for i in routes["main"]]
-    maxgap = maxup = 0
-    for a, b in zip(main, main[1:]):
-        g, u = gap_check(a, b, "main")
-        maxgap, maxup = max(maxgap, g), max(maxup, u)
-    for seg in routes["upper"]:
-        pl = [pmap[i] for i in seg]
-        for a, b in zip(pl, pl[1:]):
-            gap_check(a, b, "upper")
-    notes.append("main route: %d platforms, max gap %d, max step-up %d, upper segments %d" %
-                 (len(main), maxgap, maxup, len(routes["upper"])))
-    if main[0]["x"] != 0:
-        errs.append("main route does not start at x=0")
-
-    mains = set(routes["main"])
-    for s in spikes:
-        if not s["route"]:
-            continue
-        if s["w"] > 48:
-            errs.append("route spike too wide at %d" % s["x"])
-        host = [p for p in plats if p["id"] in mains and p["y"] == s["y"] and p["x"] <= s["x"] and
-                s["x"] + s["w"] <= p["x"] + p["w"]]
-        if not host:
-            errs.append("route spike at %d has no platform" % s["x"])
-            continue
-        h = host[0]
-        others = [o for o in spikes if o is not s and o["route"] and o["y"] == s["y"] and h["x"] <= o["x"] < h["x"] + h["w"]]
-        left = s["x"] - max([h["x"]] + [o["x"] + o["w"] for o in others if o["x"] < s["x"]])
-        right = min([h["x"] + h["w"]] + [o["x"] for o in others if o["x"] > s["x"]]) - (s["x"] + s["w"])
-        if left < 32 or right < 32:
-            errs.append("spike at %d flat before/after %d/%d < 32" % (s["x"], left, right))
-
-    obs = [p for p in plats if p["kind"] == "obstacle"]
-    for o in obs:
-        if o["h"] > 48:
-            errs.append("obstacle %s too tall" % o["id"])
-        if not any(p["id"] in mains and p["x"] <= o["x"] and o["x"] + o["w"] <= p["x"] + p["w"] and
-                   p["y"] <= o["y"] + o["h"] and o["y"] + o["h"] <= p["y"] + 0.1 for p in plats):
-            errs.append("obstacle %s not sitting on a route platform" % o["id"])
-        for s in spikes:
-            if s["route"] and abs(s["y"] - (o["y"] + o["h"])) < 1 and o["x"] < s["x"] + s["w"] and s["x"] < o["x"] + o["w"]:
-                errs.append("obstacle %s overlaps spikes" % o["id"])
-
-    for r in main:
-        for q in plats:
-            if q is r or q["kind"] in ("obstacle", "pitfloor", "refuge"):
-                continue
-            ox = min(r["x"] + r["w"], q["x"] + q["w"]) - max(r["x"], q["x"])
-            if ox <= 0:
-                continue
-            if q["kind"] == "ceil":
-                clear = r["y"] - (q["y"] + q["h"])
-                if 0 <= clear < 44:
-                    errs.append("ceiling %s clearance %d < 44 over %s" % (q["id"], clear, r["id"]))
-                continue
-            if q["y"] < r["y"] and q["y"] + q["h"] > r["y"] - 40:
-                errs.append("platform %s blocks walking box of %s" % (q["id"], r["id"]))
-    for q in plats:
-        if q["kind"] == "ceil":
-            under = [r for r in main if min(r["x"] + r["w"], q["x"] + q["w"]) - max(r["x"], q["x"]) > 0]
-            if not under:
-                errs.append("ceiling %s has no floor" % q["id"])
-
-    def support(x, y, tol=1):
-        for p in plats:
-            if p["kind"] in ("pitfloor", "ceil", "deco", "refuge"):
-                continue
-            if abs(p["y"] - y) <= tol and p["x"] + 8 <= x <= p["x"] + p["w"] - 8:
-                return p
-        return None
-
-    for d in props:
-        pw = PROP_W.get(d["key"])
-        if pw is None or d["free"]:
-            continue
-        lo, hi = d["x"] - pw / 2, d["x"] + pw / 2
-        iv = sorted((max(lo, q["x"]), min(hi, q["x"] + q["w"])) for q in plats
-                    if q["kind"] not in ("pitfloor", "ceil", "deco", "refuge", "obstacle") and abs(q["y"] - d["y"]) <= 1
-                    and q["x"] < hi and q["x"] + q["w"] > lo)
-        cov, end = 0, lo
-        for a, b in iv:
-            a = max(a, end)
-            if b > a:
-                cov += b - a
-                end = b
-        if cov < pw * 0.9:
-            errs.append("prop %s at (%d,%d) only %d%% supported" % (d["key"], d["x"], d["y"], 100 * cov // pw))
-
-    for e in enemies:
-        if e["kind"] == "dozer":
-            continue
-        if support(e["x"], e["y"]) is None:
-            errs.append("enemy %s at (%d,%d) has no platform" % (e["kind"], e["x"], e["y"]))
-    for c in cps:
-        if support(c["x"], c["y"]) is None:
-            errs.append("checkpoint %d has no platform" % c["index"])
-    idxs = sorted(c["index"] for c in cps)
-    if idxs != sorted(set(idxs)):
-        errs.append("duplicate checkpoint index")
-    for a, b in zip(sections, sections[1:]):
-        if a["x1"] != b["x0"]:
-            errs.append("sections %d/%d not contiguous" % (a["idx"], b["idx"]))
-    for s in sections:
-        if not (s["l"] <= s["x0"] and s["r"] >= s["x1"]):
-            errs.append("section %d x not inside camera limits" % s["idx"])
-        for p in plats:
-            if s["x0"] <= p["x"] < s["x1"]:
-                if p["y"] < s["top"]:
-                    errs.append("platform %s above section %d top limit" % (p["id"], s["idx"]))
-                if p["kind"] in ("route", "obstacle", "upper") and p["y"] > s["bottom"]:
-                    errs.append("platform %s below section %d bottom limit" % (p["id"], s["idx"]))
-        for e in enemies:
-            if s["x0"] <= e["x"] < s["x1"] and not (s["top"] <= e["y"] <= s["bottom"]):
-                errs.append("enemy outside limits in section %d" % s["idx"])
-    for t in trigs:
-        if t["kind"] in ("hint", "ach", "ambush", "arena", "dozer"):
-            if not any(s["x0"] - 1 <= t["x0"] and t["x1"] <= s["x1"] + 1 for s in sections):
-                errs.append("trigger %s spans sections" % t["name"])
-    ids = [t["name"] for t in trigs]
-    if len(ids) != len(set(ids)):
-        errs.append("duplicate trigger names")
-    notes.append("platforms %d spikes %d kill zones %d enemies %d checkpoints %d triggers %d props %d" %
-                 (len(plats), len(spikes), len(kills), len([e for e in enemies if e['kind'] in ('grunt', 'thrower')]),
-                  len(cps), len(trigs), len(props)))
-    return errs, notes
 
 
 # ---------------------------------------------------------------- map
