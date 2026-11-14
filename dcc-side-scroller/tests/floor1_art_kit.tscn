@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tests/floor1_art_kit.gd" id="1_t"]
+
+[node name="Floor1ArtKit" type="Node"]
+script = ExtResource("1_t")
