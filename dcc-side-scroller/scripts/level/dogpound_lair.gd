@@ -20,6 +20,7 @@ var boss_arena: Node2D = null
 var started: bool = false
 
 var _lock_shape: CollisionShape2D = null
+var _exit_shape: CollisionShape2D = null
 
 
 func _ready() -> void:
@@ -30,7 +31,7 @@ func _ready() -> void:
 	set_piece.set("half_width", half_width)
 	add_child(set_piece)
 	_lock_shape = _make_wall(-half_width - 16.0, false)
-	_make_wall(half_width + 8.0, true)
+	_exit_shape = _make_wall(half_width + 4.0, false)
 	boss = BOSS.new() as CharacterBody2D
 	boss.name = "Ralph"
 	add_child(boss)
@@ -48,7 +49,7 @@ func _ready() -> void:
 	boss_arena.set("drop_tier", "Boss")
 	boss_arena.set("drop_kit", "floor1")
 	add_child(boss_arena)
-	var locks: Array[CollisionShape2D] = [_lock_shape]
+	var locks: Array[CollisionShape2D] = [_lock_shape, _exit_shape]
 	boss_arena.call("setup", boss, locks)
 	boss_arena.connect("boss_defeated", _on_boss_defeated)
 	_build_trigger()

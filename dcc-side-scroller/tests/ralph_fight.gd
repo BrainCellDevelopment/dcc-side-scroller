@@ -120,4 +120,16 @@ func _boss() -> void:
 	await _wait_until(func() -> bool: return lair.get("boss_arena").get("dropped_box") != null, 2.0)
 	_check(lair.get("boss_arena").get("dropped_box") != null, "the boss box drops")
 	_check(not bool(lair.get("boss_arena").get("locked")), "the arena lock opens")
+	await _walk_out(lair)
 	await _teardown()
+
+
+## The exit must be open once the boss is down: walk right from inside the arena to past its edge.
+func _walk_out(lair: Node2D) -> void:
+	_player.global_position = lair.global_position + Vector2(lair.get("half_width") - 80.0, -2.0)
+	_player.velocity = Vector2.ZERO
+	await _frames(4)
+	Input.action_press(&"move_right")
+	await _frames(150)
+	Input.action_release(&"move_right")
+	_check(_player.global_position.x > lair.global_position.x + float(lair.get("half_width")) + 24.0, "the player can walk out through the exit after the boss (x %.0f)" % (_player.global_position.x - lair.global_position.x))
