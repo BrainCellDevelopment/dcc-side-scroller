@@ -279,7 +279,7 @@ func _physics_process(delta: float) -> void:
 		_stage = 1
 		return
 	_track_progress(delta, pos)
-	if _room_step(delta):
+	if _room_step(delta) or _greenroom_step(delta, pos):
 		_hold(&"jump", false)
 		return
 	_navigate(pos)
@@ -313,6 +313,23 @@ func _use(item_id: String) -> void:
 				_row()["potions"] = int(_row()["potions"]) + 1
 				_log("used %s, health %d -> %d, level %d xp %d" % [item_id, before, int(_player.get("health")), PlayerStats.character_level, PlayerStats.xp])
 			return
+
+
+# Greenroom (after the Swine): walk to Mordecai, talk, then open every box, the way a player would.
+func _greenroom_step(delta: float, pos: Vector2) -> bool:
+	var room: Node = _level.get_node_or_null("Greenroom")
+	if room == null or _section != 6 or bool(room.call("is_ready")) or not Game.in_safe_zone:
+		return false
+	var mord: Node2D = room.get("mordecai") as Node2D
+	var dx: float = mord.global_position.x - pos.x
+	if absf(dx) > 12.0 and not bool(mord.get("talked")):
+		_move(1 if dx > 0.0 else -1)
+		return true
+	_move(0)
+	_room_wait += delta
+	if fmod(_room_wait, 0.8) < delta:
+		_tap(&"interact")
+	return true
 
 
 # Safe room: stand still and open every loot box (E), the way a player would, before moving on.

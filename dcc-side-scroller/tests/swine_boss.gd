@@ -14,6 +14,7 @@ const BALL_WEDGED: int = 5
 var _fails: int = 0
 var _level: Node = null
 var _arena: Node2D = null
+const MORD_APPROACH: float = 90.0
 var _player: CharacterBody2D = null
 var _ball: CharacterBody2D = null
 var _titles: Array[String] = []
@@ -22,6 +23,8 @@ var _titles: Array[String] = []
 func _ready() -> void:
 	Game.achievement_unlocked.connect(func(title: String, _d: String) -> void: _titles.append(title))
 	await _static_checks()
+	await _drop_through_route()
+	await _greenroom_route()
 	await _fortress_route()
 	await _failed_fortress_route()
 	await _dynamite_route()
@@ -138,6 +141,75 @@ func _static_checks() -> void:
 		if plat2 != null and absf(plat2.global_position.x - (_arena.global_position.x - 352.0)) < 1.0 and plat2.global_position.y < lanes[0] - 40.0 and plat2.global_position.y > lanes[0] - 120.0 and bool(plat.get("one_way")):
 			plats += 1
 	_check(plats == 2, "two one-way lane platforms exist (%d)" % plats)
+	await _teardown()
+
+
+func _drop_through_route() -> void:
+	await _boot()
+	var lanes: Array[float] = _arena.call("lane_ys")
+	var plat: Node2D = null
+	for p: Node in _level.get_node("Platforms").get_children():
+		var p2: Node2D = p as Node2D
+		if p2 != null and absf(p2.global_position.x - (_arena.global_position.x - 352.0)) < 1.0 and p2.global_position.y < lanes[0] - 40.0 and p2.global_position.y > lanes[0] - 120.0:
+			plat = p2
+			break
+	_check(plat != null, "found a lane platform")
+	var top: float = plat.global_position.y
+	_put_player(Vector2(plat.global_position.x + 20.0, top - 1.0))
+	await _frames(10)
+	_check(_player.is_on_floor() and _player.global_position.y < top + 2.0, "player stands on lane platform (y %.1f top %.1f)" % [_player.global_position.y, top])
+	Input.action_press(&"move_down")
+	await _frames(2)
+	Input.action_press(&"jump")
+	await _frames(2)
+	Input.action_release(&"jump")
+	await _frames(25)
+	Input.action_release(&"move_down")
+	_check(_player.global_position.y > top + 10.0, "down+jump drops through platform (y %.1f top %.1f)" % [_player.global_position.y, top])
+	_put_player(Vector2(plat.global_position.x + 20.0, top - 1.0))
+	await _frames(10)
+	Input.action_press(&"move_down")
+	await _frames(2)
+	Input.action_release(&"move_down")
+	await _frames(25)
+	_check(_player.global_position.y > top + 10.0, "tapping down drops through platform (y %.1f top %.1f)" % [_player.global_position.y, top])
+	await _teardown()
+
+
+func _greenroom_route() -> void:
+	await _boot()
+	var room: Node2D = _level.get_node_or_null("Greenroom") as Node2D
+	_check(room != null, "level has a greenroom")
+	var mord: Area2D = room.get("mordecai") as Area2D
+	var box: Node2D = load("res://scenes/props/loot_box.tscn").instantiate() as Node2D
+	box.set("tier", "Boss")
+	box.set("kit", "floor1")
+	box.add_to_group("boss_boxes")
+	_level.add_child(box)
+	_put_player(room.global_position + Vector2(MORD_APPROACH, -2.0))
+	await _frames(3)
+	_check(Game.in_safe_zone, "the greenroom is a safe zone")
+	_check(not bool(room.call("is_ready")), "greenroom not ready before talking")
+	var end: Area2D = _level.get_node("Triggers/EndZone") as Area2D
+	_put_player(end.global_position + Vector2(0.0, 40.0))
+	await _frames(4)
+	_check(not bool(_level.get("complete")), "end of floor held until Mordecai is talked to")
+	_put_player(mord.global_position + Vector2(-10.0, -2.0))
+	await _frames(3)
+	await _press_interact()
+	_check(bool(mord.get("talking")), "E starts Mordecai's talk")
+	box.call("summon", _player, box.global_position)
+	for i: int in 3:
+		await _press_interact()
+	_check(bool(mord.get("talked")) and not bool(mord.get("talking")), "Mordecai's talk finishes")
+	_check(not bool(room.call("is_ready")), "greenroom not ready while a box is unopened")
+	await _frames(40)
+	await _press_interact()
+	await _wait_until(func() -> bool: return bool(box.get("is_open")), 3.0)
+	_check(bool(box.get("is_open")), "boss box opens in the greenroom")
+	await _frames(3)
+	_check(bool(room.call("is_ready")), "greenroom ready after talk and boxes")
+	_level.set("_greenroom", null)
 	await _teardown()
 
 

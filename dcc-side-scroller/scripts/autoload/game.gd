@@ -319,6 +319,12 @@ func _register_inputs() -> void:
 		_joy_button(JOY_BUTTON_DPAD_RIGHT),
 		_joy_axis(JOY_AXIS_LEFT_X, 1.0),
 	]
+	var move_down_events: Array[InputEvent] = [
+		_key(KEY_S),
+		_key(KEY_DOWN),
+		_joy_button(JOY_BUTTON_DPAD_DOWN),
+		_joy_axis(JOY_AXIS_LEFT_Y, 1.0),
+	]
 	var jump_events: Array[InputEvent] = [
 		_key(KEY_SPACE),
 		_key(KEY_W),
@@ -347,6 +353,7 @@ func _register_inputs() -> void:
 	]
 	_add_action(&"move_left", move_left_events)
 	_add_action(&"move_right", move_right_events)
+	_add_action(&"move_down", move_down_events)
 	_add_action(&"jump", jump_events)
 	_add_action(&"attack", attack_events)
 	_add_action(&"sprint", sprint_events)

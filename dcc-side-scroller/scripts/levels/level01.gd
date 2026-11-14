@@ -32,6 +32,7 @@ const COLLAPSE_HUSH: float = 1.4
 const COLLAPSE_NOTICE_TITLE: String = "LEVEL 1 IS CLOSED"
 const COLLAPSE_NOTICE_BODY: String = "A floor's worth of people did not reach the stairs. The count is posted above."
 const FADE_SECONDS: float = 0.8
+const GREENROOM_HOLD: String = "TALK TO MORDECAI AND OPEN YOUR BOXES"
 
 var section: int = 0
 var complete: bool = false
@@ -51,6 +52,7 @@ var _cigarette_done: bool = false
 var _healed: bool = false
 var _fade: ColorRect = null
 var _count_label: Label = null
+var _greenroom: Node = null
 
 @onready var _player: CharacterBody2D = $Player
 @onready var _background: CanvasLayer = $Background
@@ -83,6 +85,9 @@ func _ready() -> void:
 	Game.achievement_unlocked.connect(_on_achievement_unlocked)
 	Game.loot_box_opened.connect(_on_loot_box_opened)
 	Game.report_player_health(int(_player.get("health")), int(_player.get("max_health")))
+	_greenroom = get_node_or_null("Greenroom")
+	if _greenroom != null:
+		_greenroom.connect("ready_to_leave", _try_end)
 	_begin()
 	_setup_gates()
 
@@ -301,8 +306,17 @@ func _heal_on_stairs() -> void:
 		_hud.call("show_banner", HEAL_TEXT, 1.8)
 
 
+func _try_end() -> void:
+	for body: Node2D in ($Triggers/EndZone as Area2D).get_overlapping_bodies():
+		if body == _player:
+			_on_end_entered()
+
+
 func _on_end_entered() -> void:
 	if complete:
+		return
+	if _greenroom != null and not bool(_greenroom.call("is_ready")):
+		_hud.call("show_banner", GREENROOM_HOLD, 2.0)
 		return
 	complete = true
 	_phase = Phase.COMPLETE
