@@ -105,8 +105,8 @@ func _build_dome() -> void:
 	dome.name = "Dome"
 	dome.set("layer", 0)
 	dome.set("half_width", half_width)
-	dome.set("stairs_left", forcefield_x)
-	dome.set("stairs_length", corridor_length)
+	dome.set("corridor_left", forcefield_x)
+	dome.set("corridor_length", corridor_length)
 	add_child(dome)
 	floor_dome = DOME.new() as Node2D
 	floor_dome.name = "FloorGrooves"
