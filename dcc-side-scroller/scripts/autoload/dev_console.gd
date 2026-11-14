@@ -1,6 +1,6 @@
 extends CanvasLayer
 
-const SECTIONS: PackedStringArray = ["surface", "stairs", "hall", "tunnels", "tunnels2", "tunnels3", "arena", "chase", "guildhall"]
+const SECTIONS: PackedStringArray = ["surface", "stairtop", "stairs", "hall", "tunnels", "tunnels2", "tunnels3", "arena", "chase", "guildhall"]
 
 var _panel: PanelContainer
 var _log: RichTextLabel
