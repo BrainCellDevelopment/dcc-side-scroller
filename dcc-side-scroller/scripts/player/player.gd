@@ -11,15 +11,16 @@ const SpriteUtil: GDScript = preload("res://scripts/util/sprite_util.gd")
 const HIT_SPARK: PackedScene = preload("res://scenes/fx/hit_spark.tscn")
 const DUST: PackedScene = preload("res://scenes/fx/dust.tscn")
 const CARL_SHEET: Texture2D = preload("res://assets/characters/carl.png")
-const FRAME: Vector2i = Vector2i(64, 56)
+const FRAME: Vector2i = Vector2i(136, 136)
+const BODY_SCALE: float = 0.5
 const ANIMS: Dictionary = {
-	"idle": {"row": 0, "count": 4, "fps": 5.0, "loop": true},
-	"run": {"row": 1, "count": 6, "fps": 12.0, "loop": true},
+	"idle": {"row": 0, "count": 8, "fps": 10.0, "loop": true},
+	"run": {"row": 1, "count": 8, "fps": 16.0, "loop": true},
 	"jump": {"row": 2, "count": 1, "fps": 1.0, "loop": false},
 	"fall": {"row": 3, "count": 1, "fps": 1.0, "loop": false},
-	"punch": {"row": 4, "count": 4, "fps": 22.0, "loop": false},
-	"hurt": {"row": 5, "count": 1, "fps": 1.0, "loop": false},
-	"die": {"row": 6, "count": 4, "fps": 8.0, "loop": false},
+	"punch": {"row": 4, "count": 8, "fps": 44.0, "loop": false},
+	"hurt": {"row": 5, "count": 3, "fps": 15.0, "loop": false},
+	"die": {"row": 6, "count": 8, "fps": 8.0, "loop": false},
 }
 const DUST_COOLDOWN: float = 0.18
 const LAND_SPEED: float = 140.0
@@ -30,8 +31,8 @@ const LAND_SPEED: float = 140.0
 @export var jump_velocity: float = -330.0
 @export var max_health: int = 10
 @export var attack_damage: int = 1
-@export var attack_time: float = 0.18
-@export var attack_cooldown: float = 0.28
+@export var attack_time: float = 0.32
+@export var attack_cooldown: float = 0.42
 @export var knockback: Vector2 = Vector2(160.0, -140.0)
 
 var health: int = 0
@@ -66,6 +67,8 @@ func _ready() -> void:
 	health = max_health
 	_body = SpriteUtil.make_sprite(CARL_SHEET, FRAME, ANIMS)
 	_body.name = "Body"
+	_body.scale = Vector2.ONE * BODY_SCALE
+	_body.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_visual.add_child(_body)
 	_visual.move_child(_body, 0)
 	_body.play("idle")
@@ -227,11 +230,11 @@ func _try_hit(body: Node2D) -> void:
 		return
 	_hit_bodies.append(body)
 	body.call("take_damage", attack_damage, global_position)
-	_spawn_fx(HIT_SPARK, _visual.to_global(Vector2(24.0, -17.0)))
+	_spawn_fx(HIT_SPARK, _visual.to_global(Vector2(24.0, -22.0)))
 
 
 func _punch() -> void:
-	_body.speed_scale = (4.0 / 22.0) / maxf(attack_time, 0.01)
+	_body.speed_scale = (8.0 / 44.0) / maxf(attack_time, 0.01)
 	_body.play("punch")
 	_body.frame = 0
 	_body.frame_progress = 0.0
