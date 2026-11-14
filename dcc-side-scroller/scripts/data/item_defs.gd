@@ -6,7 +6,8 @@ extends RefCounted
 ## bonuses (stat -> amount, applied through Inventory.equipment_bonus),
 ## use (consumable effect id, see item_effects.gd), amount (use strength),
 ## reflect (fraction of melee damage returned), regen (extra health regen),
-## passive (effect that works from the bag), desc (tooltip text), effect (one-line mechanics).
+## passive (effect that works from the bag), unique (only one can ever be received per run),
+## desc (tooltip text), effect (one-line mechanics).
 
 const DEFS: Dictionary = {
 	"bandages": {
@@ -40,7 +41,7 @@ const DEFS: Dictionary = {
 		"effect": "+1 Strength",
 	},
 	"goblin_pass": {
-		"name": "Goblin Pass", "tier": "Silver", "passive": "goblin_pass",
+		"name": "Goblin Pass", "tier": "Silver", "passive": "goblin_pass", "unique": true,
 		"desc": "A tattoo-shaped permission slip. Goblins stop hating you on sight and start hating you on paperwork.",
 		"effect": "Carried: plain goblins stay neutral. Bosses and engineers do not care",
 	},
@@ -99,6 +100,17 @@ static func has(id: String) -> bool:
 	return DEFS.has(id)
 
 
+static func is_unique(id: String) -> bool:
+	return DEFS.has(id) and bool(DEFS[id].get("unique", false))
+
+
+## False for a unique item that is already owned or was already received this run.
+static func can_receive(id: String) -> bool:
+	if not is_unique(id):
+		return true
+	return not Inventory.has_item(id) and not Game.unique_received.has(id)
+
+
 static func item_name(id: String) -> String:
 	return str(DEFS[id]["name"])
 
@@ -118,8 +130,11 @@ static func extra(id: String) -> Dictionary:
 
 ## Adds `count` of an item through Game.add_item so the pickup toast fires.
 static func give(id: String, count: int = 1) -> bool:
-	if not DEFS.has(id):
+	if not DEFS.has(id) or not can_receive(id):
 		return false
 	var before: int = Inventory.count_of(id)
-	Game.add_item(id, item_name(id), tier(id), extra(id), count)
-	return Inventory.count_of(id) > before
+	Game.add_item(id, item_name(id), tier(id), extra(id), 1 if is_unique(id) else count)
+	var received: bool = Inventory.count_of(id) > before
+	if received and is_unique(id):
+		Game.unique_received[id] = true
+	return received

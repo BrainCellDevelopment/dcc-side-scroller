@@ -51,6 +51,7 @@ var in_combat: bool = false
 var god_mode: bool = false
 var in_safe_zone: bool = false
 var menu_open: bool = false
+var unique_received: Dictionary = {}
 var intro_played: bool = false
 var floor_time_left: float = FLOOR_TIME
 var checkpoint_index: int = -1
@@ -208,6 +209,7 @@ func reset_run() -> void:
 	floor_time_left = FLOOR_TIME
 	SystemVoice.end_floor()
 	Inventory.clear()
+	unique_received.clear()
 	set_hint("")
 
 
