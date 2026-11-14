@@ -23,7 +23,7 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/engineer.tscn" id="21_engineer"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/dozer.tscn" id="22_dozer"]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="23_player"]
-[ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="24_door"]
+[ext_resource type="PackedScene" path="res://scenes/props/gate_door.tscn" id="24_door"]
 [ext_resource type="PackedScene" path="res://scenes/props/bookshelf.tscn" id="25_p_bookshelf"]
 [ext_resource type="PackedScene" path="res://scenes/props/desk.tscn" id="26_p_desk"]
 [ext_resource type="PackedScene" path="res://scenes/props/rug.tscn" id="27_p_rug"]
@@ -1682,11 +1682,8 @@ position = Vector2(19376, 912)
 locked = true
 auto_open_range = 170.0
 locked_text = "Locked. Finish the dozer."
-
-[node name="GuildExitDoor" parent="Doors" instance=ExtResource("24_door")]
-position = Vector2(20178, 912)
-locked = true
-locked_text = "Locked. Talk to Mordecai and open your boxes."
+close_behind = true
+sealed_text = "Locked. Talk to Mordecai and open your boxes."
 
 [node name="Guildhall" type="Node2D" parent="."]
 position = Vector2(19776, 912)
@@ -1719,7 +1716,7 @@ z_index = -2
 position = Vector2(-100, 0)
 
 [node name="ExitZone" type="Area2D" parent="Guildhall"]
-position = Vector2(402, -50)
+position = Vector2(-398, -50)
 collision_layer = 0
 collision_mask = 2
 

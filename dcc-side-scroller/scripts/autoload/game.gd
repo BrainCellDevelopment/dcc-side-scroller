@@ -51,6 +51,7 @@ var floor_time_left: float = FLOOR_TIME
 var checkpoint_index: int = -1
 var checkpoint_position: Vector2 = Vector2.ZERO
 var checkpoint_stage: int = 0
+var carried_health: int = -1
 
 var items: Array[Dictionary] = []
 var unlocked_skins: Array[String] = [DEFAULT_SKIN]
@@ -160,7 +161,20 @@ func clear_checkpoint() -> void:
 	checkpoint_stage = 0
 
 
+func carry_player_state(player: Node) -> void:
+	carried_health = int(player.get("health"))
+
+
+func take_carried_health(maximum: int) -> int:
+	var value: int = carried_health
+	carried_health = -1
+	if value <= 0:
+		return maximum
+	return mini(value, maximum)
+
+
 func reset_run() -> void:
+	carried_health = -1
 	_engaged_enemies = 0
 	_refresh_combat()
 	set_safe_zone(false)

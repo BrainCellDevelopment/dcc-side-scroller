@@ -26,7 +26,7 @@ RES = {
 for _k in ["torch", "lichen", "fire", "burnt_tree", "bike_rack", "moped", "rubble", "big_door", "rug", "fireplace",
            "bed", "desk", "bookshelf", "guildmaster", "stair_rail", "crate", "sign_arrow", "street_lamp", "street_lamp_bent", "street_sign", "stop_sign"]:
     RES["prop_" + _k] = "res://scenes/props/%s.tscn" % _k
-RES["door"] = "res://scenes/props/door.tscn"
+RES["door"] = "res://scenes/props/gate_door.tscn"
 RES["mordecai"] = "res://scenes/props/mordecai.tscn"
 EXISTING = ["player", "goblin", "engineer", "dozer", "hud", "lootbox"]
 
@@ -435,9 +435,8 @@ def build():
     gx = g0 + 448
     markers.append({"name": "GuildCenter", "x": gx, "y": 912})
     doors.append({"name": "GuildEntryDoor", "x": g0 + 48, "y": 912, "locked": True, "range": 170,
-                  "text": "Locked. Finish the dozer."})
-    doors.append({"name": "GuildExitDoor", "x": gx + 402, "y": 912, "locked": True,
-                  "text": "Locked. Talk to Mordecai and open your boxes."})
+                  "text": "Locked. Finish the dozer.", "close_behind": True,
+                  "sealed": "Locked. Talk to Mordecai and open your boxes."})
     walls.append({"name": "RightBound", "x": g0 + 904, "y": 912 - 250, "kind": "wall"})
     end_section()
     return {"gx": gx, "scroll0": scroll0, "a0": a0, "banner": props_banner}
@@ -577,12 +576,13 @@ def write_tscn(info):
 
     for d in doors:
         dp = {"position": vec(d["x"], d["y"]), "locked": "true" if d["locked"] else "false"}
-        if d.get("open"):
-            dp["start_open"] = "true"
         if d.get("range"):
             dp["auto_open_range"] = "%d.0" % d["range"]
         if d["text"]:
             dp["locked_text"] = qstr(d["text"])
+        if d.get("close_behind"):
+            dp["close_behind"] = "true"
+            dp["sealed_text"] = qstr(d["sealed"])
         inst(d["name"], "Doors", "door", **dp)
 
     gx = info["gx"]
@@ -590,7 +590,7 @@ def write_tscn(info):
     for i, (k, x, y) in enumerate(GUILD):
         inst("G%d_%s" % (i, k.replace("prop_", "")), "Guildhall", k, position=vec(x, y), z_index="-2")
     inst("Mordecai", "Guildhall", "mordecai", position=vec(-100, 0))
-    raw("ExitZone", "Area2D", "Guildhall", ["position = Vector2(402, -50)", "collision_layer = 0",
+    raw("ExitZone", "Area2D", "Guildhall", ["position = Vector2(-398, -50)", "collision_layer = 0",
                                            "collision_mask = 2"])
     raw("CollisionShape2D", "CollisionShape2D", "Guildhall/ExitZone", ['shape = SubResource("%s")' % w.shape(24, 100)])
     raw("SafeZone", "Area2D", "Guildhall", ["position = Vector2(0, -60)", "collision_layer = 0",

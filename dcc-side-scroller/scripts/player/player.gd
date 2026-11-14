@@ -71,7 +71,7 @@ var _standstill: bool = true
 
 func _ready() -> void:
 	_gravity = float(ProjectSettings.get_setting("physics/2d/default_gravity"))
-	health = max_health
+	health = Game.take_carried_health(max_health)
 	stamina = max_stamina
 	_body = SpriteUtil.make_sprite(Game.skin_sheet(), Game.skin_frame(), Game.skin_anims())
 	_body.name = "Body"

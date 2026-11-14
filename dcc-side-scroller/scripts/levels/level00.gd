@@ -13,11 +13,14 @@ const FRAME_FAR_Z: int = 46
 const DOOR_OFFSET: float = -5.0
 const GATES: Array[Dictionary] = [
 	{"section": 1, "floor_y": 304.0},
-	{"section": 2, "floor_y": 912.0},
 ]
 const VEIL_PLAYER_Z: int = 41
 const VEIL_NEAR: float = 320.0
 const ENGINEER_NAME: String = "Goblin Engineer"
+const GOBLIN_THROWER: int = 1
+const NEXT_LEVEL: String = "res://scenes/level01.tscn"
+const EXIT_HINT: String = "Leave the way you came in"
+const EXIT_DELAY: float = 1.4
 const RUN_CHECKPOINT: int = 7
 const STAGE_RUN: int = 1
 const STAGE_AFTERMATH: int = 2
@@ -56,7 +59,7 @@ const ACHIEVEMENTS: Dictionary = {
 	"secret_route": ["Off The Beaten Path", "You found the high road. The goblins down below are filing a complaint."],
 	"gauntlet": ["Sharp Dressed Feet", "You crossed a corridor designed by someone who really hates shoes."],
 	"pest_control": ["Pest Control", "Ten goblins down. The rest have started talking about a union."],
-	"reinforcements": ["Management Escalation", "The Engineer called for backup. Backup arrived through the ceiling, unhappy."],
+	"reinforcements": ["Management Escalation", "The Engineer called for backup. Backup arrived through the ceiling, unhappy and holding rocks."],
 }
 
 var section: int = 0
@@ -65,6 +68,7 @@ var complete: bool = false
 var _phase: Phase = Phase.PLAY
 var _boxes_opened: int = 0
 var _talked: bool = false
+var _exit_ready: bool = false
 var _kills: int = 0
 var _rounds_cleared: int = 0
 var _reinforced: bool = false
@@ -104,7 +108,6 @@ var _gate_edges: Array[float] = []
 @onready var _mordecai: Area2D = $Guildhall/Mordecai
 @onready var _exit_zone: Area2D = $Guildhall/ExitZone
 @onready var _guild_entry_door: Node2D = $Doors/GuildEntryDoor
-@onready var _guild_exit_door: Node2D = $Doors/GuildExitDoor
 @onready var _boxes: Node2D = $Guildhall/LootBoxes
 
 
@@ -135,7 +138,6 @@ func _ready() -> void:
 	for box: Node in _boxes.get_children():
 		box.connect("opened", _on_loot_box_opened)
 	_mordecai.connect("dialogue_finished", _on_mordecai_done)
-	_guild_exit_door.connect("opened", _try_exit)
 	_exit_zone.body_entered.connect(_on_exit_entered)
 	_dozer.visible = false
 	_dozer.set("patrol_min_x", _dozer_left.global_position.x)
@@ -180,25 +182,34 @@ func _setup_gates() -> void:
 	for gate: Dictionary in GATES:
 		var area: Area2D = _section_areas[int(gate["section"])] as Area2D
 		var edge: float = float(area.get_meta("x0"))
-		_gate_edges.append(edge)
-		var veil: Node2D = Node2D.new()
-		veil.set_script(VEIL_SCRIPT)
-		veil.set("edge_x", edge)
-		veil.name = "Veil%d" % int(gate["section"])
-		add_child(veil)
-		for part: Dictionary in [{"scene": FRAME_NEAR_SCENE, "z": FRAME_NEAR_Z, "tag": "Near"}, {"scene": FRAME_FAR_SCENE, "z": FRAME_FAR_Z, "tag": "Far"}]:
-			var half: Node2D = (part["scene"] as PackedScene).instantiate() as Node2D
-			half.position = Vector2(edge, float(gate["floor_y"]))
-			half.z_index = int(part["z"])
-			half.name = "Frame%s%d" % [str(part["tag"]), int(gate["section"])]
-			add_child(half)
 		var door: Node2D = GATE_SCENE.instantiate() as Node2D
 		door.position = Vector2(edge + DOOR_OFFSET, float(gate["floor_y"]))
 		door.name = "Gate%d" % int(gate["section"])
-		door.set("veil", veil)
 		add_child(door)
-		if _player.global_position.x > edge + DOOR_OFFSET:
-			door.call("start_open")
+		_wire_gate(door, edge, float(gate["floor_y"]), str(gate["section"]))
+	_wire_gate(_guild_entry_door, _guild_entry_door.global_position.x - DOOR_OFFSET, _guild_entry_door.global_position.y, "Guild")
+
+
+func _wire_gate(door: Node2D, edge: float, floor_y: float, tag: String) -> void:
+	_gate_edges.append(edge)
+	var veil: Node2D = Node2D.new()
+	veil.set_script(VEIL_SCRIPT)
+	veil.set("edge_x", edge)
+	veil.name = "Veil" + tag
+	add_child(veil)
+	for part: Dictionary in [{"scene": FRAME_NEAR_SCENE, "z": FRAME_NEAR_Z, "tag": "Near"}, {"scene": FRAME_FAR_SCENE, "z": FRAME_FAR_Z, "tag": "Far"}]:
+		var half: Node2D = (part["scene"] as PackedScene).instantiate() as Node2D
+		half.position = Vector2(edge, floor_y)
+		half.z_index = int(part["z"])
+		half.name = "Frame%s%s" % [str(part["tag"]), tag]
+		add_child(half)
+	door.set("veil", veil)
+	var passed: float = _player.global_position.x - door.global_position.x
+	if passed > float(door.get("close_distance")):
+		door.call("open", false)
+		door.call("close", false)
+	elif passed > 0.0:
+		door.call("open", false)
 
 
 func _update_player_z() -> void:
@@ -350,8 +361,9 @@ func _watch_goblin(goblin: Node) -> void:
 	goblin.connect("died", _on_goblin_died)
 
 
-func _spawn_goblin(pos: Vector2) -> void:
+func _spawn_goblin(pos: Vector2, variant: int = 0) -> void:
 	var goblin: Node2D = GOBLIN_SCENE.instantiate() as Node2D
+	goblin.set("variant", variant)
 	goblin.position = pos
 	_goblins.add_child.call_deferred(goblin)
 	_watch_goblin(goblin)
@@ -406,8 +418,8 @@ func _on_boss_health_changed(boss_name: String, current: int, maximum: int) -> v
 	_reinforced = true
 	var center: float = _scroll_start.global_position.x + 320.0
 	var y: float = _scroll_start.global_position.y - 220.0
-	_spawn_goblin(Vector2(center - 90.0, y))
-	_spawn_goblin(Vector2(center + 90.0, y))
+	_spawn_goblin(Vector2(center - 90.0, y), GOBLIN_THROWER)
+	_spawn_goblin(Vector2(center + 90.0, y), GOBLIN_THROWER)
 	_unlock("reinforcements")
 
 
@@ -537,8 +549,9 @@ func _on_dozer_destroyed() -> void:
 	_camera.limit_right = int((_section_areas[6] as Area2D).get_meta("r"))
 	Game.set_hint("Head right.")
 	_unlock("dozer_down")
-	_guild_entry_door.call("unlock")
-	_guild_entry_door.call("open")
+	if _player.global_position.x <= _guild_entry_door.global_position.x + SHELTER_PAD:
+		_guild_entry_door.call("unlock")
+		_guild_entry_door.call("open")
 
 
 func _on_safe_zone_entered(body: Node2D) -> void:
@@ -567,22 +580,23 @@ func _on_loot_box_opened(_tier: String) -> void:
 
 
 func _check_exit_ready() -> void:
-	if not _talked or _boxes_opened < LOOT_BOX_COUNT or _guild_exit_door.get("is_open"):
+	if not _talked or _boxes_opened < LOOT_BOX_COUNT or _exit_ready:
 		return
-	Game.set_hint("The door is open.")
-	_guild_exit_door.call("unlock")
-	_guild_exit_door.call("open")
+	_exit_ready = true
+	Game.set_hint(EXIT_HINT)
+	_guild_entry_door.set("close_behind", false)
+	_guild_entry_door.call("unlock")
+	_guild_entry_door.call("open")
+	_try_exit()
 
 
 func _try_exit() -> void:
-	if not bool(_guild_exit_door.get("is_open")):
-		return
 	for body: Node2D in _exit_zone.get_overlapping_bodies():
 		_on_exit_entered(body)
 
 
 func _on_exit_entered(body: Node2D) -> void:
-	if body != _player or complete or not bool(_guild_exit_door.get("is_open")):
+	if body != _player or complete or not _exit_ready:
 		return
 	_phase = Phase.COMPLETE
 	complete = true
@@ -590,7 +604,11 @@ func _on_exit_entered(body: Node2D) -> void:
 	Game.register_tutorial_complete()
 	Game.set_hint("")
 	Game.clear_checkpoint()
-	_hud.call("show_banner", "LEVEL 0 COMPLETE\nLevel 1 coming soon", 0.0)
+	Game.carry_player_state(_player)
+	_player.set("control_enabled", false)
+	_hud.call("show_banner", "LEVEL 0 COMPLETE", 0.0)
+	await get_tree().create_timer(EXIT_DELAY).timeout
+	get_tree().change_scene_to_file(NEXT_LEVEL)
 
 
 func _setup_doors() -> void:
