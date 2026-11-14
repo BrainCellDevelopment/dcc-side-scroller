@@ -206,7 +206,7 @@ func _foes() -> Array[Node2D]:
 func _punch(pos: Vector2, target: Node2D) -> void:
 	var dx: float = target.global_position.x - pos.x
 	if absf(dx) < 38.0 and absf(target.global_position.y - pos.y) < 30.0 and _attack_timer <= 0.0 and int(_player.get("facing")) == (1 if dx >= 0.0 else -1):
-		_attack_timer = 0.3
+		_attack_timer = 0.45
 		_tap(&"attack")
 
 

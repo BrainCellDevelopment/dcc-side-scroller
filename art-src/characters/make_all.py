@@ -4,7 +4,7 @@ from PIL import Image
 from pxl import *
 import carl, donut, goblin, engineer, make_carl_donut
 
-OUTDIR = os.environ.get("DCC_ASSETS", "/Users/mychal.smith/brain-cell-gaming/dcc-side-scroller/dcc-side-scroller/assets/characters")
+OUTDIR = os.environ.get("DCC_ASSETS", os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "dcc-side-scroller", "assets", "characters")))
 ROCK = ("#e2dce8", "#aba3be", "#6c6488")
 
 
