@@ -4,6 +4,8 @@ signal achievement_unlocked(title: String, description: String)
 signal player_health_changed(current: int, maximum: int)
 signal boss_health_changed(boss_name: String, current: int, maximum: int)
 signal boss_cleared()
+signal player_stamina_changed(current: int, maximum: int)
+signal stamina_denied()
 signal combat_changed(active: bool)
 signal safe_zone_changed(active: bool)
 signal loot_box_opened(tier: String)
@@ -61,6 +63,14 @@ func set_safe_zone(active: bool) -> void:
 
 func report_player_health(current: int, maximum: int) -> void:
 	player_health_changed.emit(current, maximum)
+
+
+func report_player_stamina(current: int, maximum: int) -> void:
+	player_stamina_changed.emit(current, maximum)
+
+
+func deny_stamina() -> void:
+	stamina_denied.emit()
 
 
 func report_boss_health(boss_name: String, current: int, maximum: int) -> void:
