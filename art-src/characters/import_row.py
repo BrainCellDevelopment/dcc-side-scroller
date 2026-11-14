@@ -5,9 +5,10 @@ from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SHEET = os.environ.get("DCC_CARL", os.path.normpath(os.path.join(HERE, "..", "..", "dcc-side-scroller", "assets", "characters", "carl.png")))
-FW, FH = 320, 320
-BASELINE = FH - 10
-SPRITE_SCALE = 0.208
+SPRITE_SCALE = float(os.environ.get("CARL_TEXEL", "0.5"))
+COLORS = int(os.environ.get("CARL_COLORS", "96"))
+FW = FH = int(round(320 * 0.208 / SPRITE_SCALE / 8)) * 8
+BASELINE = FH - 1
 BAKE = 0.8
 ROWS = {
     "idle": {"row": 0, "ref": "idle_ref.webp", "scale": 0.158, "anchor": "feet"},
@@ -123,6 +124,21 @@ def resample(cell, factor):
     return Image.fromarray(out)
 
 
+def build_palette(tiles):
+    px = np.concatenate([np.asarray(t)[np.asarray(t)[..., 3] > 250][:, :3] for t in tiles])
+    side = int(np.ceil(np.sqrt(len(px))))
+    pad = np.zeros((side * side, 3), np.uint8)
+    pad[:len(px)] = px
+    pad[len(px):] = px[0]
+    return Image.fromarray(pad.reshape(side, side, 3)).quantize(COLORS, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+
+
+def quantize(tile, pal):
+    arr = np.asarray(tile)
+    rgb = Image.fromarray(arr[..., :3]).quantize(palette=pal, dither=Image.Dither.NONE).convert("RGB")
+    return Image.fromarray(np.dstack([np.asarray(rgb), np.where(arr[..., 3] > 127, 255, 0).astype(np.uint8)]))
+
+
 def main(names):
     names = names or list(ROWS)
     refs = {}
@@ -134,14 +150,19 @@ def main(names):
             refs[key] = load_frames(cfg)
         frames = refs[key]
         loaded[n] = [frames[i] for i in cfg["pick"]] if "pick" in cfg else frames
+    pal = None
     cols = max(len(f) for f in loaded.values())
     rows = max(c["row"] for c in ROWS.values()) + 1
     base = Image.new("RGBA", (FW * max(cols, 8), FH * rows), (0, 0, 0, 0))
+    if COLORS:
+        pal = build_palette([resample(c, ROWS[n]["scale"] * BAKE / SPRITE_SCALE) for n in names for c in loaded[n]])
     for n in names:
         cfg = ROWS[n]
         factor = cfg["scale"] * BAKE / SPRITE_SCALE
         for i, cell in enumerate(loaded[n]):
             tile = resample(cell, factor)
+            if COLORS:
+                tile = quantize(tile, pal)
             if tile.width > FW or tile.height > BASELINE + 1:
                 raise SystemExit("%s frame %d is %s, too big for %dx%d" % (n, i, tile.size, FW, FH))
             base.alpha_composite(tile, (i * FW + (FW - tile.width) // 2, cfg["row"] * FH + BASELINE + 1 - tile.height))
