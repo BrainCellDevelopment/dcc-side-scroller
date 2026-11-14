@@ -188,8 +188,7 @@ func _ready() -> void:
 	_stats_text.bbcode_enabled = true
 	_stats_text.scroll_active = false
 	_stats_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_stats_text.add_theme_font_size_override("normal_font_size", 16)
-	_stats_text.add_theme_font_size_override("bold_font_size", 16)
+	_stats_text.theme_type_variation = &"StatsText"
 	_stats_region.add_child(_stats_text)
 
 	add_child(_panel)
