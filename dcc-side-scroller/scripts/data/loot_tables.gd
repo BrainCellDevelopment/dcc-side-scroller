@@ -4,6 +4,8 @@ extends RefCounted
 ## "floor1" is weighted and used by Floor 1 safe rooms and the Neighborhood boss box.
 ## Boss is a tier of its own: gear pieces only. Carl never gets pants.
 
+const ItemDefs: GDScript = preload("res://scripts/data/item_defs.gd")
+
 const DEFAULT_KIT: String = ""
 const FLOOR1_KIT: String = "floor1"
 ## "floor1_room" is the fast-food safe room's own kit (#71): it is the only safe room, so its Bronze box is
@@ -39,9 +41,18 @@ static func entries(kit: String, tier: String) -> Array:
 	return tables.get(tier, tables[TIER_FALLBACK])
 
 
+## Drops unique items that were already received, unless that would leave nothing to roll.
+static func _available(list: Array) -> Array:
+	var kept: Array = []
+	for entry: Array in list:
+		if ItemDefs.can_receive(str(entry[0])):
+			kept.append(entry)
+	return kept if not kept.is_empty() else list
+
+
 ## Returns {"id": String, "count": int}. Pass a seeded RandomNumberGenerator for tests.
 static func roll(kit: String, tier: String, rng: RandomNumberGenerator = null) -> Dictionary:
-	var list: Array = entries(kit, tier)
+	var list: Array = _available(entries(kit, tier))
 	var total: int = 0
 	for entry: Array in list:
 		total += int(entry[1])
