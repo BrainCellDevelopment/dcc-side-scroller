@@ -194,6 +194,7 @@ func show_system_message(title: String, body: String, seconds: float = 3.0) -> v
 	var heading: Label = Label.new()
 	heading.text = title
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	heading.add_theme_font_size_override("font_size", 34)
 	heading.add_theme_color_override("font_color", Color(1.0, 0.82, 0.25))
 	heading.add_theme_color_override("font_outline_color", Color(0.1, 0.0, 0.0))
@@ -206,7 +207,8 @@ func show_system_message(title: String, body: String, seconds: float = 3.0) -> v
 	text.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0))
 	text.add_theme_constant_override("outline_size", 5)
 	box.add_child(heading)
-	box.add_child(text)
+	if not body.is_empty():
+		box.add_child(text)
 	box.modulate.a = 0.0
 	add_child(box)
 	box.pivot_offset = box.custom_minimum_size * 0.5

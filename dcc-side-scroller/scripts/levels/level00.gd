@@ -24,6 +24,7 @@ const EXIT_DELAY: float = 1.4
 const RUN_CHECKPOINT: int = 7
 const STAGE_RUN: int = 1
 const STAGE_AFTERMATH: int = 2
+const OPENING_SCRIPT: GDScript = preload("res://scripts/cutscene/opening.gd")
 const STAGE_ROUND2: int = 3
 const STAGE_ROUND3: int = 4
 const COUNTDOWN_SECONDS: float = 6.5
@@ -268,8 +269,11 @@ func _snap_camera() -> void:
 func _begin() -> void:
 	if Game.checkpoint_index < 0:
 		_enter_section(0)
-		_unlock("welcome")
 		_snap_camera()
+		if _should_play_opening():
+			_play_opening()
+		else:
+			_unlock("welcome")
 		return
 	var pos: Vector2 = Game.checkpoint_position
 	_player.global_position = pos + Vector2(0.0, -2.0)
@@ -287,6 +291,20 @@ func _begin() -> void:
 			_phase = Phase.AFTERMATH
 			_enter_section(section)
 	_snap_camera()
+
+
+func _should_play_opening() -> bool:
+	return not Game.intro_played and DisplayServer.get_name() != "headless" and not OS.has_environment("DCC_SKIP_INTRO")
+
+
+func _play_opening() -> void:
+	Game.intro_played = true
+	var opening: Node = Node.new()
+	opening.set_script(OPENING_SCRIPT)
+	add_child(opening)
+	await opening.call("play", self, _player, _camera, _hud)
+	Game.floor_time_left = Game.FLOOR_TIME
+	_unlock("welcome")
 
 
 func _prune_before(x: float) -> void:

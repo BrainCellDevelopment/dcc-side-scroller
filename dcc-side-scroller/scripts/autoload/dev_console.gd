@@ -92,7 +92,7 @@ func _on_submitted(text: String) -> void:
 	var argument: String = parts[1].to_lower() if parts.size() > 1 else ""
 	match command:
 		"help":
-			_print("goto <section|level0|level1>  list  heal  god [on|off]  kms  stats [floor <n>|xp <n>|spend <stat>|reset]  skins  skin <default|derpy>  unlockskin <id>  resetprofile  help  (` or esc closes)")
+			_print("goto <section|level0|level1>  list  heal  god [on|off]  kms  stats [floor <n>|xp <n>|spend <stat>|reset]  skins  skin <default|derpy>  intro  unlockskin <id>  resetprofile  help  (` or esc closes)")
 		"list":
 			_print("sections: " + ", ".join(SECTIONS) + ", cp<N>  levels: " + ", ".join(LEVELS.keys()))
 		"heal":
@@ -112,6 +112,15 @@ func _on_submitted(text: String) -> void:
 				_print("unlocked " + argument)
 			else:
 				_print("unknown or already unlocked: " + argument)
+		"intro":
+			Game.intro_played = false
+			Game.clear_checkpoint()
+			Game.reset_run()
+			_print("replaying the opening")
+			_panel.visible = false
+			_line.release_focus()
+			get_tree().paused = false
+			get_tree().reload_current_scene()
 		"resetprofile":
 			Game.reset_profile()
 			_print("profile reset")

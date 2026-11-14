@@ -51,6 +51,7 @@ var in_combat: bool = false
 var god_mode: bool = false
 var in_safe_zone: bool = false
 var menu_open: bool = false
+var intro_played: bool = false
 var floor_time_left: float = FLOOR_TIME
 var checkpoint_index: int = -1
 var checkpoint_position: Vector2 = Vector2.ZERO
