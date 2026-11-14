@@ -47,6 +47,7 @@ RES = {
     "krakaren_lair": "res://scenes/level/krakaren_lair.tscn",
     "kobold_rider": "res://scenes/enemies/kobold_rider.tscn",
     "grub_storm": "res://scenes/level/grub_storm.tscn",
+    "reward_room": "res://scenes/level/reward_room.tscn",
     "dogpound_lair": "res://scenes/level/dogpound_lair.tscn",
     "smoothie_bench": "res://scenes/props/smoothie_bench.tscn",
     "hud": "res://scenes/ui/hud.tscn",
@@ -240,14 +241,23 @@ def emit_pound(w):
     w.inst("DogPoundLair", ".", "dogpound_lair", position=vec(POUND["center"], FLOOR))
 
 
+REWARD = {}
+
+
 def section_stairwell(x0):
-    # Reward room and the stairs down (M5). The "end" trigger hands off to the next floor.
+    # Reward room and the stairs down: the menagerie (reward_room.gd) where Donut picks Mongo, then the end
+    # trigger, which closes the floor, shows the summary card and hands off to Level 3 (level02.gd).
     flat(640)
     cp(6, x0 + 96, 6)
+    REWARD["x"] = x0 + 260
     furnish(x0, x0 + 640)
     kit.add_prop("prop_sign_hazard", x0 + 520, FLOOR)
     trig("EndZone", "end", "", x0 + 576, x0 + 616, FLOOR - 120, FLOOR + 20)
     kit.trig("BgStairwell", "bg", "7", x0, x0 + 640, FLOOR - 300, FLOOR + 120)
+
+
+def emit_reward(w):
+    w.inst("RewardRoom", ".", "reward_room", position=vec(REWARD["x"], FLOOR))
 
 
 BUILDERS = [section_arrival, section_shelter, section_clurichaun, section_krakaren, section_grubstorm, section_dogpound, section_stairwell]
@@ -292,6 +302,7 @@ def write_tscn():
     emit_lair(w)
     emit_storm(w)
     emit_pound(w)
+    emit_reward(w)
     inst("Player", ".", "player", position=vec(START_U, FLOOR - 2))
     raw("Camera2D", "Camera2D", ".", [
         "position = %s" % vec(START_U, 184), "limit_left = 0", "limit_top = -116", "limit_right = %d" % WIDTH,

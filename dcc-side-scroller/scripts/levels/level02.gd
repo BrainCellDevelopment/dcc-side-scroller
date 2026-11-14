@@ -5,6 +5,7 @@ extends Node2D
 ## Desperado Pass and Neighborhood Map flags in from Floor 1 (see floor_handoff.gd). The end of the stairwell is
 ## still the "to be continued" stub until Floor 3 exists.
 
+const SUMMARY: GDScript = preload("res://scripts/ui/level_summary.gd")
 const VEIL_SCRIPT: GDScript = preload("res://scripts/level/area_veil.gd")
 const GATE_SCENE: PackedScene = preload("res://scenes/props/gate_door.tscn")
 const FRAME_NEAR_SCENE: PackedScene = preload("res://scenes/props/gate_frame_near.tscn")
@@ -21,6 +22,10 @@ const TITLE: String = "LEVEL 2"
 const END_TEXT: String = "LEVEL 2\nTo be continued"
 const HEAL_TEXT: String = "THE SHELTER SETS YOU RIGHT"
 const TITLE_SECONDS: float = 2.5
+const FADE_SECONDS: float = 0.8
+const CLOSE_TITLE: String = "LEVEL 2 IS CLOSED"
+const CLOSE_BODY: String = "The grubs have the stairwell to themselves. The stairs down are open."
+const SUMMARY_HEADING: String = "LEVEL 2 COMPLETE"
 const FOCUS_ON_FLOOR: float = 40.0
 
 var section: int = 0
@@ -37,6 +42,10 @@ var _shake_strength: float = 0.0
 var _shake_time: float = 0.0
 var _shake_total: float = 0.01
 var _healed_at: Dictionary = {}
+var _summary_layer: CanvasLayer = null
+var _fade: ColorRect = null
+var _leaving: bool = false
+var _summary_ready: bool = false
 
 @onready var _player: CharacterBody2D = $Player
 @onready var _background: CanvasLayer = $Background
@@ -64,6 +73,10 @@ func _ready() -> void:
 			_section_areas[int(str(area.get_meta("arg")))] = area
 	Game.screen_shake.connect(_on_screen_shake)
 	Game.report_player_health(int(_player.get("health")), int(_player.get("max_health")))
+	Game.achievement_unlocked.connect(_on_achievement_unlocked)
+	Game.loot_box_opened.connect(_on_loot_box_opened)
+	if Game.checkpoint_index < 0:
+		FloorHandoff.start_floor()
 	_capture_arrival()
 	if Game.checkpoint_index < 3:
 		Game.set_meta("smoothie_immune", false)
@@ -75,6 +88,10 @@ func _physics_process(delta: float) -> void:
 	_camera.global_position = _follow_target()
 	_update_shake(delta)
 	_update_player_z()
+	if not complete:
+		FloorHandoff.play_seconds += delta
+	elif _summary_ready and not _leaving and Game.action_just_pressed("interact"):
+		_leave()
 
 
 func _begin() -> void:
@@ -257,6 +274,15 @@ func _capture_arrival() -> void:
 	}
 
 
+func _on_achievement_unlocked(title: String, _description: String) -> void:
+	FloorHandoff.note_achievement(title)
+
+
+func _on_loot_box_opened(_tier: String) -> void:
+	FloorHandoff.note_box()
+
+
+## The end of the stairwell: the floor closes, the summary card shows, and E takes the stairs to Level 3.
 func _on_end_entered() -> void:
 	if complete:
 		return
@@ -264,7 +290,32 @@ func _on_end_entered() -> void:
 	Game.clear_checkpoint()
 	Game.set_hint("")
 	_player.set("control_enabled", false)
-	_hud.call("show_banner", END_TEXT, 0.0)
+	Game.shake(2.0, 1.0)
+	SystemVoice.announce(CLOSE_TITLE, CLOSE_BODY, 2.4)
+	await get_tree().create_timer(3.2).timeout
+	FloorHandoff.snapshot()
+	_summary_layer = SUMMARY.new() as CanvasLayer
+	_summary_layer.set("heading_text", SUMMARY_HEADING)
+	_summary_layer.call("setup", FloorHandoff.summary)
+	add_child(_summary_layer)
+	_summary_ready = true
+
+
+func _leave() -> void:
+	_leaving = true
+	FloorHandoff.carry(_player)
+	var layer: CanvasLayer = CanvasLayer.new()
+	layer.layer = 90
+	add_child(layer)
+	_fade = ColorRect.new()
+	_fade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_fade.color = Color(0.0, 0.0, 0.0, 0.0)
+	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(_fade)
+	var tween: Tween = create_tween()
+	tween.tween_property(_fade, "color:a", 1.0, FADE_SECONDS)
+	await tween.finished
+	FloorHandoff.go(get_tree(), FloorHandoff.LEVEL3_SCENE)
 
 
 func _on_player_died() -> void:

@@ -176,6 +176,7 @@ func _die() -> void:
 		tentacle.call("retract_now")
 	_set_engaged(false)
 	PlayerStats.award_kill(self)
+	Game.report_mob_kill(self)
 	Game.shake(3.0, 0.8)
 	var tween: Tween = create_tween()
 	tween.tween_property(self, "_fade", 0.0, 1.2)

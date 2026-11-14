@@ -1,4 +1,4 @@
-[gd_scene load_steps=38 format=3 uid="uid://c4lv2nastyfl2"]
+[gd_scene load_steps=39 format=3 uid="uid://c4lv2nastyfl2"]
 
 [ext_resource type="Script" path="res://scripts/levels/level02.gd" id="1_level"]
 [ext_resource type="PackedScene" path="res://scenes/level/background.tscn" id="2_background"]
@@ -21,8 +21,9 @@
 [ext_resource type="PackedScene" path="res://scenes/level/krakaren_lair.tscn" id="19_krakaren_lair"]
 [ext_resource type="PackedScene" path="res://scenes/level/grub_storm.tscn" id="20_grub_storm"]
 [ext_resource type="PackedScene" path="res://scenes/level/dogpound_lair.tscn" id="21_dogpound_lair"]
-[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="22_player"]
-[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="23_hud"]
+[ext_resource type="PackedScene" path="res://scenes/level/reward_room.tscn" id="22_reward_room"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="23_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="24_hud"]
 
 [sub_resource type="RectangleShape2D" id="shape_1600x420"]
 size = Vector2(1600, 420)
@@ -521,7 +522,10 @@ zone_length = 1024.0
 [node name="DogPoundLair" parent="." instance=ExtResource("21_dogpound_lair")]
 position = Vector2(6528, 304)
 
-[node name="Player" parent="." instance=ExtResource("22_player")]
+[node name="RewardRoom" parent="." instance=ExtResource("22_reward_room")]
+position = Vector2(7108, 304)
+
+[node name="Player" parent="." instance=ExtResource("23_player")]
 position = Vector2(96, 302)
 
 [node name="Camera2D" type="Camera2D" parent="."]
@@ -534,7 +538,7 @@ limit_smoothed = true
 position_smoothing_enabled = true
 position_smoothing_speed = 6.0
 
-[node name="HUD" parent="." instance=ExtResource("23_hud")]
+[node name="HUD" parent="." instance=ExtResource("24_hud")]
 
 [node name="Sec0" type="Area2D" parent="Triggers"]
 position = Vector2(800, 550)

@@ -7,11 +7,13 @@ extends RefCounted
 
 const CABIN_SCENE: String = "res://scenes/yacht_cabin.tscn"
 const LEVEL2_SCENE: String = "res://scenes/level02.tscn"
+const LEVEL3_SCENE: String = "res://scenes/level03.tscn"
 ## Game meta keys that follow Carl from floor to floor.
 const FLAG_MAP: String = "neighborhood_map"
 const FLAG_PASS: String = "desperado_pass"
 const FLAG_FIELD_GUIDE: String = "borough_field_guide"
-const FLAGS: PackedStringArray = [FLAG_MAP, FLAG_PASS, FLAG_FIELD_GUIDE]
+const FLAG_MONGO: String = "pet_mongo"
+const FLAGS: PackedStringArray = [FLAG_MAP, FLAG_PASS, FLAG_FIELD_GUIDE, FLAG_MONGO]
 const SURVIVORS_LOST: int = 700000
 
 ## When valid, replaces SceneTree.change_scene_to_file (tests use it to stay in one scene).

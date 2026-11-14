@@ -47,3 +47,9 @@ Cut / deferred (as Level 1 did): Mind Horror quadrant, Rage Elemental chase, Dea
 - Headless parse/tests: `godot --headless --path dcc-side-scroller res://tests/<test>.tscn` for each new beat (`level02_goto`, `grub_corridor`, `krakaren_fight`, `dogpound_fight`) plus the existing `floor_end_flow`, `swine_boss` and `playthrough_level01` still pass.
 - `tests/playthrough_level02.tscn` bot plays start to end and prints PASS; check pacing and HP against a 10 to 15 minute target.
 - Manual: run in Godot (and render screenshots as done for the greenroom) to review palette and set dressing; `goto <section>` in the dev console for each section.
+
+## Status (after milestone 5)
+- Built: all seven beats of the trimmed arc. Brindle Grub corridors and Danger Dingoes; storm shelter with Mordecai the Bugaboo and the Second Chance mailbox (flag only, no cast yet); Clurichaun quadrant with the Taint and the smoothie bench; Krakaren Clone; grub storm; kobold riders and Ralph at the dog pound; reward room (Mongo as a follower); stairwell end with the summary card and the hand-off to a Level 3 stub (`FloorHandoff.LEVEL3_SCENE`).
+- Boxes: mobs and bosses report kills to `Game.report_mob_kill`; earned boxes are handed out in the storm shelter (and the Level 1 greenroom) like the fast-food room.
+- Tests: `level02_goto`, `level02_arrival`, `krakaren_fight`, `ralph_fight`, `level02_flow` (scripted end to end, not a walking bot).
+- Not built: a walking `playthrough_level02` bot and a balance pass (health, pacing and the 10 to 15 minute target are unmeasured); Laminak fairies and the "Live, Laugh, Love" boss door; burning corpses; befriending the caged dingoes with biscuits; casting Second Chance; Mind Horror quadrant, Rage Elemental chase and the Death Watch set piece (deferred); real art for the Krakaren, Ralph and the clurichaun (placeholders).
