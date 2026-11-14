@@ -10,6 +10,9 @@ const JUMP_CUT: float = 0.45
 const SpriteUtil: GDScript = preload("res://scripts/util/sprite_util.gd")
 const HIT_SPARK: PackedScene = preload("res://scenes/fx/hit_spark.tscn")
 const DUST: PackedScene = preload("res://scenes/fx/dust.tscn")
+const Explosives: GDScript = preload("res://scripts/combat/explosives.gd")
+const DYNAMITE: PackedScene = preload("res://scenes/combat/dynamite.tscn")
+const THROW_COOLDOWN: float = 0.5
 const DUST_COOLDOWN: float = 0.18
 const LAND_SPEED: float = 140.0
 const STOMP_MIN_FALL: float = 40.0
@@ -63,6 +66,7 @@ var _mana_delay: float = 0.0
 var _health_regen_acc: float = 0.0
 var _mana_shown: int = -1
 var _spell_cooldown: float = 0.0
+var _throw_cooldown: float = 0.0
 var _exhausted: bool = false
 var _stamina_delay: float = 0.0
 var _stamina_shown: int = -1
@@ -238,6 +242,19 @@ func _handle_input(delta: float) -> void:
 			_start_attack()
 	if Game.action_just_pressed("spell"):
 		_try_cast()
+	if Game.action_just_pressed("throw"):
+		throw_dynamite()
+
+
+func throw_dynamite() -> bool:
+	if _dead or _throw_cooldown > 0.0 or not Explosives.consume_one():
+		return false
+	_throw_cooldown = THROW_COOLDOWN
+	var stick: Node2D = DYNAMITE.instantiate() as Node2D
+	get_parent().add_child(stick)
+	var power: Vector2 = Vector2(float(facing) * 170.0 + velocity.x * 0.5, -170.0)
+	stick.call("launch", global_position + Vector2(float(facing) * 8.0, -30.0), power)
+	return true
 
 
 func enable_spell() -> void:
@@ -304,6 +321,7 @@ func _regen_health(delta: float) -> void:
 
 func _regen_mana(delta: float) -> void:
 	_spell_cooldown = maxf(_spell_cooldown - delta, 0.0)
+	_throw_cooldown = maxf(_throw_cooldown - delta, 0.0)
 	if not spell_enabled:
 		return
 	if Game.god_mode:
