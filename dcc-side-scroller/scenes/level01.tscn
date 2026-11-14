@@ -405,68 +405,54 @@ style = 6
 modulate = Color(1, 1, 1, 0)
 
 [node name="P018" parent="Platforms" instance=ExtResource("15_platform")]
-position = Vector2(2032, 224)
-size = Vector2(48, 16)
-style = 6
-one_way = true
-modulate = Color(1, 1, 1, 0)
-
-[node name="P019" parent="Platforms" instance=ExtResource("15_platform")]
 position = Vector2(1888, 272)
 size = Vector2(96, 32)
 style = 6
 modulate = Color(1, 1, 1, 0)
 
-[node name="P020" parent="Platforms" instance=ExtResource("15_platform")]
-position = Vector2(1888, 224)
-size = Vector2(48, 16)
-style = 6
-one_way = true
-modulate = Color(1, 1, 1, 0)
-
-[node name="P021" parent="Platforms" instance=ExtResource("15_platform")]
+[node name="P019" parent="Platforms" instance=ExtResource("15_platform")]
 position = Vector2(640, 304)
 size = Vector2(1024, 64)
 style = 4
 
-[node name="P022" parent="Platforms" instance=ExtResource("15_platform")]
+[node name="P020" parent="Platforms" instance=ExtResource("15_platform")]
 position = Vector2(800, 256)
 size = Vector2(704, 16)
 style = 5
 one_way = true
 
-[node name="P023" parent="Platforms" instance=ExtResource("15_platform")]
+[node name="P021" parent="Platforms" instance=ExtResource("15_platform")]
 position = Vector2(800, 208)
 size = Vector2(704, 16)
 style = 5
 one_way = true
 
-[node name="P024" parent="Platforms" instance=ExtResource("15_platform")]
+[node name="P022" parent="Platforms" instance=ExtResource("15_platform")]
 position = Vector2(416, 304)
 size = Vector2(224, 112)
 style = 5
 
-[node name="P025" parent="Platforms" instance=ExtResource("15_platform")]
+[node name="P023" parent="Platforms" instance=ExtResource("15_platform")]
 position = Vector2(384, 320)
 size = Vector2(32, 96)
 style = 5
 
-[node name="P026" parent="Platforms" instance=ExtResource("15_platform")]
+[node name="P024" parent="Platforms" instance=ExtResource("15_platform")]
 position = Vector2(352, 336)
 size = Vector2(32, 80)
 style = 5
 
-[node name="P027" parent="Platforms" instance=ExtResource("15_platform")]
+[node name="P025" parent="Platforms" instance=ExtResource("15_platform")]
 position = Vector2(320, 352)
 size = Vector2(32, 64)
 style = 5
 
-[node name="P028" parent="Platforms" instance=ExtResource("15_platform")]
+[node name="P026" parent="Platforms" instance=ExtResource("15_platform")]
 position = Vector2(288, 368)
 size = Vector2(32, 48)
 style = 5
 
-[node name="P029" parent="Platforms" instance=ExtResource("15_platform")]
+[node name="P027" parent="Platforms" instance=ExtResource("15_platform")]
 position = Vector2(0, 368)
 size = Vector2(288, 48)
 style = 5
@@ -740,12 +726,12 @@ hidden_item_id = "soap_travel"
 hidden_item_name = "Travel-Size Soap"
 
 [node name="Bard01" parent="Goblins" instance=ExtResource("19_goblin")]
-position = Vector2(2056, 222)
+position = Vector2(2168, 302)
 variant = 2
 enemy_level = 5
 
 [node name="Bard02" parent="Goblins" instance=ExtResource("19_goblin")]
-position = Vector2(1912, 222)
+position = Vector2(1848, 302)
 variant = 2
 enemy_level = 5
 
