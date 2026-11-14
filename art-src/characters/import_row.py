@@ -15,7 +15,7 @@ ROWS = {
     "run": {"row": 1, "ref": "run_ref.webp", "scale": 0.205, "anchor": "box"},
     "punch": {"row": 4, "ref": "punch_ref.webp", "scale": 0.18, "anchor": "feet", "split": "components"},
     "hurt": {"row": 5, "ref": "damage_ref.webp", "scale": 0.26, "anchor": "feet", "key": "black", "band": (725, 985, 625, 1536), "gap": 1, "min_w": 60, "pick": [1, 2, 3]},
-    "die": {"row": 6, "ref": "damage_ref.webp", "scale": 0.26, "anchor": "feet", "key": "black", "band": (400, 665, 0, 1536), "split": "components"},
+    "die": {"row": 6, "ref": "damage_ref.webp", "scale": 0.26, "anchor": "feet", "key": "black", "band": (400, 665, 0, 1536), "split": "components", "own_bottom": True},
     "jump": {"row": 2, "ref": "jump_ref.webp", "scale": 0.205, "anchor": "box", "pick": [1], "own_bottom": True},
     "fall": {"row": 3, "ref": "jump_ref.webp", "scale": 0.205, "anchor": "box", "pick": [4], "own_bottom": True},
 }
