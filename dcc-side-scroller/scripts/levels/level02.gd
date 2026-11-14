@@ -291,7 +291,7 @@ func _on_end_entered() -> void:
 	Game.set_hint("")
 	_player.set("control_enabled", false)
 	Game.shake(2.0, 1.0)
-	SystemVoice.announce(CLOSE_TITLE, CLOSE_BODY, 2.4)
+	SystemVoice.announce(CLOSE_TITLE, CLOSE_BODY, 2.4, true)
 	await get_tree().create_timer(3.2).timeout
 	FloorHandoff.snapshot()
 	_summary_layer = SUMMARY.new() as CanvasLayer

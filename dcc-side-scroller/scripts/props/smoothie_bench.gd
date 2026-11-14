@@ -22,7 +22,7 @@ func _ready() -> void:
 	_prompt.position = Vector2(-50.0, -62.0)
 	_prompt.size = Vector2(100.0, 12.0)
 	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_prompt.add_theme_font_size_override("font_size", 8)
+	_prompt.add_theme_font_size_override("font_size", 12)
 	_prompt.add_theme_constant_override("outline_size", 3)
 	_prompt.add_theme_color_override("font_outline_color", Color.BLACK)
 	_prompt.z_index = 50
