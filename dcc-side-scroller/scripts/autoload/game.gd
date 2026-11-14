@@ -1,6 +1,6 @@
 extends Node
 
-const DropRates: GDScript = preload("res://scripts/data/drop_rates.gd")
+const AchievementBoxes: GDScript = preload("res://scripts/data/achievement_boxes.gd")
 
 signal achievement_unlocked(title: String, description: String)
 signal player_health_changed(current: int, maximum: int)
@@ -55,8 +55,6 @@ var in_safe_zone: bool = false
 var menu_open: bool = false
 var unique_received: Dictionary = {}
 var earned_boxes: Dictionary = {}
-var legendary_bonus: float = 0.0
-var boxes_earned_total: int = 0
 var starter_boxes_announced: bool = false
 var intro_played: bool = false
 var floor_time_left: float = FLOOR_TIME
@@ -87,6 +85,7 @@ func unlock_achievement(id: String, title: String, description: String) -> void:
 		return
 	_unlocked[id] = true
 	achievement_unlocked.emit(title, description)
+	grant_box(AchievementBoxes.tier_for(id))
 
 
 func enemy_engaged() -> void:
@@ -157,24 +156,10 @@ func clear_boss() -> void:
 	boss_cleared.emit()
 
 
-func report_mob_kill(enemy: Node) -> void:
-	if enemy == null:
-		return
-	var tutorial: bool = PlayerStats.floor_number == 0
-	if tutorial and boxes_earned_total >= DropRates.TUTORIAL_BOX_CAP:
-		return
-	if bool(enemy.get("is_boss")) and not tutorial:
-		legendary_bonus += DropRates.BOSS_LEGENDARY_BONUS
-	grant_box(DropRates.roll(legendary_bonus, null, tutorial))
-
-
 func grant_box(tier: String) -> void:
 	if tier.is_empty():
 		return
-	if tier == "Legendary":
-		legendary_bonus = 0.0
 	earned_boxes[tier] = int(earned_boxes.get(tier, 0)) + 1
-	boxes_earned_total += 1
 	announce_box(tier)
 
 
@@ -184,8 +169,7 @@ func announce_box(tier: String) -> void:
 
 func reset_boxes() -> void:
 	earned_boxes.clear()
-	legendary_bonus = 0.0
-	boxes_earned_total = 0
+	_unlocked.clear()
 	starter_boxes_announced = false
 
 

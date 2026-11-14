@@ -34,8 +34,8 @@ func _ready() -> void:
 	for box: Node in get_tree().get_nodes_in_group("loot_boxes"):
 		tiers.append(str(box.get("tier")))
 	tiers.sort()
-	_check(tiers.size() == 6, "entering the room adds 4 earned boxes to the 2 room boxes (%d)" % tiers.size())
-	_check(tiers.count("Legendary") == 1 and tiers.count("Bronze") == 3, "earned tiers are present %s" % str(tiers))
+	_check(tiers.size() == 7, "entering the room adds 4 held boxes and the first safe room achievement box to the 2 room boxes (%d)" % tiers.size())
+	_check(tiers.count("Legendary") == 1 and tiers.count("Bronze") == 4, "earned tiers are present %s" % str(tiers))
 	_check(Game.earned_boxes.is_empty(), "earned boxes were handed over")
 	print("RESULT ", "PASS" if _fails == 0 else "FAIL %d" % _fails)
 	get_tree().quit(_fails)

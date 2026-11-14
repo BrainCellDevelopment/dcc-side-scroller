@@ -83,7 +83,7 @@ func _enter_and_checkpoint() -> void:
 	var anchor: Node2D = _level.get_node("Checkpoints/CP2") as Node2D
 	_check(Game.checkpoint_position.distance_to(anchor.global_position) < 1.0, "room checkpoint matches the level checkpoint")
 	_check(_achievements.has("Four Walls, Zero Stabbing"), "first_safe_room achievement fired")
-	_check(get_tree().get_nodes_in_group("loot_boxes").size() == 2, "a Bronze and a Silver box appear")
+	_check(get_tree().get_nodes_in_group("loot_boxes").size() == 3, "the room's Bronze and Silver boxes appear, plus the first safe room achievement Bronze")
 	var tiers: Array = []
 	for box: Node in get_tree().get_nodes_in_group("loot_boxes"):
 		tiers.append(str(box.get("tier")))
@@ -123,7 +123,11 @@ func _open_boxes() -> void:
 	var before: int = _opened
 	for i: int in 4:
 		await _tap()
-	_check(_opened - before == 2, "both boxes open here (%d)" % (_opened - before))
+	for i: int in 6:
+		if _opened - before >= 3:
+			break
+		await _tap()
+	_check(_opened - before == 3, "all three boxes open here (%d)" % (_opened - before))
 	_check(Inventory.slots.any(func(x: Dictionary) -> bool: return not x.is_empty()), "boxes gave items")
 
 

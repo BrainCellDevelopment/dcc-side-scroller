@@ -344,7 +344,6 @@ func _die() -> void:
 			node.call("neutralise")
 	_set_engaged(false)
 	PlayerStats.award_kill(self)
-	Game.report_mob_kill(self)
 	defeated.emit.call_deferred(self)
 
 

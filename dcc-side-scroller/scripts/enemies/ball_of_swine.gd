@@ -153,7 +153,6 @@ func _pop() -> void:
 	if active:
 		Game.enemy_disengaged()
 	PlayerStats.award_kill(self)
-	Game.report_mob_kill(self)
 	Game.shake(6.0, 0.5)
 	defeated.emit.call_deferred(self)
 	var tween: Tween = create_tween()

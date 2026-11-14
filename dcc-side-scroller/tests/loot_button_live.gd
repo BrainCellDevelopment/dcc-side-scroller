@@ -54,7 +54,7 @@ func _ready() -> void:
 	await _frames(10)
 	player.global_position = room.global_position + Vector2(200.0, -2.0)
 	await _frames(40)
-	_check(_unopened().size() == 6, "six boxes waiting in the room (%d)" % _unopened().size())
+	_check(_unopened().size() == 7, "seven boxes waiting in the room (%d)" % _unopened().size())
 	for box: Node in _unopened():
 		_check((box as Node2D).visible, "box visible inside the safe room")
 		break
@@ -65,7 +65,7 @@ func _ready() -> void:
 	for box: Node in _unopened():
 		if not (box as Node2D).visible:
 			hidden += 1
-	_check(hidden == 6, "all unopened boxes are hidden outside the safe room (%d)" % hidden)
+	_check(hidden == 7, "all unopened boxes are hidden outside the safe room (%d)" % hidden)
 	await _key(KEY_TAB)
 	var button: Button = null
 	for node: Node in get_tree().root.find_children("*", "Button", true, false):
@@ -75,15 +75,15 @@ func _ready() -> void:
 	await _key(KEY_ESCAPE)
 	player.global_position = room.global_position + Vector2(200.0, -2.0)
 	await _frames(40)
-	_check(_unopened().size() == 6 and (_unopened()[0] as Node2D).visible, "boxes reappear on re-entering")
+	_check(_unopened().size() == 7 and (_unopened()[0] as Node2D).visible, "boxes reappear on re-entering")
 	await _key(KEY_TAB)
-	_check(button != null and not button.disabled and button.text.contains("(6)"), "button enabled with count: %s" % (button.text if button != null else "none"))
+	_check(button != null and not button.disabled and button.text.contains("(7)"), "button enabled with count: %s" % (button.text if button != null else "none"))
 	await _shot("button_inside")
 	var opened: Array[int] = [0]
 	Game.loot_box_opened.connect(func(_t: String) -> void: opened[0] += 1)
 	button.pressed.emit()
 	await _frames(20)
-	_check(opened[0] == 6, "button opened all six boxes (%d)" % opened[0])
+	_check(opened[0] == 7, "button opened all seven boxes (%d)" % opened[0])
 	_check(button.text.contains("(0)") and button.disabled, "button resets to zero")
 	await _shot("button_after")
 	await _key(KEY_ESCAPE)

@@ -1,6 +1,5 @@
 extends Node
 
-const DropRates: GDScript = preload("res://scripts/data/drop_rates.gd")
 
 const LEVEL: PackedScene = preload("res://scenes/level00.tscn")
 const GOBLIN: PackedScene = preload("res://scenes/enemies/goblin.tscn")
@@ -56,17 +55,14 @@ func _visible_boxes() -> int:
 func _run() -> void:
 	var earned_before: int = Game.earned_boxes.size()
 	_check(earned_before == 0, "no boxes earned before any kills")
-	for i: int in 120:
-		var goblin: Node = GOBLIN.instantiate()
-		_level.add_child(goblin)
-		goblin.call("_die")
+	for id: String in ["welcome", "first_goblin", "first_hurt", "mind_gap", "stairs", "engineer_down", "dozer_stomp", "pest_control", "dozer_down"]:
+		Game.unlock_achievement(id, id, "test")
 	var total: int = 0
 	for tier: String in Game.earned_boxes:
 		total += int(Game.earned_boxes[tier])
-	_check(total == DropRates.TUTORIAL_BOX_CAP, "Level 0 kills stop at %d earned boxes (%d from 120 kills)" % [DropRates.TUTORIAL_BOX_CAP, total])
-	_check(not Game.earned_boxes.has("Gold") and not Game.earned_boxes.has("Legendary"), "Level 0 drops only Bronze and Silver %s" % str(Game.earned_boxes))
+	_check(total == 8, "Level 0 achievements earn 8 boxes (%d)" % total)
+	_check(not Game.earned_boxes.has("Gold") and not Game.earned_boxes.has("Legendary"), "Level 0 earns only Bronze and Silver %s" % str(Game.earned_boxes))
 	_check(_visible_boxes() == 0, "earned boxes do not exist in the world yet")
-	Game.earned_boxes = {"Bronze": 5, "Silver": 3}
 	var mord: Area2D = _level.get_node("Guildhall/Mordecai")
 	var player: CharacterBody2D = _level.get_node("Player")
 	player.global_position = mord.global_position + Vector2(30.0, -2.0)
