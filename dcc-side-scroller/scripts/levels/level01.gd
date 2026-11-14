@@ -345,7 +345,7 @@ func _collapse_beat() -> void:
 	SystemVoice.fire("survivor_count_milestone")
 	await get_tree().create_timer(COLLAPSE_HUSH).timeout
 	_hide_count()
-	SystemVoice.announce(COLLAPSE_NOTICE_TITLE, COLLAPSE_NOTICE_BODY, 3.5)
+	SystemVoice.announce(COLLAPSE_NOTICE_TITLE, COLLAPSE_NOTICE_BODY, 3.5, true)
 	SystemVoice.announce_patch_notes()
 	await get_tree().create_timer(3.8 + 4.3).timeout
 
