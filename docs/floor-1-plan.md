@@ -97,6 +97,43 @@ Neighborhood accents sit on top of the ramps above and never replace them: garba
 
 Kit and usage: see "Floor 1 art kit (#49)" in [contract-art.md](contract-art.md). Screenshots at 1280x720 and 960x540 are in `docs/reference/floor1/`. Pick a background with `Background.set_style(4)` (tunnel), `5` (artery) or `6` (corridor); platforms use `style` 4 to 6.
 
+## Pacing and economy (#71, measured by the bot)
+
+`tests/playthrough_level01.tscn` plays the whole level with the health the game gives it (10 HP), no cheats: it opens the safe-room boxes with E, wears gear, eats cookies, drinks a healing potion when it is at 4 HP or less, throws dynamite at the sealed door, builds the Speedbump fortress against the Ball of Swine, and walks the hand-off. It prints a per-section report (seconds, real damage taken, healing by source, deaths, health in/out and lowest) and PASS or FAIL. Run it from `dcc-side-scroller/`: `godot --headless --fixed-fps 60 res://tests/playthrough_level01.tscn` (about 5 real seconds). Set `DCC_SHOT_DIR` and run without `--headless` for one screenshot per section (`0_tunnel.png` and so on). `DCC_START=<section>` starts mid-level, `DCC_BOT_HEALTH=<n>` overrides starting health (debug only), `DCC_BOT_LOOT=none` empties the bag of healing potions after the safe room (the unlucky-roll measurement below).
+
+### Section times (default run, bot seconds)
+
+| # | Section | Bot time | Real damage taken | Notes |
+|---|---|---|---|---|
+| 1 | Arterial and llama alleys | 18 s | 4 | two llamas, magic missile practice |
+| 2 | Rats and Scatterers corridor | 8 s | 0 | |
+| 3 | Safe room (fast food) | 9 s | 0 | healed 4 on entry, boxes opened |
+| 4 | The Hoarder | 56 to 57 s | 7 to 8 | boss; dynamite door included |
+| 5 | Goblin workshop | 8 s | 1 to 2 | optional, the bot does not use the Pass or charm |
+| 6 | Ball of Swine | 38 to 39 s | 5 to 6 | boss |
+| 7 | Collapse and hand-off | 11 s + 35 s | 0 | the 35 s is the cabin text the bot clicks through |
+| | **Total** | **about 185 s** | **18 to 22** | 0 deaths in 8 of 8 runs |
+
+Bot-to-human assumption: walking and small fights take a first-time player 3 to 5 times as long (reading, looking, mistimed jumps); boss fights are paced by the boss timers, so 1.5 to 2 times; the hand-off text 1.5 to 2.5 times. That gives **about 6 to 10 minutes** for a first playthrough, bosses at about 1.5 to 2 minutes each. Bosses hit the target; the level as a whole is **under the 10 to 15 minute target**, and a death at either boss adds about 1.5 minutes per retry. Human playtest notes: not captured yet (needs a person).
+
+### Health, mana and stamina economy
+- **Health is the only scarce resource.** Base max health is 10 (2 per Constitution point). Level-ups grant stat points, but they stay locked until Floor 3 (`CLASS_SELECT_FLOOR`), so the bot ends at level 8 or 9 with 10 max HP. Natural regeneration is one HP per 60 s at Constitution 5. A healing potion restores 6. The Hoarder costs about 7 to 8 HP, the Ball of Swine 5 to 8, the llamas 4, the workshop 1 to 6.
+- **Healing sources actually reachable:** the safe room (full heal on entry and the checkpoint), potions from its boxes, and the stairs at the end. Boss boxes (Hoarder, Swine) hold only gear and open only in a safe zone. The next one after the Hoarder is on Floor 2, and the section gates are one-way ("Locked. No way back."), so the bot confirmed the Hoarder box cannot be carried back to the fast-food room. It follows the player unopened ("Safe zones only") for the rest of the level.
+- **Tuning made (#71):** the fast-food room used the random Floor 1 table, so its Bronze box gave 2 healing potions only 1 time in 4 and the bot died once in about 7 of 8 runs. It now uses a `floor1_room` kit (`loot_tables.gd`): Bronze is always 2 healing potions, Silver is a cookie or a mana toast. Result: 0 deaths in 8 of 8 runs.
+- **Without the potions** (`DCC_BOT_LOOT=none`, an unlucky box on the old table): the bot reaches the workshop with 2 to 3 HP, then dies once (workshop or Ball of Swine) in 6 of 6 runs. Respawning at a checkpoint restores full health, so such a player can still finish, but only by dying once. HP on first arrival at the swine arena: 2 to 3 of 10 with no potions, 7 to 8 of 10 with the room's two potions (one potion is spent in the Hoarder fight, one after).
+- **Mana:** the player pool is 10 with 1.5 per second regeneration after 1 s; Magic Missile costs 3, so mana only limits spam. Mana potions (5) and toast (full) are surplus on this level. **Stamina:** 100, attacks cost 12, jumps 10, regenerates 40 per second after 0.5 s; never binding in the bot runs. **Cookies:** 60 XP each, which only raises the level counter on Floor 1 (points are locked).
+
+### Difficulty hook point (#23)
+Not built. When #23 lands, the knobs to scale per mode are: `max_health` (40), `charge_damage` (2), `stomp_damage` (1), `VOMIT_SPAWN` and `SPAWN_CAP` in `scripts/enemies/hoarder.gd`; the Ball of Swine health and dynamite count; enemy counts in `art-src/level/section_*.py`; the `floor1_room` kit and potion counts in `scripts/data/loot_tables.gd`; and checkpoint spacing (`kit.cp(...)` in the section builders). Start from the bot's per-section report to retune.
+
+### Issues found that a first-time player will feel
+- Nothing heals between the Hoarder (section 4) and the Ball of Swine; the only safe room is before the Hoarder. See the PR for options.
+- Two llamas instead of three (XP plan assumed three).
+- No item grants the Desperado Pass flag yet (the Level 2 stub shows `pass false`).
+- The Hoarder's Boss box cannot be opened (the safe room is behind a one-way gate), so its gear (up to Nightgaunt Cloak, +4 Constitution, +8 HP) is never obtained; same for the Swine box.
+- Stat points are unspendable on Floor 1, so XP and the XP cookie have no mechanical effect here.
+- Death clears the inventory (`Game.reset_run`), so a retry at a boss starts without potions.
+
 ## Adaptation decisions
 - **Tone.** Jokes in the System voice, real grief when it counts (the Hoarder, the collapse). The goblin chieftain's lair and the baby-bombing scene are skipped entirely (#61).
 - **Linear level.** The book's open grid becomes a right-to-left line; fog of war and the minimap are out of scope.
