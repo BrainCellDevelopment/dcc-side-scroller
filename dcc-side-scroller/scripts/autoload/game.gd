@@ -56,6 +56,7 @@ var menu_open: bool = false
 var unique_received: Dictionary = {}
 var earned_boxes: Dictionary = {}
 var starter_boxes_announced: bool = false
+var chopper_return: Vector2 = Vector2.ZERO
 var intro_played: bool = false
 var floor_time_left: float = FLOOR_TIME
 var checkpoint_index: int = -1

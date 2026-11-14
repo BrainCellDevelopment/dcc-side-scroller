@@ -46,6 +46,7 @@ const FLOOR_1: Dictionary = {
 	"neighborhood_boss": ["Wait, I Beat That?", "A neighborhood boss, down. You may now feel exactly three seconds of pride."],
 	"borough_boss": ["Boss Of The Block", "The Borough boss is done. The System is out of gentle insults and is improvising."],
 	"collapse_survived": ["Door Closing, Mind The Gap", "The floor collapsed. You were not on it. A lot of people were."],
+	"chopper_ride": ["Easy Rider, Hard Landing", "You stole a goblin motorcycle and rode it across a dead floor. The goblins want it back, and a word."],
 	"all_boxes_open": ["Unwrapped", "Every box opened. The audience is a little jealous, and the boxes are a little relieved."],
 	"survivor_count_milestone": ["Counting Heads", "You watched the survivor counter drop. It is okay to look away. It is also okay to keep looking."],
 }

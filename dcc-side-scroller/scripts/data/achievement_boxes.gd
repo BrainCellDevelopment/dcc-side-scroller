@@ -34,6 +34,7 @@ const BOXES: Dictionary = {
 	"kill_50": "Silver",
 	"level_5": "Silver",
 	"neighborhood_boss": "Silver",
+	"chopper_ride": "Silver",
 	"kill_100": "Gold",
 	"level_9": "Gold",
 	"borough_boss": "Gold",

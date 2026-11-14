@@ -12,6 +12,8 @@ const VEIL_PLAYER_Z: int = 41
 const VEIL_NEAR: float = 320.0
 const DOOR_OFFSET: float = -5.0
 const DIRECTION: float = -1.0
+const CHOPPER_STOP: GDScript = preload("res://scripts/props/chopper_stop.gd")
+const CHOPPER_STOP_POSITION: Vector2 = Vector2(1620.0, 304.0)
 const TITLE: String = "LEVEL 1"
 const TITLE_SECONDS: float = 2.5
 const FOCUS_ON_FLOOR: float = 40.0
@@ -88,8 +90,15 @@ func _ready() -> void:
 	_greenroom = get_node_or_null("Greenroom")
 	if _greenroom != null:
 		_greenroom.connect("ready_to_leave", _try_end)
+	_add_chopper_stop()
 	_begin()
 	_setup_gates()
+
+
+func _add_chopper_stop() -> void:
+	var stop: Node2D = CHOPPER_STOP.new() as Node2D
+	stop.position = CHOPPER_STOP_POSITION
+	add_child(stop)
 
 
 func _physics_process(delta: float) -> void:
