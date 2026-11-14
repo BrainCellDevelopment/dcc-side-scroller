@@ -1,4 +1,4 @@
-[gd_scene load_steps=48 format=3 uid="uid://dl1fndtn48xq"]
+[gd_scene load_steps=51 format=3 uid="uid://dl1fndtn48xq"]
 
 [ext_resource type="Script" path="res://scripts/levels/level01.gd" id="1_level"]
 [ext_resource type="PackedScene" path="res://scenes/level/background.tscn" id="2_background"]
@@ -23,16 +23,19 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/rat.tscn" id="21_rat"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/scatterer.tscn" id="22_scatterer"]
 [ext_resource type="PackedScene" path="res://scenes/props/bathroom_door.tscn" id="23_bathroom_door"]
-[ext_resource type="PackedScene" path="res://scenes/level/fastfood_room.tscn" id="24_fastfood_room"]
-[ext_resource type="PackedScene" path="res://scenes/level/swine_arena.tscn" id="25_swine_arena"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/hoarder.tscn" id="26_hoarder"]
-[ext_resource type="PackedScene" path="res://scenes/props/blast_door.tscn" id="27_blast_door"]
-[ext_resource type="PackedScene" path="res://scenes/props/dynamite_pickup.tscn" id="28_dynamite_pickup"]
-[ext_resource type="PackedScene" path="res://scenes/props/garbage_pile.tscn" id="29_garbage_pile"]
-[ext_resource type="PackedScene" path="res://scenes/level/hoarder_lair.tscn" id="30_hoarder_lair"]
-[ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="31_door"]
-[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="32_player"]
-[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="33_hud"]
+[ext_resource type="PackedScene" path="res://scenes/level/steam_vent.tscn" id="24_steam_vent"]
+[ext_resource type="PackedScene" path="res://scenes/props/workshop_prop.tscn" id="25_workshop_prop"]
+[ext_resource type="PackedScene" path="res://scenes/level/workshop_site.tscn" id="26_workshop_site"]
+[ext_resource type="PackedScene" path="res://scenes/level/fastfood_room.tscn" id="27_fastfood_room"]
+[ext_resource type="PackedScene" path="res://scenes/level/swine_arena.tscn" id="28_swine_arena"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/hoarder.tscn" id="29_hoarder"]
+[ext_resource type="PackedScene" path="res://scenes/props/blast_door.tscn" id="30_blast_door"]
+[ext_resource type="PackedScene" path="res://scenes/props/dynamite_pickup.tscn" id="31_dynamite_pickup"]
+[ext_resource type="PackedScene" path="res://scenes/props/garbage_pile.tscn" id="32_garbage_pile"]
+[ext_resource type="PackedScene" path="res://scenes/level/hoarder_lair.tscn" id="33_hoarder_lair"]
+[ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="34_door"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="35_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="36_hud"]
 
 [sub_resource type="RectangleShape2D" id="shape_720x420"]
 size = Vector2(720, 420)
@@ -276,25 +279,22 @@ position = Vector2(2072, 194)
 [node name="D058" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(1832, 194)
 
-[node name="D059" parent="Deco" instance=ExtResource("4_p_crate")]
-position = Vector2(2232, 304)
-
-[node name="D060" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D059" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(1544, 194)
 
-[node name="D061" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D060" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(664, 194)
 
-[node name="D062" parent="Deco" instance=ExtResource("8_p_sign_hazard")]
+[node name="D061" parent="Deco" instance=ExtResource("8_p_sign_hazard")]
 position = Vector2(1640, 304)
 
-[node name="D063" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D062" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(520, 194)
 
-[node name="D064" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D063" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(280, 194)
 
-[node name="D065" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D064" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(40, 194)
 
 [node name="P001" parent="Platforms" instance=ExtResource("14_platform")]
@@ -379,23 +379,49 @@ size = Vector2(768, 64)
 style = 6
 
 [node name="P017" parent="Platforms" instance=ExtResource("14_platform")]
+position = Vector2(2032, 272)
+size = Vector2(96, 32)
+style = 6
+modulate = Color(1, 1, 1, 0)
+
+[node name="P018" parent="Platforms" instance=ExtResource("14_platform")]
+position = Vector2(2032, 224)
+size = Vector2(48, 16)
+style = 6
+one_way = true
+modulate = Color(1, 1, 1, 0)
+
+[node name="P019" parent="Platforms" instance=ExtResource("14_platform")]
+position = Vector2(1888, 272)
+size = Vector2(96, 32)
+style = 6
+modulate = Color(1, 1, 1, 0)
+
+[node name="P020" parent="Platforms" instance=ExtResource("14_platform")]
+position = Vector2(1888, 224)
+size = Vector2(48, 16)
+style = 6
+one_way = true
+modulate = Color(1, 1, 1, 0)
+
+[node name="P021" parent="Platforms" instance=ExtResource("14_platform")]
 position = Vector2(640, 304)
 size = Vector2(1024, 64)
 style = 4
 
-[node name="P018" parent="Platforms" instance=ExtResource("14_platform")]
+[node name="P022" parent="Platforms" instance=ExtResource("14_platform")]
 position = Vector2(800, 256)
 size = Vector2(704, 16)
 style = 5
 one_way = true
 
-[node name="P019" parent="Platforms" instance=ExtResource("14_platform")]
+[node name="P023" parent="Platforms" instance=ExtResource("14_platform")]
 position = Vector2(800, 208)
 size = Vector2(704, 16)
 style = 5
 one_way = true
 
-[node name="P020" parent="Platforms" instance=ExtResource("14_platform")]
+[node name="P024" parent="Platforms" instance=ExtResource("14_platform")]
 position = Vector2(0, 304)
 size = Vector2(640, 64)
 style = 5
@@ -564,8 +590,16 @@ variant = 1
 position = Vector2(5164, 302)
 
 [node name="G03" parent="Goblins" instance=ExtResource("18_goblin")]
-position = Vector2(1912, 302)
-variant = 1
+position = Vector2(2242, 302)
+
+[node name="G04" parent="Goblins" instance=ExtResource("18_goblin")]
+position = Vector2(2200, 302)
+
+[node name="G05" parent="Goblins" instance=ExtResource("18_goblin")]
+position = Vector2(2008, 302)
+
+[node name="G06" parent="Goblins" instance=ExtResource("18_goblin")]
+position = Vector2(1820, 302)
 
 [node name="SleepingLlama" parent="Goblins" instance=ExtResource("19_llama")]
 position = Vector2(5814, 302)
@@ -630,15 +664,129 @@ position = Vector2(4160, 208)
 hidden_item_id = "soap_travel"
 hidden_item_name = "Travel-Size Soap"
 
-[node name="FastFoodRoom" parent="." instance=ExtResource("24_fastfood_room")]
+[node name="Bard01" parent="Goblins" instance=ExtResource("18_goblin")]
+position = Vector2(2056, 222)
+variant = 2
+enemy_level = 5
+
+[node name="Bard02" parent="Goblins" instance=ExtResource("18_goblin")]
+position = Vector2(1912, 222)
+variant = 2
+enemy_level = 5
+
+[node name="Shamanka01" parent="Goblins" instance=ExtResource("18_goblin")]
+position = Vector2(1720, 302)
+variant = 3
+enemy_level = 7
+charm_gift = "goblin_pass"
+
+[node name="Vent4768" parent="Hazards" instance=ExtResource("24_steam_vent")]
+position = Vector2(2144, 304)
+phase = 0
+
+[node name="Vent5072" parent="Hazards" instance=ExtResource("24_steam_vent")]
+position = Vector2(1840, 304)
+phase = 1.6
+
+[node name="Work00" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(2032, 304)
+kind = "dozer"
+width = 96.0
+
+[node name="Work01" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(1888, 304)
+kind = "dozer"
+width = 96.0
+
+[node name="Work02" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(2304, 304)
+kind = "coal"
+width = 120.0
+
+[node name="Work03" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(2248, 304)
+kind = "conveyor"
+width = 120.0
+
+[node name="Work04" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(1696, 304)
+kind = "engine"
+width = 96.0
+
+[node name="Work05" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(2408, 304)
+kind = "pineapples"
+
+[node name="Work06" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(2292, 304)
+kind = "pineapples"
+
+[node name="Work07" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(2260, 304)
+kind = "pineapples"
+
+[node name="Work08" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(2132, 304)
+kind = "pineapples"
+
+[node name="Work09" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(2028, 304)
+kind = "pineapples"
+
+[node name="Work10" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(1836, 304)
+kind = "pineapples"
+
+[node name="Work11" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(1700, 304)
+kind = "pineapples"
+
+[node name="Work12" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(2232, 304)
+kind = "barrel"
+
+[node name="Work13" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(2220, 304)
+kind = "barrel"
+
+[node name="Work14" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(2016, 304)
+kind = "barrel"
+
+[node name="Work15" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(1792, 304)
+kind = "barrel"
+
+[node name="Work16" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(1780, 304)
+kind = "barrel"
+
+[node name="Work17" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(1752, 304)
+kind = "boiler"
+
+[node name="Work18" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(2080, 184)
+kind = "pipe"
+width = 160.0
+
+[node name="Work19" parent="Deco" instance=ExtResource("25_workshop_prop")]
+position = Vector2(1672, 164)
+kind = "pipe"
+width = 200.0
+
+[node name="WorkshopSite" parent="." instance=ExtResource("26_workshop_site")]
+position = Vector2(2336, 184)
+
+[node name="FastFoodRoom" parent="." instance=ExtResource("27_fastfood_room")]
 position = Vector2(3712, 304)
 
-[node name="SwineArena" parent="." instance=ExtResource("25_swine_arena")]
+[node name="SwineArena" parent="." instance=ExtResource("28_swine_arena")]
 position = Vector2(1152, 304)
 
 [node name="Bosses" type="Node2D" parent="."]
 
-[node name="Hoarder" parent="Bosses" instance=ExtResource("26_hoarder")]
+[node name="Hoarder" parent="Bosses" instance=ExtResource("29_hoarder")]
 position = Vector2(2498, 302)
 
 [node name="HoarderScatterer1" parent="Goblins" instance=ExtResource("22_scatterer")]
@@ -653,95 +801,95 @@ position = Vector2(3038, 302)
 [node name="HoarderScatterer4" parent="Goblins" instance=ExtResource("22_scatterer")]
 position = Vector2(2993, 302)
 
-[node name="HoarderDoor" parent="Doors" instance=ExtResource("27_blast_door")]
+[node name="HoarderDoor" parent="Doors" instance=ExtResource("30_blast_door")]
 position = Vector2(2908, 304)
 size = Vector2(16, 140)
 
-[node name="Dynamite1" parent="Deco" instance=ExtResource("28_dynamite_pickup")]
+[node name="Dynamite1" parent="Deco" instance=ExtResource("31_dynamite_pickup")]
 position = Vector2(3198, 304)
 
-[node name="Dynamite2" parent="Deco" instance=ExtResource("28_dynamite_pickup")]
+[node name="Dynamite2" parent="Deco" instance=ExtResource("31_dynamite_pickup")]
 position = Vector2(3078, 304)
 
-[node name="Dynamite3" parent="Deco" instance=ExtResource("28_dynamite_pickup")]
+[node name="Dynamite3" parent="Deco" instance=ExtResource("31_dynamite_pickup")]
 position = Vector2(2958, 304)
 
-[node name="LairPile1" parent="Platforms" instance=ExtResource("29_garbage_pile")]
+[node name="LairPile1" parent="Platforms" instance=ExtResource("32_garbage_pile")]
 position = Vector2(2798, 304)
 width = 44.0
 height = 28.0
 seed_value = 1
 
-[node name="LairPile2" parent="Platforms" instance=ExtResource("29_garbage_pile")]
+[node name="LairPile2" parent="Platforms" instance=ExtResource("32_garbage_pile")]
 position = Vector2(2718, 304)
 width = 56.0
 height = 36.0
 seed_value = 2
 
-[node name="LairPile3" parent="Platforms" instance=ExtResource("29_garbage_pile")]
+[node name="LairPile3" parent="Platforms" instance=ExtResource("32_garbage_pile")]
 position = Vector2(2628, 304)
 width = 44.0
 height = 28.0
 seed_value = 3
 
-[node name="LairPile4" parent="Platforms" instance=ExtResource("29_garbage_pile")]
+[node name="LairPile4" parent="Platforms" instance=ExtResource("32_garbage_pile")]
 position = Vector2(2558, 304)
 width = 40.0
 height = 32.0
 seed_value = 4
 
-[node name="PileBackdrop1" parent="Deco" instance=ExtResource("29_garbage_pile")]
+[node name="PileBackdrop1" parent="Deco" instance=ExtResource("32_garbage_pile")]
 position = Vector2(3268, 304)
 width = 70.0
 height = 54.0
 solid = false
 seed_value = 11
 
-[node name="PileBackdrop2" parent="Deco" instance=ExtResource("29_garbage_pile")]
+[node name="PileBackdrop2" parent="Deco" instance=ExtResource("32_garbage_pile")]
 position = Vector2(3128, 304)
 width = 80.0
 height = 46.0
 solid = false
 seed_value = 12
 
-[node name="PileBackdrop3" parent="Deco" instance=ExtResource("29_garbage_pile")]
+[node name="PileBackdrop3" parent="Deco" instance=ExtResource("32_garbage_pile")]
 position = Vector2(2998, 304)
 width = 90.0
 height = 70.0
 solid = false
 seed_value = 13
 
-[node name="PileBackdrop4" parent="Deco" instance=ExtResource("29_garbage_pile")]
+[node name="PileBackdrop4" parent="Deco" instance=ExtResource("32_garbage_pile")]
 position = Vector2(2850, 304)
 width = 56.0
 height = 100.0
 solid = false
 seed_value = 14
 
-[node name="PileBackdrop5" parent="Deco" instance=ExtResource("29_garbage_pile")]
+[node name="PileBackdrop5" parent="Deco" instance=ExtResource("32_garbage_pile")]
 position = Vector2(2678, 304)
 width = 110.0
 height = 84.0
 solid = false
 seed_value = 15
 
-[node name="PileBackdrop6" parent="Deco" instance=ExtResource("29_garbage_pile")]
+[node name="PileBackdrop6" parent="Deco" instance=ExtResource("32_garbage_pile")]
 position = Vector2(2456, 304)
 width = 60.0
 height = 110.0
 solid = false
 seed_value = 16
 
-[node name="HoarderLair" parent="." instance=ExtResource("30_hoarder_lair")]
+[node name="HoarderLair" parent="." instance=ExtResource("33_hoarder_lair")]
 
-[node name="EntryDoor" parent="Doors" instance=ExtResource("31_door")]
+[node name="EntryDoor" parent="Doors" instance=ExtResource("34_door")]
 position = Vector2(6904, 304)
 start_open = true
 close_behind = true
 close_side = -1.0
 sealed_text = "Locked. No way back."
 
-[node name="Player" parent="." instance=ExtResource("32_player")]
+[node name="Player" parent="." instance=ExtResource("35_player")]
 position = Vector2(6848, 302)
 
 [node name="Camera2D" type="Camera2D" parent="."]
@@ -754,7 +902,7 @@ limit_smoothed = true
 position_smoothing_enabled = true
 position_smoothing_speed = 6.0
 
-[node name="HUD" parent="." instance=ExtResource("33_hud")]
+[node name="HUD" parent="." instance=ExtResource("36_hud")]
 
 [node name="Sec0" type="Area2D" parent="Triggers"]
 position = Vector2(6000, 550)
