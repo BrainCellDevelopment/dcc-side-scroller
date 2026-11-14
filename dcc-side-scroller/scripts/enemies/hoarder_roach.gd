@@ -20,7 +20,10 @@ func _ready() -> void:
 	add_to_group("hoarder_roach")
 	var shape: CollisionShape2D = CollisionShape2D.new()
 	var rect: RectangleShape2D = RectangleShape2D.new()
-	rect.size = Vector2(20.0, 26.0)
+	# The mouth sits about 50 px above her feet, higher than a standing punch reaches, so the
+	# hurtbox extends down over her chin and chest (the roach itself is drawn at the origin).
+	rect.size = Vector2(20.0, 38.0)
+	shape.position = Vector2(0.0, 12.0)
 	shape.shape = rect
 	add_child(shape)
 	z_index = 12

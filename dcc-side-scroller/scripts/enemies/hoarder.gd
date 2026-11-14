@@ -28,8 +28,8 @@ const CHARGE_MAX: float = 1.4
 const CHARGE_RECOVER: float = 1.2
 const STUN_TIME: float = 3.5
 const PILE_REACH: float = 34.0
-const MOUTH_HIGH: Vector2 = Vector2(22.0, -44.0)
-const MOUTH_LOW: Vector2 = Vector2(26.0, -30.0)
+const MOUTH_HIGH: Vector2 = Vector2(10.0, -50.0)
+const MOUTH_LOW: Vector2 = Vector2(12.0, -51.0)
 const ROACH_HINT: String = "Kill the roach in her mouth!"
 
 @export var max_health: int = 40
