@@ -125,3 +125,12 @@ Indices 0 to 3 are unchanged (street, stairwell, tunnel, guildhall). The `initia
 | `spray_arrow.tscn` | `spray_arrow.png` | 34x18 static | centre, points left; flip with `scale.x = -1` |
 | `spray_x.tscn` | `spray_x.png` | 20x20 static | centre (bone-white "no" cross) |
 Lichen props are always placed on a floor or at the base of a wall (never floating, see #28). `torch.tscn` and `lichen.tscn` from Level 0 still work but keep the Level 0 look.
+
+## Bad Llama (#57)
+Art generator: `art-src/characters/llama.py` (Pillow only; writes `assets/characters/llama.png`, `assets/fx/lava_ball.png`, `assets/fx/lava_puddle.png`).
+| Scene | Script | Notes |
+|---|---|---|
+| `scenes/enemies/llama.tscn` | `scripts/enemies/llama.gd` | CharacterBody2D, group `enemies`, origin at the feet, art faces right and flips on `Visual`. Sheet `llama.png`, frame 72x56, rows idle 4, walk 6, windup 3, spit 2, hurt 1, die 4, sleep 2, wake 2. Exports `enemy_level` (3), `xp_value`, `is_boss`, `max_health` (6), `dormant` (sleeping until woken). Calls `PlayerStats.award_kill`. |
+| `scenes/enemies/lava_ball.tscn` | `scripts/enemies/lava_ball.gd` | Extends `rock.gd` (same `launch(velocity, damage)`); `lava_ball.png` 10x10, 4 frames. Leaves a short-lived puddle where it lands on a platform top. |
+| `scenes/level/lava_puddle.tscn` | `scripts/level/lava_puddle.gd` | Area2D hazard, group `hazards`, origin bottom-left like spikes, `width` (multiple of 16), `damage` 1, `lifetime` (0 = permanent). `lava_puddle.png` 32x10, 4 frames, stretched to `width`. |
+Weak point: the throat. A hit while the llama telegraphs a spit (`throat_open`, the head rears back and the gland glows), or a head-height hit from its front (attacker 20 px or more above its feet and 14 px or more in front), ruptures the gland and kills it for a bonus; any other hit is normal damage.

@@ -21,8 +21,9 @@ const STEP_GROWTH: int = 200
 ## docs/floor-1-plan.md when a beat changes.
 const PLAN: Array[Dictionary] = [
 	{"beat": 1, "name": "Arterial tunnel and llama alley", "required": true, "kills": [
-		{"enemy": "Bad Llama", "level": 3, "count": 1},
-		{"enemy": "Goblin thrower", "level": 2, "count": 3},
+		{"enemy": "Bad Llama", "level": 3, "count": 2},
+		{"enemy": "Goblin thrower", "level": 2, "count": 1},
+		{"enemy": "Goblin grunt", "level": 2, "count": 1},
 	]},
 	{"beat": 2, "name": "Rats and Scatterers corridor", "required": true, "kills": [
 		{"enemy": "Rat", "level": 2, "count": 5},

@@ -13,7 +13,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import levelkit
-from levelkit import Writer, vec, STONE
+from levelkit import Writer, vec, STONE, fnum
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 PROJECT = ROOT + "/dcc-side-scroller"
@@ -25,8 +25,13 @@ FLOOR = 304
 BOTTOM = 364
 DOOR_U = 40
 START_U = 96
-BG_STYLE = 2
 CAM_PAD = 320
+
+# Floor 1 art kit (#49): background styles 4 tunnel, 5 artery, 6 corridor; platform styles 4 brick, 5 wet stone, 6 plank.
+BRICK, WETSTONE, PLANK = 4, 5, 6
+# section idx -> (background style, platform style)
+LOOK = {0: (5, BRICK), 1: (6, WETSTONE), 2: (4, PLANK), 3: (6, BRICK), 4: (4, PLANK), 5: (5, BRICK), 6: (4, WETSTONE)}
+BG_STYLE = LOOK[0][0]
 
 RES = {
     "player": "res://scenes/player/player.tscn",
@@ -37,15 +42,28 @@ RES = {
     "killzone": "res://scenes/level/kill_zone.tscn",
     "checkpoint": "res://scenes/level/checkpoint.tscn",
     "background": "res://scenes/level/background.tscn",
-    "prop_torch": "res://scenes/props/torch.tscn",
+    "prop_torch": "res://scenes/props/torch_bracket.tscn",
     "prop_crate": "res://scenes/props/crate.tscn",
     "door": "res://scenes/props/door.tscn",
 }
+RES.update({
+    "llama": "res://scenes/enemies/llama.tscn",
+    "lava_puddle": "res://scenes/level/lava_puddle.tscn",
+    "prop_spray_arrow": "res://scenes/props/spray_arrow.tscn",
+    "prop_sign_arrow_brick": "res://scenes/props/sign_arrow_brick.tscn",
+    "prop_skull_sconce": "res://scenes/props/skull_sconce.tscn",
+    "prop_lichen_floor": "res://scenes/props/lichen_floor.tscn",
+    "prop_lichen_wall": "res://scenes/props/lichen_wall.tscn",
+    "prop_sign_hazard": "res://scenes/props/sign_hazard.tscn",
+    "prop_spray_x": "res://scenes/props/spray_x.tscn",
+    "prop_grate": "res://scenes/props/grate.tscn",
+    "prop_pipe_h": "res://scenes/props/pipe_h.tscn",
+})
 EXISTING = ["player", "goblin", "hud"]
 
 # idx, key (dev goto name), title shown on entry, gated (swing door at the entry edge), forward width
 SECTIONS = [
-    (0, "tunnel", "ARTERIAL TUNNEL", False, 1152),
+    (0, "tunnel", "ARTERIAL TUNNEL", False, 1888),
     (1, "rats", "THE RATS' CORRIDOR", True, 960),
     (2, "saferoom", "SAFE ROOM", True, 768),
     (3, "hoarder", "THE HOARDER", True, 896),
@@ -70,20 +88,73 @@ def furnish(x0, x1, crates=()):
         kit.add_prop("prop_crate", x0 + x, FLOOR)
 
 
+PUDDLES = []
+
+
+def llama(x, dormant=False, name=None):
+    kit.add_enemy("llama", x, cur["y"], dormant=dormant, name=name)
+
+
+def puddle(x, w=32):
+    PUDDLES.append((x, w))
+
+
 def section_tunnel(x0):
-    # Arterial tunnel and llama alley (#57). Stub: intro rock thrower on a shelf, a spike strip, a pit.
+    # Arterial tunnel and llama alleys (#57): guild exit and torch-lit artery with the painted arrows, the
+    # intro thrower and the missile practice, then the alleys. Checkpoint 0 sits at the mouth of the alleys.
     flat(448)
-    shelf = kit.add_plat(x0 + 288, FLOOR - 80, 64, 16, STONE, kind="upper")
+    shelf = kit.add_plat(x0 + 288, FLOOR - 80, 64, 16, BRICK, kind="upper")
     thrower(shelf["x"] + 32, shelf["y"])
     kit.enemies[-1]["name"] = "IntroThrower"
-    grunt(x0 + 380)
-    cp(0, x0 + 232, 0)
     flat(224, spk=[(96, 32)])
     pit(48)
-    flat(432)
-    grunt(x0 + 880)
-    grunt(x0 + 1000)
-    furnish(x0, x0 + 1152, crates=(160, 620))
+    flat(176)
+    cp(0, x0 + 784, 0)
+    kit.trig("BgArtery", "bg", "5", x0, x0 + 720, FLOOR - 300, FLOOR + 120)
+    kit.trig("BgAlley", "bg", "4", x0 + 720, x0 + 1888, FLOOR - 300, FLOOR + 120)
+    # alley 1: a sleeping llama that Donut's missile wakes
+    flat(320)
+    kit.hint("HintSleepingLlama", x0 + 900, x0 + 1060, "A sleeping llama. Press K and let Donut say hello")
+    puddle(x0 + 992)
+    llama(x0 + 1130, dormant=True, name="SleepingLlama")
+    # alley 2: an awake llama behind a cover block
+    flat(352)
+    kit.block(x0 + 1296, 32, 32)
+    puddle(x0 + 1352)
+    llama(x0 + 1480)
+    # alley 3: a grunt among the spit puddles
+    flat(320, spk=[(48, 32)])
+    puddle(x0 + 1672)
+    grunt(x0 + 1780)
+    furnish(x0, x0 + 1888, crates=(160, 620))
+    decorate_llama_alley(x0)
+
+
+def decorate_llama_alley(x0):
+    for u in (140, 520, 700):
+        kit.add_prop("prop_spray_arrow", x0 + u, FLOOR - 58, free=True)
+    kit.add_prop("prop_sign_arrow_brick", x0 + 440, FLOOR)
+    kit.add_prop("prop_skull_sconce", x0 + 340, FLOOR - 118, free=True)
+    kit.add_prop("prop_skull_sconce", x0 + 620, FLOOR - 118, free=True)
+    kit.add_prop("prop_sign_hazard", x0 + 830, FLOOR)
+    kit.add_prop("prop_spray_x", x0 + 1250, FLOOR - 56, free=True)
+    kit.add_prop("prop_grate", x0 + 1010, FLOOR - 64, free=True)
+    kit.add_prop("prop_pipe_h", x0 + 1530, FLOOR - 132, free=True)
+    for u in (880, 1180, 1420, 1700):
+        kit.add_prop("prop_lichen_floor", x0 + u, FLOOR, free=True)
+    kit.add_prop("prop_lichen_wall", x0 + 1090, FLOOR, free=True)
+
+
+def emit_llama_alley(w):
+    gi = 0
+    for e in kit.enemies:
+        if e["kind"] != "llama":
+            continue
+        gi += 1
+        extra = {"dormant": "true"} if e.get("dormant") else {}
+        w.inst(e.get("name") or "Llama%d" % gi, "Goblins", "llama", position=vec(kit.mx(e["x"]), e["y"] - 2), **extra)
+    for i, (x, pw) in enumerate(PUDDLES):
+        w.inst("Puddle%d" % i, "Hazards", "lava_puddle", position=vec(kit.mspan(x, pw), FLOOR), width=fnum(pw) + ".0")
 
 
 def section_rats(x0):
@@ -141,7 +212,7 @@ def build():
     kit.walls.append({"name": "RightBound", "x": -8, "y": FLOOR - 250, "kind": "wall"})
     last = len(SECTIONS) - 1
     for (idx, key, title, gated, width), builder in zip(SECTIONS, BUILDERS):
-        kit.start_section(idx, key, BG_STYLE, title, STONE, BOTTOM, gate=gated)
+        kit.start_section(idx, key, LOOK[idx][0], title, LOOK[idx][1], BOTTOM, gate=gated)
         x0 = cur["x"]
         builder(x0)
         assert cur["x"] == x0 + width, (key, cur["x"], x0 + width)
@@ -169,6 +240,7 @@ def write_tscn():
     kit.emit_props(w)
     kit.emit_geometry(w)
     kit.emit_enemies(w)
+    emit_llama_alley(w)
     inst("EntryDoor", "Doors", "door", position=vec(kit.mx(DOOR_U), FLOOR), start_open="true",
          close_behind="true", close_side="-1.0", sealed_text='"Locked. No way back."')
     inst("Player", ".", "player", position=vec(kit.mx(START_U), FLOOR - 2))
