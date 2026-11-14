@@ -135,7 +135,7 @@ func _static_checks() -> void:
 	var plats: int = 0
 	for plat: Node in _level.get_node("Platforms").get_children():
 		var plat2: Node2D = plat as Node2D
-		if plat2 != null and plat2.global_position.y < lanes[0] - 40.0 and plat2.global_position.y > lanes[0] - 120.0 and bool(plat.get("one_way")):
+		if plat2 != null and absf(plat2.global_position.x - (_arena.global_position.x - 352.0)) < 1.0 and plat2.global_position.y < lanes[0] - 40.0 and plat2.global_position.y > lanes[0] - 120.0 and bool(plat.get("one_way")):
 			plats += 1
 	_check(plats == 2, "two one-way lane platforms exist (%d)" % plats)
 	await _teardown()
