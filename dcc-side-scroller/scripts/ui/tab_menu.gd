@@ -101,7 +101,7 @@ func _ready() -> void:
 	_title_row.add_child(_inv_title)
 	_boxes_button = Button.new()
 	_boxes_button.focus_mode = Control.FOCUS_NONE
-	_boxes_button.add_theme_font_size_override("font_size", 8)
+	_boxes_button.add_theme_font_size_override("font_size", 12)
 	_boxes_button.pressed.connect(_open_loot_boxes)
 	_title_row.add_child(_boxes_button)
 	Game.safe_zone_changed.connect(func(_active: bool) -> void: _refresh())
@@ -195,8 +195,7 @@ func _ready() -> void:
 	_stats_text.bbcode_enabled = true
 	_stats_text.scroll_active = false
 	_stats_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_stats_text.add_theme_font_size_override("normal_font_size", 8)
-	_stats_text.add_theme_font_size_override("bold_font_size", 8)
+	_stats_text.theme_type_variation = &"StatsText"
 	_stats_region.add_child(_stats_text)
 
 	add_child(_panel)

@@ -72,7 +72,7 @@ func _run() -> void:
 	var level_before: int = PlayerStats.character_level
 	PlayerStats.add_xp(100000)
 	_check(PlayerStats.character_level > level_before, "xp raised the level")
-	_check(_announced.has("LEVEL UP!"), "level-up goes out as an announcement")
+	_check(_announced.has("Level Up: %d" % PlayerStats.character_level), "level-up goes out as Level Up: <n> only")
 	_check(_unlocked.has("Number Go Up"), "level 2 achievement fires on level-up")
 
 	var s0: int = SystemVoice.survivors

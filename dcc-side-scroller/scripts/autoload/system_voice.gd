@@ -5,12 +5,14 @@ extends Node
 ## Hooks for other scripts:
 ##   SystemVoice.fire("hook_id")            unlock a registry achievement
 ##   SystemVoice.count("stomp")             bump a counter (fires "stomp_<n>")
-##   SystemVoice.announce(title, body, s)   queue a banner box
+##   SystemVoice.announce(title, body, s, major)   corner toast; major = centre-screen banner (boss intro, floor close)
 ##   SystemVoice.drop_survivors(n)          the collapse beat uses this
 ##   SystemVoice.time_left() / begin_floor(n, seconds)
 ## See docs/achievement-hooks.md for the list of hooks and owners.
 
 signal announced(title: String, body: String, seconds: float)
+## Same announcement with its weight: the HUD shows major ones centre-screen and the rest as corner toasts.
+signal announced_ex(title: String, body: String, seconds: float, major: bool)
 signal survivors_changed(count: int)
 signal survivors_visibility_changed(shown: bool)
 
@@ -108,8 +110,9 @@ func counter_value(counter_name: String) -> int:
 	return int(_counters.get(counter_name, 0))
 
 
-func announce(title: String, body: String, seconds: float = 3.5) -> void:
+func announce(title: String, body: String, seconds: float = 3.5, major: bool = false) -> void:
 	announced.emit(title, body, seconds)
+	announced_ex.emit(title, body, seconds, major)
 
 
 ## Returns the next line of a pool, cycling through all of them before any repeat.
@@ -122,11 +125,11 @@ func next_line(pool_name: String, pool: Array) -> String:
 
 
 func announce_boss_intro(boss_name: String) -> void:
-	announce(boss_name, next_line("boss_intro", Achievements.BOSS_INTRO_LINES), 3.0)
+	announce(boss_name, next_line("boss_intro", Achievements.BOSS_INTRO_LINES), 3.0, true)
 
 
 func announce_patch_notes() -> void:
-	announce("PATCH NOTES", next_line("patch", Achievements.PATCH_NOTES), 4.0)
+	announce("PATCH NOTES", next_line("patch", Achievements.PATCH_NOTES), 4.0, true)
 
 
 func announce_survivors() -> void:
@@ -166,13 +169,9 @@ func _check_collapse_warnings() -> void:
 		# Joining a run already inside a window skips the older warnings.
 		if Game.floor_time_left > float(threshold) - 5.0:
 			var lines: Array = Achievements.COLLAPSE_LINES[threshold]
-			announce(str(lines[0]), str(lines[1]), 4.5)
+			announce(str(lines[0]), str(lines[1]), 4.5, true)
 
 
 func _on_leveled_up(level: int) -> void:
 	fire("level_%d" % level)
-	var points: String = "%d unspent attribute points." % PlayerStats.unspent_points
-	if not PlayerStats.class_chosen:
-		points += " They stay locked until you choose a race and class."
-	var line: String = next_line("level_up", Achievements.LEVEL_UP_LINES)
-	announce("LEVEL UP!", "You have reached level %d. %s\n%s" % [level, line, points], 3.5)
+	announce("Level Up: %d" % level, "", 3.0)

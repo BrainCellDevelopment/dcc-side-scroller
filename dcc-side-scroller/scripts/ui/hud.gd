@@ -10,13 +10,17 @@ const MANA_DENIED_COLOR: Color = Color(0.95, 0.9, 1.0)
 const XP_BAR_WIDTH: float = 80.0
 const XP_COLOR: Color = Color(0.45, 0.85, 0.55)
 const BOSS_BAR_WIDTH: float = 240.0
-const POPUP_SECONDS: float = 3.5
-const POPUP_FADE: float = 0.25
+const TOAST_WIDTH: float = 220.0
+const TOAST_MAX: int = 3
+const TOAST_MIN_SECONDS: float = 3.0
+const TOAST_PER_CHAR: float = 0.05
+const TOAST_FADE_IN: float = 0.2
+const TOAST_FADE_OUT: float = 0.5
+const TOAST_GOLD: Color = Color(1.0, 0.82, 0.25)
 
-var _popup_queue: Array[Dictionary] = []
-var _current_popup: Dictionary = {}
-var _popup_showing: bool = false
-var _popup_tween: Tween = null
+var _toast_queue: Array[Dictionary] = []
+var _toast_box: VBoxContainer = null
+var _toast_count: int = 0
 var _banner_token: int = 0
 var _announce_queue: Array[Dictionary] = []
 var _announce_busy: bool = false
@@ -38,9 +42,6 @@ var _charm_label: Label = null
 @onready var stamina_fill: ColorRect = $StaminaBarBg/StaminaFill
 @onready var health_label: Label = $HealthLabel
 @onready var timer_label: Label = $TimerLabel
-@onready var achievement_panel: ColorRect = $AchievementPanel
-@onready var achievement_title: Label = $AchievementPanel/Title
-@onready var achievement_description: Label = $AchievementPanel/Description
 @onready var boss_bar: Control = $BossBar
 @onready var boss_name_label: Label = $BossBar/BossName
 @onready var boss_fill: ColorRect = $BossBar/BossBarBg/BossFill
@@ -49,7 +50,6 @@ var _charm_label: Label = null
 
 
 func _ready() -> void:
-	achievement_panel.visible = false
 	boss_bar.visible = false
 	hint_label.visible = false
 	banner.visible = false
@@ -61,7 +61,6 @@ func _ready() -> void:
 	Game.mana_denied.connect(_on_mana_denied)
 	Game.boss_health_changed.connect(_on_boss_health_changed)
 	Game.boss_cleared.connect(_on_boss_cleared)
-	Game.combat_changed.connect(_on_combat_changed)
 	Game.hint_changed.connect(_on_hint_changed)
 	Game.item_added.connect(_on_item_added)
 	_build_item_label()
@@ -71,7 +70,8 @@ func _ready() -> void:
 	_build_charm_label()
 	_build_countdown()
 	_build_survivors()
-	SystemVoice.announced.connect(_on_announced)
+	_build_toasts()
+	SystemVoice.announced_ex.connect(_on_announced)
 	_update_timer()
 
 
@@ -85,7 +85,7 @@ func _build_charm_label() -> void:
 	_charm_label.name = "CharmLabel"
 	_charm_label.position = Vector2(8.0, 33.0)
 	_charm_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_charm_label.add_theme_font_size_override("font_size", 8)
+	_charm_label.add_theme_font_size_override("font_size", 12)
 	_charm_label.add_theme_color_override("font_color", Color(1.0, 0.55, 0.75))
 	_charm_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	_charm_label.add_theme_constant_override("outline_size", 3)
@@ -132,6 +132,7 @@ func _build_countdown() -> void:
 
 func _build_survivors() -> void:
 	_survivor_label = Label.new()
+	_survivor_label.theme_type_variation = &"HudLabel"
 	_survivor_label.name = "SurvivorLabel"
 	_survivor_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_survivor_label.anchor_left = 1.0
@@ -158,9 +159,90 @@ func _refresh_survivors(count: int) -> void:
 	_survivor_label.text = "Survivors: %s" % SystemVoice.format_count(count)
 
 
-func _on_announced(title: String, body: String, seconds: float) -> void:
+func _on_announced(title: String, body: String, seconds: float, major: bool) -> void:
+	if not major:
+		show_toast(title, body, seconds)
+		return
 	_announce_queue.append({"title": title, "body": body, "seconds": seconds})
 	_show_next_announcement()
+
+
+func _build_toasts() -> void:
+	_toast_box = VBoxContainer.new()
+	_toast_box.name = "Toasts"
+	_toast_box.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_toast_box.anchor_left = 1.0
+	_toast_box.anchor_right = 1.0
+	_toast_box.offset_left = -TOAST_WIDTH - 8.0
+	_toast_box.offset_right = -8.0
+	_toast_box.offset_top = 36.0
+	_toast_box.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_toast_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_toast_box.add_theme_constant_override("separation", 3)
+	add_child(_toast_box)
+
+
+## A small notification in the top-right corner (level-ups, achievements, System notices). Up to TOAST_MAX show
+## at once; the rest queue. It stays up long enough to read, scaled by its length (seconds is a minimum).
+func show_toast(title: String, body: String = "", seconds: float = 0.0) -> void:
+	_toast_queue.append({"title": title, "body": body, "seconds": seconds})
+	_pump_toasts()
+
+
+func _pump_toasts() -> void:
+	while _toast_count < TOAST_MAX and not _toast_queue.is_empty():
+		_spawn_toast(_toast_queue.pop_front())
+
+
+func _spawn_toast(data: Dictionary) -> void:
+	var title: String = str(data["title"])
+	var body: String = str(data["body"])
+	_toast_count += 1
+	var panel: PanelContainer = PanelContainer.new()
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.custom_minimum_size = Vector2(TOAST_WIDTH, 0.0)
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.05, 0.04, 0.08, 0.82)
+	style.border_color = TOAST_GOLD
+	style.border_width_left = 2
+	style.content_margin_left = 6.0
+	style.content_margin_right = 4.0
+	style.content_margin_top = 3.0
+	style.content_margin_bottom = 3.0
+	panel.add_theme_stylebox_override("panel", style)
+	var column: VBoxContainer = VBoxContainer.new()
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_theme_constant_override("separation", 1)
+	panel.add_child(column)
+	var heading: Label = Label.new()
+	heading.text = title
+	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	heading.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	heading.add_theme_font_size_override("font_size", 10)
+	heading.add_theme_color_override("font_color", TOAST_GOLD)
+	column.add_child(heading)
+	if not body.is_empty():
+		var text: Label = Label.new()
+		text.text = body
+		text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		text.add_theme_font_size_override("font_size", 10)
+		text.add_theme_constant_override("line_spacing", -1)
+		column.add_child(text)
+	panel.modulate.a = 0.0
+	_toast_box.add_child(panel)
+	var hold: float = maxf(float(data["seconds"]), TOAST_MIN_SECONDS) + TOAST_PER_CHAR * float(title.length() + body.length())
+	var tween: Tween = create_tween()
+	tween.tween_property(panel, "modulate:a", 1.0, TOAST_FADE_IN)
+	tween.tween_interval(hold)
+	tween.tween_property(panel, "modulate:a", 0.0, TOAST_FADE_OUT)
+	tween.tween_callback(_on_toast_finished.bind(panel))
+
+
+func _on_toast_finished(panel: Control) -> void:
+	panel.queue_free()
+	_toast_count = maxi(_toast_count - 1, 0)
+	_pump_toasts()
 
 
 func _show_next_announcement() -> void:
@@ -199,7 +281,7 @@ func _build_god_label() -> void:
 	_god_label.text = "GOD MODE"
 	_god_label.position = Vector2(92.0, 14.0)
 	_god_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_god_label.add_theme_font_size_override("font_size", 8)
+	_god_label.add_theme_font_size_override("font_size", 12)
 	_god_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
 	_god_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	_god_label.add_theme_constant_override("outline_size", 3)
@@ -224,7 +306,7 @@ func _build_item_label() -> void:
 	_item_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_item_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_item_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_item_label.add_theme_font_size_override("font_size", 10)
+	_item_label.add_theme_font_size_override("font_size", 12)
 	_item_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
 	_item_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	_item_label.add_theme_constant_override("outline_size", 3)
@@ -368,6 +450,7 @@ func _build_xp_bar() -> void:
 	_xp_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_xp_bg.add_child(_xp_fill)
 	_level_label = Label.new()
+	_level_label.theme_type_variation = &"HudLabel"
 	_level_label.name = "LevelLabel"
 	_level_label.position = Vector2(92.0, 24.0)
 	_level_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -431,39 +514,4 @@ func _on_hint_changed(text: String) -> void:
 
 
 func _on_achievement_unlocked(title: String, description: String) -> void:
-	_popup_queue.append({"title": title, "description": description})
-	_show_next_popup()
-
-
-func _on_combat_changed(active: bool) -> void:
-	if not active:
-		_show_next_popup()
-		return
-	if _popup_showing:
-		if _popup_tween != null and _popup_tween.is_valid():
-			_popup_tween.kill()
-		_popup_queue.push_front(_current_popup)
-		_popup_showing = false
-		achievement_panel.visible = false
-
-
-func _show_next_popup() -> void:
-	if _popup_showing or _popup_queue.is_empty() or Game.in_combat:
-		return
-	_current_popup = _popup_queue.pop_front()
-	_popup_showing = true
-	achievement_title.text = "New Achievement! %s" % str(_current_popup["title"])
-	achievement_description.text = str(_current_popup["description"])
-	achievement_panel.modulate.a = 0.0
-	achievement_panel.visible = true
-	_popup_tween = create_tween()
-	_popup_tween.tween_property(achievement_panel, "modulate:a", 1.0, POPUP_FADE)
-	_popup_tween.tween_interval(POPUP_SECONDS)
-	_popup_tween.tween_property(achievement_panel, "modulate:a", 0.0, POPUP_FADE)
-	_popup_tween.tween_callback(_on_popup_finished)
-
-
-func _on_popup_finished() -> void:
-	_popup_showing = false
-	achievement_panel.visible = false
-	_show_next_popup()
+	show_toast("Achievement: %s" % title, description)
