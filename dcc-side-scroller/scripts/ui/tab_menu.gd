@@ -152,6 +152,15 @@ func _ready() -> void:
 		var cap: Label = _make_label(SLOT_CAPTIONS[DEFAULT_SLOTS[i]], 6, Color(0.6, 0.62, 0.7))
 		cap.name = "Caption"
 		eq_box.add_child(cap)
+		var eq_icon: TextureRect = TextureRect.new()
+		eq_icon.name = "Icon"
+		eq_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		eq_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		eq_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		eq_icon.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		eq_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		eq_icon.visible = false
+		eq_box.add_child(eq_icon)
 		var nm: Label = _make_label("", 7, Color.WHITE)
 		nm.name = "Name"
 		nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -522,6 +531,11 @@ func _refresh() -> void:
 		var selected: bool = _focus == Focus.DOLL and i == _selected_doll
 		var border: Color = _tier_color(item) if filled else EMPTY_BORDER
 		var nm: Label = _doll_boxes[i].get_node("Box/Name") as Label
+		var eq_icon: TextureRect = _doll_boxes[i].get_node("Box/Icon") as TextureRect
+		var icon: Texture2D = ItemIcon.get_icon(str(item.get("id", ""))) if filled else null
+		eq_icon.texture = icon
+		eq_icon.visible = icon != null
+		nm.visible = icon == null
 		if filled:
 			_fit_name(nm, str(item.get("name", "?")), box_avail, 7)
 		else:
