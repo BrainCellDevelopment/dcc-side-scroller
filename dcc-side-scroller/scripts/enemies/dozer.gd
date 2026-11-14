@@ -16,6 +16,7 @@ const SPARK_FX: PackedScene = preload("res://scenes/fx/hit_spark.tscn")
 const STEAM_FX: PackedScene = preload("res://scenes/fx/steam_puff.tscn")
 const DUST_FX: PackedScene = preload("res://scenes/fx/dust.tscn")
 const EXPLOSION_FX: PackedScene = preload("res://scenes/fx/explosion.tscn")
+const PINEAPPLE_SCENE: PackedScene = preload("res://scenes/enemies/pineapple.tscn")
 
 const TRACKS_FRAME: Vector2i = Vector2i(88, 16)
 const WHEEL_FRAME: Vector2i = Vector2i(28, 28)
@@ -49,6 +50,16 @@ const LAND_WINDOW: float = 0.12
 const TURN_PAUSE: float = 0.7
 const TURN_WARN: float = 1.0
 const ENTRY_WARN: float = 1.4
+const THROW_ROUND: int = 1
+const THROW_FIRST: float = 1.0
+const THROW_INTERVAL: float = 0.7
+const THROW_WINDUP: float = 0.3
+const THROW_RANGE: float = 380.0
+const THROW_BEHIND_WALL: float = 70.0
+const THROW_SPEED_MAX: float = 380.0
+const HAND_POINT: Vector2 = Vector2(34.0, -50.0)
+const DRIVER_LEAN: float = -7.0
+const DRIVER_DUCK: float = 16.0
 const BEAM_POLYGON: PackedVector2Array = [Vector2(54.0, -30.0), Vector2(190.0, -62.0), Vector2(190.0, -2.0)]
 
 @export var contact_damage: int = 2
@@ -65,6 +76,9 @@ var _timer: float = 0.0
 var _base_y: float = 0.0
 var _hatch_timer: float = 0.0
 var _pivot_stage: int = 0
+var _throw_timer: float = 0.0
+var _windup: float = -1.0
+var _driver_tween: Tween
 var _engaged: bool = false
 var _was_on_floor: bool = false
 var _land_timer: float = 0.0
@@ -108,10 +122,10 @@ func _ready() -> void:
 		_mirror_x[node] = node.position.x
 
 
-func begin_patrol(player: CharacterBody2D, floor_y: float) -> void:
+func begin_patrol(player: CharacterBody2D, floor_y: float, start_round: int = 0) -> void:
 	_player = player
 	_base_y = floor_y
-	round_index = 0
+	round_index = start_round
 	_face(-1)
 	z_index = 0
 	_visual.position.x = 0.0
@@ -123,14 +137,15 @@ func begin_patrol(player: CharacterBody2D, floor_y: float) -> void:
 	_deck.set_deferred("disabled", false)
 	visible = true
 	_driver.visible = true
-	_hatch_timer = CLOSED_TIMES[0]
+	_hatch_timer = CLOSED_TIMES[round_index]
 	_pivot_stage = 1
 	_timer = ENTRY_WARN
 	state = State.PIVOT
 	_engage()
-	Game.report_boss_health(BOSS_NAME, ROUNDS, ROUNDS)
+	Game.report_boss_health(BOSS_NAME, ROUNDS - round_index, ROUNDS)
 	Game.shake(4.0, ENTRY_WARN)
-	round_started.emit(1)
+	_apply_round_pose()
+	round_started.emit(round_index + 1)
 
 
 func _engage() -> void:
@@ -148,8 +163,11 @@ func _physics_process(delta: float) -> void:
 
 
 func _patrol_step(delta: float) -> void:
+	if state != State.PATROL:
+		_cancel_throw()
 	match state:
 		State.PATROL:
+			_throw_step(delta)
 			_run_hatch(delta)
 			var x: float = clampf(global_position.x + float(direction) * PATROL_SPEEDS[round_index] * delta, patrol_min_x, patrol_max_x)
 			global_position.x = x
@@ -172,6 +190,71 @@ func _patrol_step(delta: float) -> void:
 	_check_stomp()
 	if state != State.DESTROYED:
 		_check_contact()
+
+
+func _throw_step(delta: float) -> void:
+	if round_index != THROW_ROUND or not _has_player():
+		return
+	if _windup > 0.0:
+		_windup -= delta
+		if _windup <= 0.0:
+			_windup = -1.0
+			_throw()
+		return
+	_throw_timer -= delta
+	var dx: float = absf(_player.global_position.x - global_position.x)
+	var behind_wall: bool = _player.global_position.x < patrol_min_x - THROW_BEHIND_WALL
+	if _throw_timer <= 0.0 and dx <= THROW_RANGE and not behind_wall:
+		_windup = THROW_WINDUP
+		_tween_driver(DRIVER_POS.y + DRIVER_LEAN - 6.0, Color(1.0, 0.8, 0.5), THROW_WINDUP)
+
+
+func _throw() -> void:
+	_throw_timer = THROW_INTERVAL - THROW_WINDUP
+	_tween_driver(DRIVER_POS.y + DRIVER_LEAN, Color.WHITE, 0.15)
+	var holder: Node = get_tree().current_scene
+	if holder == null:
+		return
+	var origin: Vector2 = _fx_point(HAND_POINT)
+	var offset: Vector2 = _player.global_position + Vector2(0.0, -14.0) - origin
+	var pineapple: Area2D = PINEAPPLE_SCENE.instantiate() as Area2D
+	holder.add_child(pineapple)
+	pineapple.global_position = origin
+	var g: float = float(pineapple.get("fall_gravity"))
+	var flight: float = clampf(offset.length() / 300.0, 0.35, 0.9)
+	var launch_velocity: Vector2 = Vector2(offset.x / flight, offset.y / flight - 0.5 * g * flight)
+	if launch_velocity.length() > THROW_SPEED_MAX:
+		launch_velocity = launch_velocity.normalized() * THROW_SPEED_MAX
+	pineapple.call("launch", launch_velocity, 1)
+
+
+func _cancel_throw() -> void:
+	if _windup > 0.0:
+		_windup = -1.0
+		_tween_driver(DRIVER_POS.y + DRIVER_LEAN, Color.WHITE, 0.15)
+	_throw_timer = maxf(_throw_timer, THROW_FIRST)
+
+
+func _apply_round_pose() -> void:
+	_windup = -1.0
+	_throw_timer = THROW_FIRST
+	if round_index == THROW_ROUND:
+		_tween_driver(DRIVER_POS.y + DRIVER_LEAN, Color.WHITE, 0.3)
+	elif round_index > THROW_ROUND:
+		_tween_driver(DRIVER_POS.y + DRIVER_DUCK, Color.WHITE, 0.3)
+
+
+func _tween_driver(y: float, tint: Color, time: float) -> void:
+	if _driver_tween != null and _driver_tween.is_valid():
+		_driver_tween.kill()
+	_driver_tween = create_tween().set_parallel(true)
+	_driver_tween.tween_property(_driver, "position:y", y, time)
+	_driver_tween.tween_property(_driver, "modulate", tint, time)
+
+
+func _clear_pineapples() -> void:
+	for node: Node in get_tree().get_nodes_in_group("projectiles"):
+		node.queue_free()
 
 
 func _pivot_step(delta: float) -> void:
@@ -342,6 +425,7 @@ func _hit() -> void:
 	_hatch_timer = CLOSED_TIMES[round_index]
 	state = State.STALLED
 	_timer = STALL_TIME
+	_apply_round_pose()
 	round_started.emit(cleared + 1)
 	_visual.modulate = Color(3.0, 3.0, 3.0)
 	var flash: Tween = create_tween()
@@ -350,6 +434,8 @@ func _hit() -> void:
 
 func _explode() -> void:
 	state = State.DESTROYED
+	_cancel_throw()
+	_clear_pineapples()
 	_set_vulnerable(false)
 	_deck.set_deferred("disabled", true)
 	Game.enemy_disengaged()
