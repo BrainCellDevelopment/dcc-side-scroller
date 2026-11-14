@@ -1,15 +1,14 @@
 import os
 import sys
 import numpy as np
-from PIL import Image, ImageFilter
+from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SHEET = os.environ.get("DCC_CARL", os.path.normpath(os.path.join(HERE, "..", "..", "dcc-side-scroller", "assets", "characters", "carl.png")))
-FW, FH = 80, 80
-BASELINE = FH - 2
-COLORS = int(os.environ.get("RUN_COLORS", "112"))
-SHARPEN = int(os.environ.get("RUN_SHARPEN", "90"))
-BAKE = float(os.environ.get("CARL_BAKE", "0.8"))
+FW, FH = 320, 320
+BASELINE = FH - 10
+SPRITE_SCALE = 0.208
+BAKE = 0.8
 ROWS = {
     "idle": {"row": 0, "ref": "idle_ref.webp", "scale": 0.158, "anchor": "feet"},
     "run": {"row": 1, "ref": "run_ref.webp", "scale": 0.205, "anchor": "box"},
@@ -87,15 +86,16 @@ def load_frames(cfg):
         ys = np.where(sub.sum(1) > 0)[0]
         xs = np.where(sub.sum(0) > 0)[0]
         ax = c0 + feet_x(sub[:, c0:c1]) if cfg["anchor"] == "feet" else (xs.min() + xs.max()) / 2.0
-        info.append((ax, xs.min(), xs.max() + 1, int(ys.max()) + 1, keep))
-    half = int(max(max(ax - x0, x1 - ax) for ax, x0, x1, _, _ in info)) + 6
+        info.append((ax, xs.min(), xs.max() + 1, int(ys.max()) + 1, keep, int(ys.min())))
+    half = int(max(max(ax - x0, x1 - ax) for ax, x0, x1, _, _, _ in info)) + 6
+    top = max(0, min(t for *_, t in info) - 2)
     frames = []
-    for ax, x0, x1, own, keep in info:
+    for ax, x0, x1, own, keep, own_top in info:
         masked = arr.copy()
         masked[~dilate(keep), 3] = 0
         im = Image.fromarray(masked)
         cx = int(round(ax)) - half
-        frames.append(im.crop((cx, 0, cx + half * 2, own if cfg.get("own_bottom") else bottom)))
+        frames.append(im.crop((cx, max(0, own_top - 2) if cfg.get("own_bottom") else top, cx + half * 2, own if cfg.get("own_bottom") else bottom)))
     return frames
 
 
@@ -107,34 +107,20 @@ def dilate(mask):
     return out
 
 
-def shrink(cell, scale):
-    w = max(1, round(cell.width * scale))
-    h = max(1, round(cell.height * scale))
-    arr = np.asarray(cell).astype(float)
+def resample(cell, factor):
+    arr = np.asarray(cell).astype(np.float64)
+    if abs(factor - 1.0) < 1e-3:
+        return Image.fromarray(arr.astype(np.uint8))
+    w = max(1, round(cell.width * factor))
+    h = max(1, round(cell.height * factor))
     a = arr[..., 3:] / 255.0
     pre = np.concatenate([arr[..., :3] * a, arr[..., 3:]], -1)
-    chans = [np.asarray(Image.fromarray(pre[..., k].astype(np.uint8)).resize((w, h), Image.BOX)).astype(float) for k in range(4)]
-    sa = chans[3] / 255.0
-    rgb = np.stack(chans[:3], -1) / np.maximum(sa[..., None], 1e-3)
-    return np.clip(rgb, 0, 255).astype(np.uint8), sa > 0.5
-
-
-def build_palette(sets):
-    px = []
-    for frames in sets:
-        for f in frames:
-            arr = np.asarray(f)
-            m = arr[..., 3] > 250
-            px.append(arr[m][:, :3])
-    allpx = np.concatenate(px)
-    rng = np.random.default_rng(1)
-    if len(allpx) > 400000:
-        allpx = allpx[rng.choice(len(allpx), 400000, replace=False)]
-    side = int(np.ceil(np.sqrt(len(allpx))))
-    pad = np.zeros((side * side, 3), np.uint8)
-    pad[:len(allpx)] = allpx
-    pad[len(allpx):] = allpx[0]
-    return Image.fromarray(pad.reshape(side, side, 3)).quantize(COLORS, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    chans = [np.asarray(Image.fromarray(pre[..., k].astype(np.float32), mode="F").resize((w, h), Image.LANCZOS)) for k in range(4)]
+    al = np.clip(chans[3], 0, 255)
+    rgb = np.stack(chans[:3], -1) / np.maximum(al[..., None] / 255.0, 1e-3)
+    out = np.dstack([np.clip(rgb, 0, 255), al]).astype(np.uint8)
+    out[al < 1] = 0
+    return Image.fromarray(out)
 
 
 def main(names):
@@ -148,28 +134,18 @@ def main(names):
             refs[key] = load_frames(cfg)
         frames = refs[key]
         loaded[n] = [frames[i] for i in cfg["pick"]] if "pick" in cfg else frames
-    pal = build_palette(refs.values())
-    base = Image.open(SHEET).convert("RGBA")
-    need_w = FW * max(len(f) for f in loaded.values())
-    if base.width < need_w:
-        wide = Image.new("RGBA", (need_w, base.height), (0, 0, 0, 0))
-        wide.paste(base, (0, 0))
-        base = wide
+    cols = max(len(f) for f in loaded.values())
+    rows = max(c["row"] for c in ROWS.values()) + 1
+    base = Image.new("RGBA", (FW * max(cols, 8), FH * rows), (0, 0, 0, 0))
     for n in names:
         cfg = ROWS[n]
-        row = Image.new("RGBA", (base.width, FH), (0, 0, 0, 0))
+        factor = cfg["scale"] * BAKE / SPRITE_SCALE
         for i, cell in enumerate(loaded[n]):
-            rgb, m = shrink(cell, cfg["scale"] * BAKE)
-            img = Image.fromarray(rgb)
-            if SHARPEN:
-                img = img.filter(ImageFilter.UnsharpMask(radius=0.8, percent=SHARPEN, threshold=0))
-            img = img.quantize(palette=pal, dither=Image.Dither.NONE).convert("RGB")
-            h, w = m.shape
-            tile = Image.fromarray(np.dstack([np.asarray(img), np.where(m, 255, 0).astype(np.uint8)]))
-            row.alpha_composite(tile, (i * FW + (FW - w) // 2, BASELINE + 1 - h))
-        base.paste((0, 0, 0, 0), (0, cfg["row"] * FH, base.width, (cfg["row"] + 1) * FH))
-        base.alpha_composite(row, (0, cfg["row"] * FH))
-        print(n, len(loaded[n]), "frames")
+            tile = resample(cell, factor)
+            if tile.width > FW or tile.height > BASELINE + 1:
+                raise SystemExit("%s frame %d is %s, too big for %dx%d" % (n, i, tile.size, FW, FH))
+            base.alpha_composite(tile, (i * FW + (FW - tile.width) // 2, cfg["row"] * FH + BASELINE + 1 - tile.height))
+        print(n, len(loaded[n]), "frames, source scale %.3f" % factor)
     base.save(SHEET)
     print(base.size)
 

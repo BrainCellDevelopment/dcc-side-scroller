@@ -11,7 +11,8 @@ const SpriteUtil: GDScript = preload("res://scripts/util/sprite_util.gd")
 const HIT_SPARK: PackedScene = preload("res://scenes/fx/hit_spark.tscn")
 const DUST: PackedScene = preload("res://scenes/fx/dust.tscn")
 const CARL_SHEET: Texture2D = preload("res://assets/characters/carl.png")
-const FRAME: Vector2i = Vector2i(80, 80)
+const FRAME: Vector2i = Vector2i(320, 320)
+const BODY_SCALE: float = 0.208
 const ANIMS: Dictionary = {
 	"idle": {"row": 0, "count": 8, "fps": 10.0, "loop": true},
 	"run": {"row": 1, "count": 8, "fps": 16.0, "loop": true},
@@ -66,6 +67,8 @@ func _ready() -> void:
 	health = max_health
 	_body = SpriteUtil.make_sprite(CARL_SHEET, FRAME, ANIMS)
 	_body.name = "Body"
+	_body.scale = Vector2.ONE * BODY_SCALE
+	_body.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_visual.add_child(_body)
 	_visual.move_child(_body, 0)
 	_body.play("idle")
