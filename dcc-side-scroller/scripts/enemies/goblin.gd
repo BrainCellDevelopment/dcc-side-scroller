@@ -269,7 +269,22 @@ func _die() -> void:
 	tween.tween_callback(queue_free)
 
 
+func neutralise() -> void:
+	if state == State.DEAD:
+		return
+	state = State.DEAD
+	velocity = Vector2.ZERO
+	set_deferred("collision_layer", 0)
+	attack_shape.set_deferred("disabled", true)
+	_set_engaged(false)
+	var tween: Tween = create_tween()
+	tween.tween_property(self, "modulate:a", 0.0, 0.3)
+	tween.tween_callback(queue_free)
+
+
 func _try_hit(body: Node2D) -> void:
+	if Game.in_safe_zone:
+		return
 	if has_hit or state != State.ATTACK or attack_phase != AttackPhase.ACTIVE:
 		return
 	if body == null or not body.is_in_group("player") or not body.has_method("take_damage"):
@@ -328,6 +343,8 @@ func _blocked_behind() -> bool:
 
 
 func _throw_rock() -> void:
+	if Game.in_safe_zone:
+		return
 	var player: CharacterBody2D = _get_player()
 	var holder: Node = get_tree().current_scene
 	if player == null or holder == null:
