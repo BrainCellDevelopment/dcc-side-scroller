@@ -753,7 +753,7 @@ enemy_level = 5
 position = Vector2(1720, 302)
 variant = 3
 enemy_level = 7
-charm_gift = "goblin_pass"
+charm_gift = ""
 
 [node name="Vent4768" parent="Hazards" instance=ExtResource("25_steam_vent")]
 position = Vector2(2144, 304)

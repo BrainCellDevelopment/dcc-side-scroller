@@ -40,8 +40,13 @@ const DOLL_GRID: Dictionary = {
 	"right_hand": Vector2i(1, 1),
 	"left_foot": Vector2i(0, 2),
 	"right_foot": Vector2i(1, 2),
+	"tattoo": Vector2i(2, 1),
 }
 const DOLL_TEXTURE_PATH: String = "res://assets/ui/carl_doll.png"
+const TATTOO_SLOT: String = "tattoo"
+const TATTOO_TEXTURE_PATH: String = "res://assets/ui/tattoo_goblin_pass.png"
+const TATTOO_CENTER: Vector2 = Vector2(452.0, 674.0)
+const TATTOO_SIZE: Vector2 = Vector2(54.0, 45.0)
 const FIGURE_COLOR: Color = Color(0.78, 0.84, 0.92)
 const EMPTY_BORDER: Color = Color(0.25, 0.27, 0.35)
 
@@ -57,6 +62,7 @@ var _grid: GridContainer
 var _cells: Array[PanelContainer] = []
 var _doll: Control
 var _doll_tex: Texture2D
+var _tattoo_tex: Texture2D
 var _doll_boxes: Array[PanelContainer] = []
 var _detail: Label
 var _stats_text: RichTextLabel
@@ -141,6 +147,7 @@ func _ready() -> void:
 	_doll.draw.connect(_draw_doll)
 	_doll.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_doll_tex = load(DOLL_TEXTURE_PATH) as Texture2D
+	_tattoo_tex = load(TATTOO_TEXTURE_PATH) as Texture2D
 	_body.add_child(_doll)
 	for i: int in DEFAULT_SLOTS.size():
 		var eq: PanelContainer = PanelContainer.new()
@@ -223,6 +230,21 @@ func _equip_slots() -> PackedStringArray:
 	return DEFAULT_SLOTS
 
 
+## Equipment slots plus the tattoo, which is only selectable once Carl has one.
+func _doll_slots() -> PackedStringArray:
+	var slots: PackedStringArray = _equip_slots().duplicate()
+	if not _tattoo_item().is_empty():
+		slots.append(TATTOO_SLOT)
+	return slots
+
+
+func _tattoo_item() -> Dictionary:
+	var inv: Node = _inventory()
+	if inv == null or not inv.has_method("tattoo_item"):
+		return {}
+	return inv.call("tattoo_item")
+
+
 func _slot(i: int) -> Dictionary:
 	var inv: Node = _inventory()
 	if inv == null or not ("slots" in inv):
@@ -234,6 +256,8 @@ func _slot(i: int) -> Dictionary:
 
 
 func _equipped(slot_name: String) -> Dictionary:
+	if slot_name == TATTOO_SLOT:
+		return _tattoo_item()
 	var inv: Node = _inventory()
 	if inv == null or not ("equipped" in inv):
 		return {}
@@ -289,7 +313,9 @@ func _draw_doll() -> void:
 		var ts: Vector2 = _doll_tex.get_size()
 		var k: float = minf(sz.x / ts.x, sz.y / ts.y)
 		var ds: Vector2 = (ts * k).floor()
-		_doll.draw_texture_rect(_doll_tex, Rect2(((sz - ds) * 0.5).floor(), ds), false)
+		var origin: Vector2 = ((sz - ds) * 0.5).floor()
+		_doll.draw_texture_rect(_doll_tex, Rect2(origin, ds), false)
+		_draw_tattoo(origin, k)
 		return
 	var cx: float = _doll_center(sz)
 	var r: float = clampf(sz.y * 0.08, 6.0, 14.0)
@@ -312,6 +338,16 @@ func _draw_doll() -> void:
 		_doll.draw_rect(Rect2(hx - 1.0, hand_y - 1.0, 3.0, 3.0), col)
 	for fx: float in [cx - foot_dx, cx + foot_dx]:
 		_doll.draw_rect(Rect2(fx - 2.0, foot_y - 1.0, 5.0, 3.0), col)
+
+
+func _draw_tattoo(origin: Vector2, k: float) -> void:
+	if _tattoo_item().is_empty():
+		return
+	var rect: Rect2 = Rect2((origin + (TATTOO_CENTER - TATTOO_SIZE * 0.5) * k).floor(), (TATTOO_SIZE * k).floor())
+	if _tattoo_tex != null:
+		_doll.draw_texture_rect(_tattoo_tex, rect, false)
+	if _focus == Focus.DOLL and _doll_slots()[_selected_doll] == TATTOO_SLOT:
+		_doll.draw_rect(rect.grow(2.0), Color.WHITE, false, 1.0)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -376,12 +412,14 @@ func _selected_item() -> Dictionary:
 	if _focus == Focus.INVENTORY:
 		return _slot(_selected_slot)
 	if _focus == Focus.DOLL:
-		return _equipped(_equip_slots()[_selected_doll])
+		return _equipped(_doll_slots()[_selected_doll])
 	return {}
 
 
 func _assign_hotbar(index: int) -> void:
 	var item: Dictionary = _selected_item()
+	if _focus == Focus.DOLL and _doll_slots()[_selected_doll] == TATTOO_SLOT:
+		return
 	if item.is_empty():
 		Inventory.clear_hotbar(index)
 	else:
@@ -400,8 +438,9 @@ func _activate() -> void:
 			elif inv != null and inv.has_method("equip_from"):
 				inv.call("equip_from", _selected_slot)
 		Focus.DOLL:
-			if inv != null and inv.has_method("unequip"):
-				inv.call("unequip", _equip_slots()[_selected_doll])
+			var doll_slot: String = _doll_slots()[_selected_doll]
+			if inv != null and doll_slot != TATTOO_SLOT and inv.has_method("unequip"):
+				inv.call("unequip", doll_slot)
 	_refresh()
 
 
@@ -427,7 +466,7 @@ func _move(dx: int, dy: int) -> void:
 
 
 func _move_doll(dx: int, dy: int) -> void:
-	var slots: PackedStringArray = _equip_slots()
+	var slots: PackedStringArray = _doll_slots()
 	var cur: Vector2i = DOLL_GRID.get(slots[_selected_doll], Vector2i(0, 0))
 	var best: int = _selected_doll
 	var best_score: int = 1000
@@ -498,6 +537,8 @@ func _refresh() -> void:
 	if not _panel.visible:
 		return
 	_refresh_boxes_button()
+	_selected_doll = mini(_selected_doll, _doll_slots().size() - 1)
+	_doll.queue_redraw()
 	_inv_title.add_theme_color_override("font_color", GOLD if _focus == Focus.INVENTORY else Color(0.5, 0.45, 0.3))
 	var name_avail: Vector2 = Vector2(_cell_size.x - 6.0, _cell_size.y - 4.0 - 9.0)
 	for i: int in _cells.size():
@@ -552,7 +593,7 @@ func _detail_text() -> String:
 	if _focus == Focus.INVENTORY:
 		item = _slot(_selected_slot)
 	elif _focus == Focus.DOLL:
-		item = _equipped(_equip_slots()[_selected_doll])
+		item = _equipped(_doll_slots()[_selected_doll])
 	if item.is_empty():
 		return "Empty"
 	var parts: PackedStringArray = [str(item.get("name", "?"))]
@@ -567,7 +608,7 @@ func _detail_text() -> String:
 		for k: Variant in (bonuses as Dictionary).keys():
 			parts.append("%+d %s" % [int((bonuses as Dictionary)[k]), LABELS.get(str(k), str(k).capitalize())])
 	var is_use: bool = not str(item.get("use", "")).is_empty()
-	var hint: String = "  [E: use, 1-5: hotbar]" if _focus == Focus.INVENTORY and is_use else "  [E: equip, 1-5: hotbar]" if _focus == Focus.INVENTORY and slot_name != "" else ("  [E: unequip, 1-5: hotbar]" if _focus == Focus.DOLL else "")
+	var hint: String = "  [E: use, 1-5: hotbar]" if _focus == Focus.INVENTORY and is_use else "  [E: equip, 1-5: hotbar]" if _focus == Focus.INVENTORY and slot_name != "" else ("  [E: unequip, 1-5: hotbar]" if _focus == Focus.DOLL and _doll_slots()[_selected_doll] != TATTOO_SLOT else "")
 	var text: String = "  |  ".join(parts) + hint
 	var desc: String = str(item.get("desc", ""))
 	if desc != "":

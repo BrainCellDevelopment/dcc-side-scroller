@@ -6,7 +6,7 @@ extends RefCounted
 ## bonuses (stat -> amount, applied through Inventory.equipment_bonus),
 ## use (consumable effect id, see item_effects.gd), amount (use strength),
 ## reflect (fraction of melee damage returned), regen (extra health regen),
-## passive (effect that works from the bag), unique (only one can ever be received per run),
+## passive (effect that works from the bag), tattoo (shown on the doll, never takes a bag slot), unique (only one can ever be received per run),
 ## desc (tooltip text), effect (one-line mechanics).
 
 const DEFS: Dictionary = {
@@ -41,9 +41,9 @@ const DEFS: Dictionary = {
 		"effect": "+1 Strength",
 	},
 	"goblin_pass": {
-		"name": "Goblin Pass", "tier": "Silver", "passive": "goblin_pass", "unique": true,
+		"name": "Goblin Pass", "tier": "Silver", "passive": "goblin_pass", "unique": true, "tattoo": true,
 		"desc": "A tattoo-shaped permission slip. Goblins stop hating you on sight and start hating you on paperwork.",
-		"effect": "Carried: plain goblins stay neutral. Bosses and engineers do not care",
+		"effect": "Tattoo on your forearm: plain goblins stay neutral. Bosses and engineers do not care",
 	},
 	"dynamite": {
 		"name": "Goblin Dynamite", "tier": "Bronze",

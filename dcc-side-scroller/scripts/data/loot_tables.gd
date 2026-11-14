@@ -12,6 +12,8 @@ const FLOOR1_KIT: String = "floor1"
 ## a guaranteed lifeline (two healing potions) and its Silver box is food (cookie or toast).
 const ROOM_KIT: String = "floor1_room"
 const TIER_FALLBACK: String = "Bronze"
+## Given when every entry of a table was a unique item that was already received.
+const FALLBACK: Dictionary = {"id": "experience_cookie", "count": 1}
 
 ## Each entry: [item id, weight, count].
 const KITS: Dictionary = {
@@ -24,14 +26,14 @@ const KITS: Dictionary = {
 	},
 	"floor1": {
 		"Bronze": [["healing_potion", 3, 2], ["mana_potion", 3, 2], ["dynamite", 3, 3], ["fireplace_poker", 2, 1], ["bandages", 1, 1]],
-		"Silver": [["mana_toast", 3, 2], ["experience_cookie", 3, 1], ["goblin_pass", 2, 1], ["toe_ring", 2, 1], ["knuckle_wraps", 1, 1]],
+		"Silver": [["mana_toast", 3, 2], ["experience_cookie", 3, 1], ["toe_ring", 2, 1], ["knuckle_wraps", 1, 1]],
 		"Gold": [["spiked_kneepads", 3, 1], ["lucky_boxers", 2, 1], ["dynamite", 2, 5], ["healing_potion", 2, 4]],
 		"Legendary": [["legendary_pet_biscuit", 1, 1]],
 		"Boss": [["nightgaunt_cloak", 1, 1], ["trollskin_shirt", 1, 1], ["spiked_kneepads", 1, 1]],
 	},
 	"floor1_room": {
 		"Bronze": [["healing_potion", 1, 2]],
-		"Silver": [["experience_cookie", 1, 1], ["mana_toast", 1, 2]],
+		"Silver": [["goblin_pass", 1, 1]],
 	},
 }
 
@@ -41,18 +43,20 @@ static func entries(kit: String, tier: String) -> Array:
 	return tables.get(tier, tables[TIER_FALLBACK])
 
 
-## Drops unique items that were already received, unless that would leave nothing to roll.
+## Drops unique items that were already received.
 static func _available(list: Array) -> Array:
 	var kept: Array = []
 	for entry: Array in list:
 		if ItemDefs.can_receive(str(entry[0])):
 			kept.append(entry)
-	return kept if not kept.is_empty() else list
+	return kept
 
 
 ## Returns {"id": String, "count": int}. Pass a seeded RandomNumberGenerator for tests.
 static func roll(kit: String, tier: String, rng: RandomNumberGenerator = null) -> Dictionary:
 	var list: Array = _available(entries(kit, tier))
+	if list.is_empty():
+		return FALLBACK.duplicate()
 	var total: int = 0
 	for entry: Array in list:
 		total += int(entry[1])

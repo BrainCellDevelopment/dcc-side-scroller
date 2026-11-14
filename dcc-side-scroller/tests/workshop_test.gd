@@ -240,7 +240,7 @@ func _level_layout() -> void:
 			bards += 1
 		elif int(v) == 3:
 			shamankas += 1
-			_check(bool(node.get("charmable")) and str(node.get("charm_gift")) == "goblin_pass", "workshop Shamanka is charmable with a pass to give")
+			_check(bool(node.get("charmable")) and str(node.get("charm_gift")).is_empty(), "workshop Shamanka is charmable but hands out no pass (it comes from Tally's box)")
 		elif int(v) == 0 and (node as Node2D).global_position.x > site.global_position.x - 672.0 and (node as Node2D).global_position.x < site.global_position.x + 96.0:
 			grunts_in_workshop += 1
 	_check(bards == 2 and shamankas == 1, "workshop has 2 Bomb Bards and 1 Shamanka")
