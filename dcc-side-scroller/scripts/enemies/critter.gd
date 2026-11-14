@@ -9,6 +9,8 @@ const SpriteUtil: GDScript = preload("res://scripts/util/sprite_util.gd")
 const Poison: GDScript = preload("res://scripts/combat/poison.gd")
 const RAT_SHEET: Texture2D = preload("res://assets/characters/rat.png")
 const SCATTERER_SHEET: Texture2D = preload("res://assets/characters/scatterer.png")
+const GRUB_SHEET: Texture2D = preload("res://assets/characters/grub.png")
+const DINGO_SHEET: Texture2D = preload("res://assets/characters/dingo.png")
 const FRAME: Vector2i = Vector2i(32, 32)
 const RAT_ANIMS: Dictionary = {
 	"idle": {"row": 0, "count": 2, "fps": 4.0, "loop": true},
@@ -22,6 +24,18 @@ const SCATTERER_ANIMS: Dictionary = {
 	"walk": {"row": 1, "count": 4, "fps": 12.0, "loop": true},
 	"die": {"row": 2, "count": 3, "fps": 10.0, "loop": false},
 }
+const GRUB_ANIMS: Dictionary = {
+	"idle": {"row": 0, "count": 2, "fps": 3.0, "loop": true},
+	"walk": {"row": 1, "count": 4, "fps": 8.0, "loop": true},
+	"die": {"row": 2, "count": 3, "fps": 10.0, "loop": false},
+}
+const DINGO_ANIMS: Dictionary = {
+	"idle": {"row": 0, "count": 2, "fps": 4.0, "loop": true},
+	"walk": {"row": 1, "count": 4, "fps": 12.0, "loop": true},
+	"windup": {"row": 2, "count": 2, "fps": 8.0, "loop": false},
+	"attack": {"row": 3, "count": 2, "fps": 12.0, "loop": false},
+	"die": {"row": 4, "count": 3, "fps": 10.0, "loop": false},
+}
 const HEIGHT_TOLERANCE: float = 40.0
 const KNOCKBACK: Vector2 = Vector2(100.0, -70.0)
 const SWARM_INTERVAL: float = 2.4
@@ -32,7 +46,7 @@ const ALERT_TIME: float = 5.0
 const DROPLETS: int = 9
 const DROP_COLOR: Color = Color(0.49, 0.69, 0.7, 1.0)
 
-@export_enum("Rat", "Scatterer") var kind: int = 0
+@export_enum("Rat", "Scatterer", "Grub", "Dingo") var kind: int = 0
 @export var enemy_level: int = 2
 @export var xp_value: int = -1
 @export var is_boss: bool = false
@@ -80,6 +94,13 @@ func _ready() -> void:
 		poisonous = false
 		add_to_group("scatterers")
 		sprite = SpriteUtil.make_sprite(SCATTERER_SHEET, FRAME, SCATTERER_ANIMS)
+	elif kind == 2:
+		poisonous = false
+		add_to_group("grubs")
+		sprite = SpriteUtil.make_sprite(GRUB_SHEET, FRAME, GRUB_ANIMS)
+	elif kind == 3:
+		poisonous = false
+		sprite = SpriteUtil.make_sprite(DINGO_SHEET, FRAME, DINGO_ANIMS)
 	else:
 		sprite = SpriteUtil.make_sprite(RAT_SHEET, FRAME, RAT_ANIMS)
 	sprite.name = "Sprite"

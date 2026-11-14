@@ -41,6 +41,9 @@ LOOK = {0: (9, CONCRETE), 1: (7, CONCRETE), 2: (9, CINDER), 3: (8, CINDER), 4: (
 RES = {
     "player": "res://scenes/player/player.tscn",
     "goblin": "res://scenes/enemies/goblin.tscn",
+    "grub": "res://scenes/enemies/grub.tscn",
+    "dingo": "res://scenes/enemies/dingo.tscn",
+    "storm_shelter": "res://scenes/level/storm_shelter.tscn",
     "hud": "res://scenes/ui/hud.tscn",
     "platform": "res://scenes/level/platform.tscn",
     "spikes": "res://scenes/level/spikes.tscn",
@@ -75,6 +78,23 @@ grunt, thrower = kit.grunt, kit.thrower
 WIDTH = sum(s[4] for s in SECTIONS)
 
 
+def grub(x, y=None):
+    kit.add_enemy("grub", x, cur["y"] if y is None else y)
+
+
+def dingo(x, y=None):
+    kit.add_enemy("dingo", x, cur["y"] if y is None else y)
+
+
+def emit_critters(w):
+    counts = {"grub": 0, "dingo": 0}
+    for e in kit.enemies:
+        if e["kind"] in counts:
+            counts[e["kind"]] += 1
+            w.inst("%s%02d" % (e["kind"].capitalize(), counts[e["kind"]]), "Goblins", e["kind"],
+                   position=vec(e["x"], e["y"] - 2))
+
+
 def furnish(x0, x1, crates=()):
     for x in range(x0 + 120, x1, 240):
         kit.add_prop("prop_torch", x, FLOOR - 110)
@@ -83,33 +103,43 @@ def furnish(x0, x1, crates=()):
 
 
 def section_arrival(x0):
-    # Floor 2 begins: white floors, cinderblock, orange lichen. Grub corridors with shelves to hop. Placeholder
-    # grunts stand in for Brindle Grubs and Danger Dingoes until the Floor 2 roster lands.
+    # Floor 2 begins: white floors, cinderblock, orange lichen. Brindle Grub corridors (slow, harmless, in
+    # clusters) with a Danger Dingo patrolling the long run, shelves to hop between.
     flat(448)
     cp(0, x0 + 96, 0)
+    grub(x0 + 340)
+    grub(x0 + 392)
     flat(320)
     shelf = kit.add_plat(x0 + 512, FLOOR - 80, 96, 16, CONCRETE, kind="upper", one_way=True)
-    grunt(shelf["x"] + 48, shelf["y"])
+    grub(shelf["x"] + 48, shelf["y"])
+    grub(x0 + 600)
     pit(48)
     flat(352)
     block(x0 + 1120, 32, 32)
-    grunt(x0 + 1300)
+    dingo(x0 + 1000)
+    grub(x0 + 1210)
     flat(432)
-    grunt(x0 + 1500)
+    dingo(x0 + 1500)
     furnish(x0, x0 + 1600, crates=(200, 980))
     kit.add_prop("prop_pipe_h", x0 + 700, FLOOR - 132, free=True)
     kit.add_prop("prop_grate", x0 + 1040, FLOOR - 64, free=True)
     kit.trig("BgArrival", "bg", "9", x0, x0 + 1600, FLOOR - 300, FLOOR + 120)
 
 
+SHELTER = {}
+
+
 def section_shelter(x0):
-    # Storm-shelter safe room: a concrete bunker. M1 lays the floor and the checkpoint; M2 adds the cots, the
-    # mailbox, Mordecai the Bugaboo and the safe zone.
+    # Storm-shelter safe room (storm_shelter.gd): the room instance owns the cots, TVs, mailbox, safe zone and
+    # Mordecai the Bugaboo; this section lays the floor, the checkpoint and the heal trigger.
     flat(768)
+    SHELTER["center"] = x0 + 384
     cp(1, x0 + 96, 1)
-    kit.add_prop("prop_torch", x0 + 40, FLOOR - 110)
-    kit.add_prop("prop_torch", x0 + 728, FLOOR - 110)
     kit.trig("Shelter", "heal", "", x0 + 32, x0 + 736, FLOOR - 120, FLOOR + 20)
+
+
+def emit_shelter(w):
+    w.inst("StormShelter", ".", "storm_shelter", position=vec(SHELTER["center"], FLOOR))
 
 
 def section_clurichaun(x0):
@@ -211,6 +241,8 @@ def write_tscn():
     kit.emit_props(w)
     kit.emit_geometry(w)
     kit.emit_enemies(w)
+    emit_critters(w)
+    emit_shelter(w)
     inst("Player", ".", "player", position=vec(START_U, FLOOR - 2))
     raw("Camera2D", "Camera2D", ".", [
         "position = %s" % vec(START_U, 184), "limit_left = 0", "limit_top = -116", "limit_right = %d" % WIDTH,

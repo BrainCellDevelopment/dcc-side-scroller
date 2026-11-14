@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3 uid="uid://c4lv2nastyfl2"]
+[gd_scene load_steps=33 format=3 uid="uid://c4lv2nastyfl2"]
 
 [ext_resource type="Script" path="res://scripts/levels/level02.gd" id="1_level"]
 [ext_resource type="PackedScene" path="res://scenes/level/background.tscn" id="2_background"]
@@ -13,8 +13,11 @@
 [ext_resource type="PackedScene" path="res://scenes/level/kill_zone.tscn" id="11_killzone"]
 [ext_resource type="PackedScene" path="res://scenes/level/checkpoint.tscn" id="12_checkpoint"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/goblin.tscn" id="13_goblin"]
-[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="14_player"]
-[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="15_hud"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/grub.tscn" id="14_grub"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/dingo.tscn" id="15_dingo"]
+[ext_resource type="PackedScene" path="res://scenes/level/storm_shelter.tscn" id="16_storm_shelter"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="17_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="18_hud"]
 
 [sub_resource type="RectangleShape2D" id="shape_1600x420"]
 size = Vector2(1600, 420)
@@ -115,90 +118,84 @@ position = Vector2(700, 172)
 position = Vector2(1040, 240)
 
 [node name="D011" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(1640, 194)
-
-[node name="D012" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(2328, 194)
-
-[node name="D013" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(2488, 194)
 
-[node name="D014" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D012" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(2728, 194)
 
-[node name="D015" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D013" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(2968, 194)
 
-[node name="D016" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D014" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(3208, 194)
 
-[node name="D017" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D015" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(3448, 194)
 
-[node name="D018" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D016" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(3688, 194)
 
-[node name="D019" parent="Deco" instance=ExtResource("4_p_crate")]
+[node name="D017" parent="Deco" instance=ExtResource("4_p_crate")]
 position = Vector2(2608, 304)
 
-[node name="D020" parent="Deco" instance=ExtResource("4_p_crate")]
+[node name="D018" parent="Deco" instance=ExtResource("4_p_crate")]
 position = Vector2(3528, 304)
 
-[node name="D021" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D019" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(4024, 194)
 
-[node name="D022" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D020" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(4264, 194)
 
-[node name="D023" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D021" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(4504, 194)
 
-[node name="D024" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D022" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(4744, 194)
 
-[node name="D025" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D023" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(4920, 194)
 
-[node name="D026" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D024" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(5160, 194)
 
-[node name="D027" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D025" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(5400, 194)
 
-[node name="D028" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D026" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(5640, 194)
 
-[node name="D029" parent="Deco" instance=ExtResource("4_p_crate")]
+[node name="D027" parent="Deco" instance=ExtResource("4_p_crate")]
 position = Vector2(5300, 304)
 
-[node name="D030" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D028" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(5944, 194)
 
-[node name="D031" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D029" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(6184, 194)
 
-[node name="D032" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D030" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(6424, 194)
 
-[node name="D033" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D031" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(6664, 194)
 
-[node name="D034" parent="Deco" instance=ExtResource("4_p_crate")]
+[node name="D032" parent="Deco" instance=ExtResource("4_p_crate")]
 position = Vector2(6424, 304)
 
-[node name="D035" parent="Deco" instance=ExtResource("7_p_skull_sconce")]
+[node name="D033" parent="Deco" instance=ExtResource("7_p_skull_sconce")]
 position = Vector2(6024, 186)
 
-[node name="D036" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D034" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(6968, 194)
 
-[node name="D037" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D035" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(7208, 194)
 
-[node name="D038" parent="Deco" instance=ExtResource("3_p_torch")]
+[node name="D036" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(7448, 194)
 
-[node name="D039" parent="Deco" instance=ExtResource("8_p_sign_hazard")]
+[node name="D037" parent="Deco" instance=ExtResource("8_p_sign_hazard")]
 position = Vector2(7368, 304)
 
 [node name="P001" parent="Platforms" instance=ExtResource("9_platform")]
@@ -490,40 +487,55 @@ collision_mask = 0
 shape = SubResource("shape_16x720")
 
 [node name="G01" parent="Goblins" instance=ExtResource("13_goblin")]
-position = Vector2(560, 222)
-
-[node name="G02" parent="Goblins" instance=ExtResource("13_goblin")]
-position = Vector2(1300, 302)
-
-[node name="G03" parent="Goblins" instance=ExtResource("13_goblin")]
-position = Vector2(1500, 302)
-
-[node name="G04" parent="Goblins" instance=ExtResource("13_goblin")]
 position = Vector2(2668, 302)
 variant = 1
 
-[node name="G05" parent="Goblins" instance=ExtResource("13_goblin")]
+[node name="G02" parent="Goblins" instance=ExtResource("13_goblin")]
 position = Vector2(2928, 222)
 variant = 1
 
-[node name="G06" parent="Goblins" instance=ExtResource("13_goblin")]
+[node name="G03" parent="Goblins" instance=ExtResource("13_goblin")]
 position = Vector2(3368, 302)
 
-[node name="G07" parent="Goblins" instance=ExtResource("13_goblin")]
+[node name="G04" parent="Goblins" instance=ExtResource("13_goblin")]
 position = Vector2(3768, 302)
 variant = 1
 
-[node name="G08" parent="Goblins" instance=ExtResource("13_goblin")]
+[node name="G05" parent="Goblins" instance=ExtResource("13_goblin")]
 position = Vector2(5080, 302)
 
-[node name="G09" parent="Goblins" instance=ExtResource("13_goblin")]
+[node name="G06" parent="Goblins" instance=ExtResource("13_goblin")]
 position = Vector2(5420, 302)
 
-[node name="G10" parent="Goblins" instance=ExtResource("13_goblin")]
+[node name="G07" parent="Goblins" instance=ExtResource("13_goblin")]
 position = Vector2(6124, 302)
 variant = 1
 
-[node name="Player" parent="." instance=ExtResource("14_player")]
+[node name="Grub01" parent="Goblins" instance=ExtResource("14_grub")]
+position = Vector2(340, 302)
+
+[node name="Grub02" parent="Goblins" instance=ExtResource("14_grub")]
+position = Vector2(392, 302)
+
+[node name="Grub03" parent="Goblins" instance=ExtResource("14_grub")]
+position = Vector2(560, 222)
+
+[node name="Grub04" parent="Goblins" instance=ExtResource("14_grub")]
+position = Vector2(600, 302)
+
+[node name="Dingo01" parent="Goblins" instance=ExtResource("15_dingo")]
+position = Vector2(1000, 302)
+
+[node name="Grub05" parent="Goblins" instance=ExtResource("14_grub")]
+position = Vector2(1210, 302)
+
+[node name="Dingo02" parent="Goblins" instance=ExtResource("15_dingo")]
+position = Vector2(1500, 302)
+
+[node name="StormShelter" parent="." instance=ExtResource("16_storm_shelter")]
+position = Vector2(1984, 304)
+
+[node name="Player" parent="." instance=ExtResource("17_player")]
 position = Vector2(96, 302)
 
 [node name="Camera2D" type="Camera2D" parent="."]
@@ -536,7 +548,7 @@ limit_smoothed = true
 position_smoothing_enabled = true
 position_smoothing_speed = 6.0
 
-[node name="HUD" parent="." instance=ExtResource("15_hud")]
+[node name="HUD" parent="." instance=ExtResource("18_hud")]
 
 [node name="Sec0" type="Area2D" parent="Triggers"]
 position = Vector2(800, 550)
