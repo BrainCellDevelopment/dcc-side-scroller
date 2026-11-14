@@ -9,6 +9,7 @@ FW, FH = 80, 80
 BASELINE = FH - 2
 COLORS = int(os.environ.get("RUN_COLORS", "112"))
 SHARPEN = int(os.environ.get("RUN_SHARPEN", "90"))
+BAKE = float(os.environ.get("CARL_BAKE", "0.8"))
 ROWS = {
     "idle": {"row": 0, "ref": "idle_ref.webp", "scale": 0.158, "anchor": "feet"},
     "run": {"row": 1, "ref": "run_ref.webp", "scale": 0.205, "anchor": "box"},
@@ -158,7 +159,7 @@ def main(names):
         cfg = ROWS[n]
         row = Image.new("RGBA", (base.width, FH), (0, 0, 0, 0))
         for i, cell in enumerate(loaded[n]):
-            rgb, m = shrink(cell, cfg["scale"])
+            rgb, m = shrink(cell, cfg["scale"] * BAKE)
             img = Image.fromarray(rgb)
             if SHARPEN:
                 img = img.filter(ImageFilter.UnsharpMask(radius=0.8, percent=SHARPEN, threshold=0))

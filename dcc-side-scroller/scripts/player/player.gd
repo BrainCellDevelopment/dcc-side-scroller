@@ -66,7 +66,6 @@ func _ready() -> void:
 	health = max_health
 	_body = SpriteUtil.make_sprite(CARL_SHEET, FRAME, ANIMS)
 	_body.name = "Body"
-	_body.scale = Vector2.ONE / Game.WORLD_SCALE
 	_visual.add_child(_body)
 	_visual.move_child(_body, 0)
 	_body.play("idle")

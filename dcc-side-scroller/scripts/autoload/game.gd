@@ -12,7 +12,6 @@ signal item_added(item: Dictionary)
 signal screen_shake(strength: float, duration: float)
 
 const FLOOR_TIME: float = 432000.0
-const WORLD_SCALE: float = 1.25
 const ACTION_DEADZONE: float = 0.5
 
 var in_combat: bool = false
