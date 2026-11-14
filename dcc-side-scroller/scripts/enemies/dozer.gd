@@ -40,9 +40,10 @@ const DUST_POINT: Vector2 = Vector2(-50.0, -3.0)
 const BLAST_POINTS: Array[Vector2] = [Vector2(-40.0, -32.0), Vector2(20.0, -40.0), Vector2(40.0, -14.0), Vector2(-10.0, -20.0)]
 
 const BOSS_NAME: String = "Goblin Murder Dozer"
-const ROUNDS: int = 3
+const ROUNDS: int = 2
+const COUNTDOWN_ROUND: int = 2
 const HATCH_TIMES: Array[float] = [4.5, 4.0, 3.5]
-const PATROL_SPEEDS: Array[float] = [90.0, 120.0, 150.0]
+const PATROL_SPEEDS: Array[float] = [130.0, 180.0, 230.0]
 const CLOSED_TIMES: Array[float] = [3.0, 2.5, 2.0]
 const STALL_TIME: float = 1.6
 const STOMP_MIN_HEIGHT: float = 26.0
@@ -71,11 +72,13 @@ var state: State = State.PARKED
 var round_index: int = 0
 var vulnerable: bool = false
 var direction: int = 1
+var alarm: float = 0.0
 
 var _timer: float = 0.0
 var _base_y: float = 0.0
 var _hatch_timer: float = 0.0
 var _pivot_stage: int = 0
+var _alarm_phase: float = 0.0
 var _throw_timer: float = 0.0
 var _windup: float = -1.0
 var _driver_tween: Tween
@@ -278,6 +281,8 @@ func _pivot_step(delta: float) -> void:
 
 
 func _run_hatch(delta: float) -> void:
+	if round_index >= COUNTDOWN_ROUND:
+		return
 	_hatch_timer -= delta
 	if _hatch_timer > 0.0:
 		return
@@ -312,7 +317,16 @@ func _has_player() -> bool:
 	return is_instance_valid(_player)
 
 
+func detonate() -> void:
+	if state != State.DESTROYED:
+		alarm = 0.0
+		_explode()
+
+
 func _update_effects(delta: float) -> void:
+	if alarm > 0.0:
+		_alarm_phase += delta * lerpf(4.0, 18.0, alarm)
+		_visual.modulate = Color.WHITE.lerp(Color(2.4, 0.3, 0.25), 0.5 + 0.5 * sin(_alarm_phase))
 	_wheel.speed_scale = 2.4 if state == State.PIVOT and _pivot_stage == 1 else 1.0
 	_tracks.speed_scale = PATROL_SPEEDS[round_index] / 60.0 if state == State.PATROL else 0.2
 	_steam_timer -= delta
@@ -377,7 +391,7 @@ func _check_stomp() -> void:
 func _bounce() -> void:
 	_bounce_cooldown = 0.25
 	_player.velocity = Vector2(_player.velocity.x, -230.0)
-	if closed_hatch_damage > 0:
+	if closed_hatch_damage > 0 and round_index < COUNTDOWN_ROUND:
 		_player.call("take_damage", closed_hatch_damage, global_position)
 	_spawn_fx(SPARK_FX, _player.global_position + Vector2(0.0, -2.0))
 
@@ -418,9 +432,6 @@ func _hit() -> void:
 	_spawn_fx(SPARK_FX, _player.global_position + Vector2(0.0, -2.0))
 	Game.shake(3.0, 0.2)
 	round_cleared.emit(cleared)
-	if cleared >= ROUNDS:
-		_explode()
-		return
 	round_index = cleared
 	_hatch_timer = CLOSED_TIMES[round_index]
 	state = State.STALLED
