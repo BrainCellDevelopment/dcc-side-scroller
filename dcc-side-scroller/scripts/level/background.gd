@@ -4,9 +4,9 @@ const STYLES: Array = [
 	{
 		"name": "street",
 		"layers": [
-			{"file": "far", "fx": 0.1, "fy": 0.04, "top": "0a0720", "bottom": "190e2a"},
-			{"file": "mid", "fx": 0.3, "fy": 0.1, "top": "", "bottom": "150b26"},
-			{"file": "near", "fx": 0.55, "fy": 0.18, "top": "", "bottom": "0d0816"},
+			{"file": "far", "fx": 0.1, "fy": 0.04, "top": "05080f", "bottom": "2c4064"},
+			{"file": "mid", "fx": 0.3, "fy": 0.1, "top": "", "bottom": "17233b"},
+			{"file": "near", "fx": 0.55, "fy": 0.18, "top": "", "bottom": "080d1a"},
 		],
 	},
 	{
@@ -139,17 +139,17 @@ func _update_style(style_index: int) -> void:
 		return
 	var view: Vector2 = get_viewport().get_visible_rect().size
 	var cam_pos: Vector2 = Vector2(view.x * 0.5, anchor_cam_y)
-	var cam: Camera2D = get_viewport().get_camera_2d()
-	if cam != null:
-		cam_pos = cam.get_screen_center_position()
+	if get_viewport().get_camera_2d() != null:
+		cam_pos = get_viewport().get_canvas_transform().affine_inverse() * (view * 0.5)
+	var scale: float = maxf(1.0, float(get_window().size.y) / view.y)
 	var data: Array = _layer_data[style_index]
 	for item: Variant in data:
 		var entry: Dictionary = item
 		var tw: float = entry["tw"]
 		var th: float = entry["th"]
-		var origin_x: float = roundf(view.x * 0.5 - cam_pos.x * float(entry["fx"]))
+		var origin_x: float = roundf((view.x * 0.5 - cam_pos.x * float(entry["fx"])) * scale) / scale
 		var start_x: float = fposmod(origin_x, tw) - tw
-		var top_y: float = roundf(view.y * 0.5 - th * 0.5 - (cam_pos.y - anchor_cam_y) * float(entry["fy"]))
+		var top_y: float = roundf((view.y * 0.5 - th * 0.5 - (cam_pos.y - anchor_cam_y) * float(entry["fy"])) * scale) / scale
 		var rect: TextureRect = entry["rect"]
 		rect.position = Vector2(start_x, top_y)
 		rect.size = Vector2(view.x + tw + 2.0, th)

@@ -134,6 +134,7 @@ func begin_patrol(player: CharacterBody2D, floor_y: float, start_round: int = 0)
 	_hatch.play("closed")
 	_set_vulnerable(false)
 	global_position = Vector2(patrol_max_x, floor_y)
+	reset_physics_interpolation()
 	_deck.set_deferred("disabled", false)
 	visible = true
 	_driver.visible = true
