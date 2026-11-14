@@ -525,7 +525,7 @@ func _stats_bbcode(focused: bool) -> String:
 			var cursor: String = ">" if (focused and i == _selected_stat) else ""
 			t += "[cell]%s [/cell][cell]%s  [/cell][cell]%d      [/cell]" % [cursor, LABELS[names[i]], PlayerStats.get_stat(names[i])]
 	t += "[/table]\n"
-	t += "Health max %d   Mana %d/%d   Melee +%d\n" % [PlayerStats.max_health(), PlayerStats.mana, PlayerStats.max_mana(), PlayerStats.damage_bonus()]
+	t += "Health max %d   Mana %d/%d   Melee +%d   Smush %d\n" % [PlayerStats.max_health(), PlayerStats.mana, PlayerStats.max_mana(), PlayerStats.damage_bonus(), PlayerStats.smush_count]
 	if PlayerStats.class_chosen:
 		t += "Unspent points: %d  (Enter to spend)" % PlayerStats.unspent_points
 	else:
