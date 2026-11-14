@@ -14,6 +14,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import levelkit
 from levelkit import Writer, vec, STONE, fnum
+import section_rats
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 PROJECT = ROOT + "/dcc-side-scroller"
@@ -59,7 +60,8 @@ RES.update({
     "prop_grate": "res://scenes/props/grate.tscn",
     "prop_pipe_h": "res://scenes/props/pipe_h.tscn",
 })
-EXISTING = ["player", "goblin", "hud"]
+RES.update(section_rats.RES)
+EXISTING = ["player", "goblin", "hud"] + list(section_rats.RES)
 
 # idx, key (dev goto name), title shown on entry, gated (swing door at the entry edge), forward width
 SECTIONS = [
@@ -157,14 +159,9 @@ def emit_llama_alley(w):
         w.inst("Puddle%d" % i, "Hazards", "lava_puddle", position=vec(kit.mspan(x, pw), FLOOR), width=fnum(pw) + ".0")
 
 
-def section_rats(x0):
-    # Rats and Scatterers corridor (#58, #56). Stub: goblins stand in.
-    flat(960)
-    cp(1, x0 + 96, 1)
-    grunt(x0 + 360)
-    grunt(x0 + 560)
-    grunt(x0 + 720)
-    furnish(x0, x0 + 960, crates=(240,))
+def section_rats_corridor(x0):
+    # Rats and Scatterers corridor (#58, #56): layout, enemies and doors live in section_rats.py.
+    section_rats.build(kit, x0, FLOOR, furnish)
 
 
 def section_saferoom(x0):
@@ -204,7 +201,7 @@ def section_collapse(x0):
     trig("EndZone", "end", "", x0 + 640 - 100, x0 + 640 - 60, FLOOR - 120, FLOOR + 20)
 
 
-BUILDERS = [section_tunnel, section_rats, section_saferoom, section_hoarder, section_workshop, section_swine, section_collapse]
+BUILDERS = [section_tunnel, section_rats_corridor, section_saferoom, section_hoarder, section_workshop, section_swine, section_collapse]
 
 
 def build():
@@ -241,6 +238,7 @@ def write_tscn():
     kit.emit_geometry(w)
     kit.emit_enemies(w)
     emit_llama_alley(w)
+    section_rats.emit(kit, w)
     inst("EntryDoor", "Doors", "door", position=vec(kit.mx(DOOR_U), FLOOR), start_open="true",
          close_behind="true", close_side="-1.0", sealed_text='"Locked. No way back."')
     inst("Player", ".", "player", position=vec(kit.mx(START_U), FLOOR - 2))

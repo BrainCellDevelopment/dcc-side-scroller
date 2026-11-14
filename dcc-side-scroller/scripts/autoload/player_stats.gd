@@ -15,6 +15,7 @@ const BASE_VALUE: int = 5
 const BASE_HEALTH: int = 10
 const HEALTH_PER_CON: int = 2
 const STRENGTH_PER_DAMAGE: int = 3
+const SMUSH_MANY: int = 10
 
 var active: bool = false
 var floor_number: int = 0
@@ -23,6 +24,7 @@ var xp: int = 0
 var unspent_points: int = 0
 var class_chosen: bool = false
 var mana: int = 0
+var smush_count: int = 0
 var _awarded: Dictionary = {}
 
 var _base: Dictionary = {}
@@ -64,6 +66,7 @@ func reset() -> void:
 	xp = 0
 	unspent_points = 0
 	class_chosen = false
+	smush_count = 0
 	_mana_timer = 0.0
 	_awarded.clear()
 	for stat_name: String in STAT_NAMES:
@@ -119,6 +122,15 @@ func add_xp(amount: int) -> void:
 		character_level += 1
 		unspent_points += POINTS_PER_LEVEL
 		leveled_up.emit(character_level)
+	stats_changed.emit()
+
+
+## Call when the player's bare-foot stomp kills something (the Smush counter). The first-stomp
+## achievement lives in SystemVoice; this one marks ten kills.
+func add_smush() -> void:
+	smush_count += 1
+	if smush_count == SMUSH_MANY:
+		Game.unlock_achievement("smush_ten", "Stompetition", "Ten stomps. The audience has started keeping score on your socks, which you do not have.")
 	stats_changed.emit()
 
 

@@ -170,6 +170,8 @@ func _slide_off_enemies() -> void:
 func _stomp(enemy: Node2D) -> void:
 	enemy.call("take_damage", stomp_damage, global_position)
 	SystemVoice.count("stomp")
+	if enemy.get("health") != null and int(enemy.get("health")) <= 0:
+		PlayerStats.add_smush()
 	var holding_jump: bool = Game.action_pressed("jump")
 	velocity.y = jump_velocity * 0.85 if holding_jump else -stomp_bounce
 	_jumping = holding_jump

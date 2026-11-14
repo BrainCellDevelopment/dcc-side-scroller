@@ -128,7 +128,7 @@ func _physics_process(delta: float) -> void:
 		return
 	if bool(_level.get("complete")):
 		_move(0)
-		_finish(true, "reached the end of the stub, damage taken %d" % (BOT_HEALTH - int(_player.get("health"))))
+		_finish(true, "reached the end of the stub, damage taken %d, level %d xp %d, smush %d" % [BOT_HEALTH - int(_player.get("health")), PlayerStats.character_level, PlayerStats.xp, PlayerStats.smush_count])
 		return
 	_track_progress(delta, pos)
 	_navigate(pos)

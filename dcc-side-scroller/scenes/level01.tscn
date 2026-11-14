@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3 uid="uid://dl1fndtn48xq"]
+[gd_scene load_steps=38 format=3 uid="uid://dl1fndtn48xq"]
 
 [ext_resource type="Script" path="res://scripts/levels/level01.gd" id="1_level"]
 [ext_resource type="PackedScene" path="res://scenes/level/background.tscn" id="2_background"]
@@ -20,9 +20,12 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/goblin.tscn" id="18_goblin"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/llama.tscn" id="19_llama"]
 [ext_resource type="PackedScene" path="res://scenes/level/lava_puddle.tscn" id="20_lava_puddle"]
-[ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="21_door"]
-[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="22_player"]
-[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="23_hud"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/rat.tscn" id="21_rat"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/scatterer.tscn" id="22_scatterer"]
+[ext_resource type="PackedScene" path="res://scenes/props/bathroom_door.tscn" id="23_bathroom_door"]
+[ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="24_door"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="25_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="26_hud"]
 
 [sub_resource type="RectangleShape2D" id="shape_720x420"]
 size = Vector2(720, 420)
@@ -167,61 +170,109 @@ position = Vector2(4456, 194)
 [node name="D028" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(4216, 194)
 
-[node name="D029" parent="Deco" instance=ExtResource("4_p_crate")]
-position = Vector2(4816, 304)
+[node name="D029" parent="Deco" instance=ExtResource("12_p_lichen_floor")]
+position = Vector2(4996, 304)
 
-[node name="D030" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(3976, 194)
+[node name="D030" parent="Deco" instance=ExtResource("12_p_lichen_floor")]
+position = Vector2(4806, 304)
 
-[node name="D031" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(3736, 194)
+[node name="D031" parent="Deco" instance=ExtResource("12_p_lichen_floor")]
+position = Vector2(4586, 304)
 
-[node name="D032" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(3496, 194)
+[node name="D032" parent="Deco" instance=ExtResource("12_p_lichen_floor")]
+position = Vector2(4416, 304)
 
-[node name="D033" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(3208, 194)
+[node name="D033" parent="Deco" instance=ExtResource("12_p_lichen_floor")]
+position = Vector2(4276, 304)
 
-[node name="D034" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(2968, 194)
+[node name="D034" parent="Deco" instance=ExtResource("13_p_lichen_wall")]
+position = Vector2(4906, 304)
 
-[node name="D035" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(2728, 194)
+[node name="D035" parent="Deco" instance=ExtResource("13_p_lichen_wall")]
+position = Vector2(4726, 304)
 
-[node name="D036" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(2488, 194)
+[node name="D036" parent="Deco" instance=ExtResource("13_p_lichen_wall")]
+position = Vector2(4536, 304)
 
-[node name="D037" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(2312, 194)
+[node name="D037" parent="Deco" instance=ExtResource("13_p_lichen_wall")]
+position = Vector2(4356, 304)
 
-[node name="D038" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(2072, 194)
+[node name="D038" parent="Deco" instance=ExtResource("13_p_lichen_wall")]
+position = Vector2(4116, 304)
 
-[node name="D039" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(1832, 194)
+[node name="D039" parent="Deco" instance=ExtResource("10_p_grate")]
+position = Vector2(4816, 248)
 
-[node name="D040" parent="Deco" instance=ExtResource("4_p_crate")]
-position = Vector2(2232, 304)
+[node name="D040" parent="Deco" instance=ExtResource("10_p_grate")]
+position = Vector2(4576, 248)
 
-[node name="D041" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(1544, 194)
+[node name="D041" parent="Deco" instance=ExtResource("10_p_grate")]
+position = Vector2(4436, 248)
 
-[node name="D042" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(1304, 194)
+[node name="D042" parent="Deco" instance=ExtResource("11_p_pipe_h")]
+position = Vector2(4856, 172)
 
-[node name="D043" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(1064, 194)
+[node name="D043" parent="Deco" instance=ExtResource("11_p_pipe_h")]
+position = Vector2(4516, 172)
 
-[node name="D044" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(824, 194)
+[node name="D044" parent="Deco" instance=ExtResource("11_p_pipe_h")]
+position = Vector2(4226, 172)
 
-[node name="D045" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(520, 194)
+[node name="D045" parent="Deco" instance=ExtResource("7_p_skull_sconce")]
+position = Vector2(4188, 154)
 
 [node name="D046" parent="Deco" instance=ExtResource("3_p_torch")]
-position = Vector2(280, 194)
+position = Vector2(3976, 194)
 
 [node name="D047" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(3736, 194)
+
+[node name="D048" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(3496, 194)
+
+[node name="D049" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(3208, 194)
+
+[node name="D050" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(2968, 194)
+
+[node name="D051" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(2728, 194)
+
+[node name="D052" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(2488, 194)
+
+[node name="D053" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(2312, 194)
+
+[node name="D054" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(2072, 194)
+
+[node name="D055" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(1832, 194)
+
+[node name="D056" parent="Deco" instance=ExtResource("4_p_crate")]
+position = Vector2(2232, 304)
+
+[node name="D057" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(1544, 194)
+
+[node name="D058" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(1304, 194)
+
+[node name="D059" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(1064, 194)
+
+[node name="D060" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(824, 194)
+
+[node name="D061" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(520, 194)
+
+[node name="D062" parent="Deco" instance=ExtResource("3_p_torch")]
+position = Vector2(280, 194)
+
+[node name="D063" parent="Deco" instance=ExtResource("3_p_torch")]
 position = Vector2(40, 194)
 
 [node name="P001" parent="Platforms" instance=ExtResource("14_platform")]
@@ -272,29 +323,45 @@ style = 4
 [node name="P010" parent="Platforms" instance=ExtResource("14_platform")]
 position = Vector2(4096, 304)
 size = Vector2(960, 64)
-style = 5
+style = 4
 
 [node name="P011" parent="Platforms" instance=ExtResource("14_platform")]
+position = Vector2(4256, 256)
+size = Vector2(48, 48)
+style = 4
+
+[node name="P012" parent="Platforms" instance=ExtResource("14_platform")]
+position = Vector2(4128, 208)
+size = Vector2(176, 16)
+style = 4
+one_way = true
+
+[node name="P013" parent="Platforms" instance=ExtResource("14_platform")]
+position = Vector2(4112, 128)
+size = Vector2(16, 96)
+style = 4
+
+[node name="P014" parent="Platforms" instance=ExtResource("14_platform")]
 position = Vector2(3328, 304)
 size = Vector2(768, 64)
 style = 6
 
-[node name="P012" parent="Platforms" instance=ExtResource("14_platform")]
+[node name="P015" parent="Platforms" instance=ExtResource("14_platform")]
 position = Vector2(2432, 304)
 size = Vector2(896, 64)
 style = 4
 
-[node name="P013" parent="Platforms" instance=ExtResource("14_platform")]
+[node name="P016" parent="Platforms" instance=ExtResource("14_platform")]
 position = Vector2(1664, 304)
 size = Vector2(768, 64)
 style = 6
 
-[node name="P014" parent="Platforms" instance=ExtResource("14_platform")]
+[node name="P017" parent="Platforms" instance=ExtResource("14_platform")]
 position = Vector2(640, 304)
 size = Vector2(1024, 64)
 style = 4
 
-[node name="P015" parent="Platforms" instance=ExtResource("14_platform")]
+[node name="P018" parent="Platforms" instance=ExtResource("14_platform")]
 position = Vector2(0, 304)
 size = Vector2(640, 64)
 style = 5
@@ -414,15 +481,6 @@ variant = 1
 position = Vector2(5164, 302)
 
 [node name="G03" parent="Goblins" instance=ExtResource("18_goblin")]
-position = Vector2(4696, 302)
-
-[node name="G04" parent="Goblins" instance=ExtResource("18_goblin")]
-position = Vector2(4496, 302)
-
-[node name="G05" parent="Goblins" instance=ExtResource("18_goblin")]
-position = Vector2(4336, 302)
-
-[node name="G06" parent="Goblins" instance=ExtResource("18_goblin")]
 position = Vector2(1912, 302)
 variant = 1
 
@@ -445,14 +503,58 @@ width = 32.0
 position = Vector2(5240, 304)
 width = 32.0
 
-[node name="EntryDoor" parent="Doors" instance=ExtResource("21_door")]
+[node name="Rat01" parent="Goblins" instance=ExtResource("21_rat")]
+position = Vector2(4756, 302)
+
+[node name="Rat02" parent="Goblins" instance=ExtResource("21_rat")]
+position = Vector2(4720, 302)
+
+[node name="Rat03" parent="Goblins" instance=ExtResource("21_rat")]
+position = Vector2(4684, 302)
+
+[node name="Rat04" parent="Goblins" instance=ExtResource("21_rat")]
+position = Vector2(4648, 302)
+
+[node name="Rat05" parent="Goblins" instance=ExtResource("21_rat")]
+position = Vector2(4612, 302)
+
+[node name="Scatterer01" parent="Goblins" instance=ExtResource("22_scatterer")]
+position = Vector2(4456, 302)
+
+[node name="Scatterer02" parent="Goblins" instance=ExtResource("22_scatterer")]
+position = Vector2(4416, 302)
+
+[node name="Scatterer03" parent="Goblins" instance=ExtResource("22_scatterer")]
+position = Vector2(4376, 302)
+
+[node name="Scatterer04" parent="Goblins" instance=ExtResource("22_scatterer")]
+position = Vector2(4336, 302)
+
+[node name="Scatterer05" parent="Goblins" instance=ExtResource("22_scatterer")]
+position = Vector2(4216, 302)
+
+[node name="Scatterer06" parent="Goblins" instance=ExtResource("22_scatterer")]
+position = Vector2(4176, 302)
+
+[node name="LooA" parent="Doors" instance=ExtResource("23_bathroom_door")]
+position = Vector2(4866, 304)
+
+[node name="LooB" parent="Doors" instance=ExtResource("23_bathroom_door")]
+position = Vector2(4496, 304)
+
+[node name="LooDeadEnd" parent="Doors" instance=ExtResource("23_bathroom_door")]
+position = Vector2(4160, 208)
+hidden_item_id = "soap_travel"
+hidden_item_name = "Travel-Size Soap"
+
+[node name="EntryDoor" parent="Doors" instance=ExtResource("24_door")]
 position = Vector2(6904, 304)
 start_open = true
 close_behind = true
 close_side = -1.0
 sealed_text = "Locked. No way back."
 
-[node name="Player" parent="." instance=ExtResource("22_player")]
+[node name="Player" parent="." instance=ExtResource("25_player")]
 position = Vector2(6848, 302)
 
 [node name="Camera2D" type="Camera2D" parent="."]
@@ -465,7 +567,7 @@ limit_smoothed = true
 position_smoothing_enabled = true
 position_smoothing_speed = 6.0
 
-[node name="HUD" parent="." instance=ExtResource("23_hud")]
+[node name="HUD" parent="." instance=ExtResource("26_hud")]
 
 [node name="Sec0" type="Area2D" parent="Triggers"]
 position = Vector2(6000, 550)
