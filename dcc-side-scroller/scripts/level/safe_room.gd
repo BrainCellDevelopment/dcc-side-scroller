@@ -129,8 +129,14 @@ func _on_zone_entered(body: Node2D) -> void:
 		_boxes_given = true
 		for tier: String in box_tiers:
 			add_box.call_deferred(tier)
+	_give_earned_boxes.call_deferred()
 	SystemVoice.fire("first_safe_room")
 	entered.emit()
+
+
+func _give_earned_boxes() -> void:
+	for tier: String in Game.take_earned_boxes():
+		add_box(tier)
 
 
 func _on_zone_exited(body: Node2D) -> void:

@@ -229,6 +229,7 @@ func _die() -> void:
 	body_shape.set_deferred("disabled", true)
 	_set_engaged(false)
 	PlayerStats.award_kill(self)
+	Game.report_mob_kill(self)
 	died.emit(self)
 	sprite.speed_scale = 1.0
 	sprite.play("die")
