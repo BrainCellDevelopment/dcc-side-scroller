@@ -1,0 +1,27 @@
+[gd_resource type="Theme" load_steps=5 format=3]
+
+[ext_resource type="FontFile" path="res://assets/fonts/PixelifySans.ttf" id="1_body"]
+[ext_resource type="FontFile" path="res://assets/fonts/Silkscreen-Regular.ttf" id="2_hud"]
+[ext_resource type="FontFile" path="res://assets/fonts/Silkscreen-Bold.ttf" id="3_hudbold"]
+
+[sub_resource type="FontVariation" id="FontVariation_heading"]
+base_font = ExtResource("1_body")
+variation_opentype = {2003265652: 700.0}
+
+[resource]
+default_font = ExtResource("1_body")
+default_font_size = 12
+Heading/base_type = &"Label"
+Heading/fonts/font = SubResource("FontVariation_heading")
+HudLabel/base_type = &"Label"
+HudLabel/font_sizes/font_size = 8
+HudLabel/fonts/font = ExtResource("2_hud")
+ShadowText/base_type = &"Label"
+ShadowText/colors/font_shadow_color = Color(0, 0, 0, 1)
+ShadowText/constants/shadow_offset_x = 1
+ShadowText/constants/shadow_offset_y = 1
+StatsText/base_type = &"RichTextLabel"
+StatsText/fonts/normal_font = ExtResource("2_hud")
+StatsText/fonts/bold_font = ExtResource("3_hudbold")
+StatsText/font_sizes/normal_font_size = 8
+StatsText/font_sizes/bold_font_size = 8

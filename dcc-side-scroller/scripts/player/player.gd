@@ -5,6 +5,7 @@ signal attacked
 
 const COYOTE_TIME: float = 0.1
 const JUMP_BUFFER_TIME: float = 0.1
+const Taint: GDScript = preload("res://scripts/combat/taint.gd")
 const DROP_THROUGH_TIME: float = 0.25
 const HURT_STUN_TIME: float = 0.2
 const BUFF_SPEED: float = 1.2
@@ -286,7 +287,7 @@ func apply_buff(buff: String, seconds: float) -> void:
 
 ## Item effect: returns false (nothing spent) when already at full health.
 func heal(amount: int) -> bool:
-	if _dead or health >= max_health:
+	if _dead or health >= max_health or Taint.is_tainted(self):
 		return false
 	health = mini(health + amount, max_health)
 	Game.report_player_health(health, max_health)
@@ -435,7 +436,7 @@ func _spend_mana(cost: float) -> bool:
 
 func _regen_health(delta: float) -> void:
 	var interval: float = PlayerStats.health_regen_interval()
-	if interval <= 0.0 or _dead or health >= max_health:
+	if interval <= 0.0 or _dead or health >= max_health or Taint.is_tainted(self):
 		_health_regen_acc = 0.0
 		return
 	_health_regen_acc += delta

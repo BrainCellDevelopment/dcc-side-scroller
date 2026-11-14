@@ -379,7 +379,7 @@ func _make_plate() -> void:
 	_plate = Label.new()
 	_plate.name = "Plate"
 	_plate.text = "%s  LV %d\nSpits lava. Throat is soft." % [display_name, enemy_level]
-	_plate.add_theme_font_size_override("font_size", 8)
+	_plate.add_theme_font_size_override("font_size", 12)
 	_plate.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
 	_plate.add_theme_color_override("font_outline_color", Color(0.05, 0.02, 0.04))
 	_plate.add_theme_constant_override("outline_size", 3)
@@ -412,7 +412,7 @@ func _show_plate() -> void:
 func _float_text(text: String, at: Vector2) -> void:
 	var label: Label = Label.new()
 	label.text = text
-	label.add_theme_font_size_override("font_size", 8)
+	label.add_theme_font_size_override("font_size", 12)
 	label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
 	label.add_theme_color_override("font_outline_color", Color(0.05, 0.02, 0.04))
 	label.add_theme_constant_override("outline_size", 3)

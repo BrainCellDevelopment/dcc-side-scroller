@@ -8,6 +8,7 @@ extends Node2D
 signal ready_to_leave
 
 const SET: GDScript = preload("res://scripts/level/greenroom_set.gd")
+const LOOT_BOX: PackedScene = preload("res://scenes/props/loot_box.tscn")
 const MORDECAI: PackedScene = preload("res://scenes/props/mordecai.tscn")
 const ZONE_SIZE: Vector2 = Vector2(288.0, 140.0)
 const MORDECAI_X: float = 26.0
@@ -81,6 +82,7 @@ func _on_zone_entered(body: Node2D) -> void:
 	if body.is_in_group("player"):
 		player_inside = true
 		Game.set_safe_zone(true)
+		_give_earned_boxes.call_deferred()
 
 
 func _on_zone_exited(body: Node2D) -> void:
@@ -92,3 +94,15 @@ func _on_zone_exited(body: Node2D) -> void:
 func _exit_tree() -> void:
 	if player_inside:
 		Game.set_safe_zone(false)
+
+
+func _give_earned_boxes() -> void:
+	for tier: String in Game.take_earned_boxes():
+		var box: Area2D = LOOT_BOX.instantiate() as Area2D
+		box.set("tier", tier)
+		box.set("kit", "floor1")
+		box.set("slot", get_tree().get_nodes_in_group("loot_boxes").size())
+		add_child(box)
+		var spot: Vector2 = global_position + Vector2(MORDECAI_X - 30.0, -20.0)
+		box.global_position = spot
+		box.call("summon", get_tree().get_first_node_in_group("player"), spot)

@@ -9,6 +9,7 @@ const SpriteUtil: GDScript = preload("res://scripts/util/sprite_util.gd")
 const GRUNT_SHEET: Texture2D = preload("res://assets/characters/goblin.png")
 const THROWER_SHEET: Texture2D = preload("res://assets/characters/goblin_thrower.png")
 const BARD_SHEET: Texture2D = preload("res://assets/characters/goblin_bard.png")
+const CLURICHAUN_SHEET: Texture2D = preload("res://assets/characters/clurichaun.png")
 const SHAMANKA_SHEET: Texture2D = preload("res://assets/characters/goblin_shamanka.png")
 const BOMB_SCENE: PackedScene = preload("res://scenes/enemies/glass_bomb.tscn")
 const ROCK_SCENE: PackedScene = preload("res://scenes/enemies/rock.tscn")
@@ -42,7 +43,7 @@ const HURT_TIME: float = 0.2
 const KNOCKBACK: Vector2 = Vector2(120.0, -90.0)
 const HEIGHT_TOLERANCE: float = 40.0
 
-@export_enum("Grunt", "Thrower", "BombBard", "Shamanka") var variant: int = 0
+@export_enum("Grunt", "Thrower", "BombBard", "Shamanka", "Clurichaun") var variant: int = 0
 @export var enemy_level: int = 2
 @export var xp_value: int = -1
 @export var is_boss: bool = false
@@ -110,8 +111,10 @@ func _ready() -> void:
 		windup_time = 0.7
 		active_time = THROW_ACTIVE
 		throw_cooldown = 1.2
-	elif variant == 1:
-		max_health = 2
+	elif variant == 1 or variant == 4:
+		max_health = 3 if variant == 4 else 2
+		if variant == 4:
+			enemy_level = 3
 		speed = 40.0
 		chase_speed = 40.0
 		detect_range = 250.0
@@ -324,6 +327,8 @@ func _sheet() -> Texture2D:
 			return BARD_SHEET
 		3:
 			return SHAMANKA_SHEET
+		4:
+			return CLURICHAUN_SHEET
 	return GRUNT_SHEET
 
 
@@ -380,6 +385,8 @@ func _cast_anguish() -> void:
 func _release_attack() -> void:
 	match variant:
 		1:
+			_throw_rock()
+		4:
 			_throw_rock()
 		2:
 			_throw_bomb()
@@ -575,6 +582,7 @@ func _throw_rock() -> void:
 	var launch_velocity: Vector2 = Vector2(offset.x / flight, offset.y / flight - 0.5 * g * flight)
 	if launch_velocity.length() > ROCK_SPEED_MAX:
 		launch_velocity = launch_velocity.normalized() * ROCK_SPEED_MAX
+	rock.set("taints", variant == 4)
 	rock.call("launch", launch_velocity, attack_damage)
 
 
