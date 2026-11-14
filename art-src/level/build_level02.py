@@ -44,6 +44,8 @@ RES = {
     "grub": "res://scenes/enemies/grub.tscn",
     "dingo": "res://scenes/enemies/dingo.tscn",
     "storm_shelter": "res://scenes/level/storm_shelter.tscn",
+    "krakaren_lair": "res://scenes/level/krakaren_lair.tscn",
+    "smoothie_bench": "res://scenes/props/smoothie_bench.tscn",
     "hud": "res://scenes/ui/hud.tscn",
     "platform": "res://scenes/level/platform.tscn",
     "spikes": "res://scenes/level/spikes.tscn",
@@ -82,17 +84,24 @@ def grub(x, y=None):
     kit.add_enemy("grub", x, cur["y"] if y is None else y)
 
 
+def clurichaun(x, y=None):
+    kit.add_enemy("clurichaun", x, cur["y"] if y is None else y)
+
+
 def dingo(x, y=None):
     kit.add_enemy("dingo", x, cur["y"] if y is None else y)
 
 
 def emit_critters(w):
-    counts = {"grub": 0, "dingo": 0}
+    counts = {"grub": 0, "dingo": 0, "clurichaun": 0}
     for e in kit.enemies:
         if e["kind"] in counts:
             counts[e["kind"]] += 1
-            w.inst("%s%02d" % (e["kind"].capitalize(), counts[e["kind"]]), "Goblins", e["kind"],
-                   position=vec(e["x"], e["y"] - 2))
+            name = "%s%02d" % (e["kind"].capitalize(), counts[e["kind"]])
+            if e["kind"] == "clurichaun":
+                w.inst(name, "Goblins", "goblin", position=vec(e["x"], e["y"] - 2), variant="4")
+            else:
+                w.inst(name, "Goblins", e["kind"], position=vec(e["x"], e["y"] - 2))
 
 
 def furnish(x0, x1, crates=()):
@@ -142,31 +151,47 @@ def emit_shelter(w):
     w.inst("StormShelter", ".", "storm_shelter", position=vec(SHELTER["center"], FLOOR))
 
 
+BENCH = {}
+LAIR = {}
+
+
 def section_clurichaun(x0):
-    # Hillbilly Clurichauns with slingshots around the moonshine filling room (M3).
+    # Hillbilly Clurichauns with slingshots (their pebbles inflict the Taint) leading to the filling room, where
+    # the bicycle blender makes the immunity smoothie the Krakaren fight needs.
     flat(384)
     cp(2, x0 + 96, 2)
-    thrower(x0 + 300)
+    clurichaun(x0 + 300)
     pit(48)
     flat(320)
     shelf = kit.add_plat(x0 + 512, FLOOR - 80, 96, 16, CINDER, kind="upper", one_way=True)
-    thrower(shelf["x"] + 48, shelf["y"])
+    clurichaun(shelf["x"] + 48, shelf["y"])
     flat(384)
     block(x0 + 896, 32, 32)
-    grunt(x0 + 1000)
+    clurichaun(x0 + 1000)
     flat(400)
-    thrower(x0 + 1400)
+    clurichaun(x0 + 1240)
+    BENCH["x"] = x0 + 1344
     furnish(x0, x0 + 1536, crates=(240, 1160))
     kit.trig("BgClurichaun", "bg", "9", x0, x0 + 1536, FLOOR - 300, FLOOR + 120)
 
 
+def emit_bench(w):
+    w.inst("SmoothieBench", ".", "smoothie_bench", position=vec(BENCH["x"], FLOOR))
+
+
 def section_krakaren(x0):
-    # Boss lair: the Krakaren Clone bursts through the cinderblock (M3). A flat arena for now.
+    # Boss lair: the Krakaren Clone (krakaren_lair.gd builds the boss, lock and trigger). A 256 px lead-in with
+    # the checkpoint, then a 640 px arena.
     flat(256)
     cp(3, x0 + 96, 3)
     flat(640)
-    furnish(x0, x0 + 896)
+    LAIR["center"] = x0 + 256 + 320
+    kit.add_prop("prop_torch", x0 + 40, FLOOR - 110)
     kit.trig("BgKrakaren", "bg", "8", x0, x0 + 896, FLOOR - 300, FLOOR + 120)
+
+
+def emit_lair(w):
+    w.inst("KrakarenLair", ".", "krakaren_lair", position=vec(LAIR["center"], FLOOR))
 
 
 def section_grubstorm(x0):
@@ -243,6 +268,8 @@ def write_tscn():
     kit.emit_enemies(w)
     emit_critters(w)
     emit_shelter(w)
+    emit_bench(w)
+    emit_lair(w)
     inst("Player", ".", "player", position=vec(START_U, FLOOR - 2))
     raw("Camera2D", "Camera2D", ".", [
         "position = %s" % vec(START_U, 184), "limit_left = 0", "limit_top = -116", "limit_right = %d" % WIDTH,

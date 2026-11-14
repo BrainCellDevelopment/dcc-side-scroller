@@ -65,6 +65,8 @@ func _ready() -> void:
 	Game.screen_shake.connect(_on_screen_shake)
 	Game.report_player_health(int(_player.get("health")), int(_player.get("max_health")))
 	_capture_arrival()
+	if Game.checkpoint_index < 3:
+		Game.set_meta("smoothie_immune", false)
 	_begin()
 	_setup_gates()
 

@@ -58,6 +58,27 @@ def backgrounds():
             print("wrote bg_%s_%s.png" % (new, layer))
 
 
+def clurichaun():
+    """Clurichaun sheet: the Thrower goblin recoloured ruddy and sunburnt (hillbilly fairy), same frame layout."""
+    src = Image.open(ASSETS + "characters/goblin_thrower.png").convert("RGBA")
+    px = src.load()
+    for y in range(src.height):
+        for x in range(src.width):
+            r, g, b, a = px[x, y]
+            if a == 0:
+                continue
+            h, s, v = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
+            if 0.18 < h < 0.5 and s > 0.2:
+                h = 0.02 + (h - 0.18) * 0.08
+                s = min(1.0, s * 0.95)
+                v = min(1.0, v * 1.12)
+            r2, g2, b2 = colorsys.hsv_to_rgb(h, s, v)
+            px[x, y] = (int(r2 * 255), int(g2 * 255), int(b2 * 255), a)
+    src.save(ASSETS + "characters/clurichaun.png")
+    print("wrote clurichaun.png")
+
+
 if __name__ == "__main__":
     tiles()
     backgrounds()
+    clurichaun()
