@@ -146,7 +146,11 @@ func award_kill(enemy: Node) -> int:
 func health_regen_interval() -> float:
 	if not active:
 		return 0.0
-	return REGEN_SECONDS_TIMES_CON / float(maxi(get_stat("constitution"), 1))
+	var interval: float = REGEN_SECONDS_TIMES_CON / float(maxi(get_stat("constitution"), 1))
+	var inventory: Node = get_node_or_null("/root/Inventory")
+	if inventory != null:
+		interval /= 1.0 + float(inventory.equipment_value("regen"))
+	return interval
 
 
 func can_spend_points() -> bool:

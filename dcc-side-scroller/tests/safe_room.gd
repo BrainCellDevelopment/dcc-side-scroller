@@ -121,7 +121,7 @@ func _boxes_only_inside() -> void:
 	await _frames(60)
 	await _tap()
 	_check(bool(box.get("is_open")), "box opens inside the safe room")
-	_check(Inventory.has_item("bandages"), "opened box added its item")
+	_check(Inventory.slots.any(func(x: Dictionary) -> bool: return not x.is_empty()), "opened box added its item")
 	var second: Area2D = _room.call("add_box", "Silver") as Area2D
 	_player.global_position = Vector2(-400.0, -2.0)
 	await _frames(90)

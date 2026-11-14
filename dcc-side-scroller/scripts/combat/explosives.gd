@@ -1,5 +1,6 @@
 extends RefCounted
 
+const ItemDefs: GDScript = preload("res://scripts/data/item_defs.gd")
 const ITEM_ID: String = "dynamite"
 const ITEM_NAME: String = "Goblin Dynamite"
 const BOOM_ACHIEVEMENT: String = "explosives_boom"
@@ -22,7 +23,7 @@ static func stack_count() -> int:
 
 
 static func add_stack(count: int = 1) -> bool:
-	return Inventory.add_item(ITEM_ID, ITEM_NAME, "Bronze", count)
+	return Inventory.add_item(ITEM_ID, ITEM_NAME, "Bronze", count, ItemDefs.extra(ITEM_ID))
 
 
 # Takes one stick from the inventory stack. False when the player has none.
