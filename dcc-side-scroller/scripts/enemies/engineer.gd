@@ -296,6 +296,8 @@ func _hurt(delta: float) -> void:
 func _defeat() -> void:
 	state = State.DEFEATED
 	velocity = Vector2.ZERO
+	set_deferred("collision_layer", 0)
+	set_deferred("collision_mask", 0)
 	_set_attack_enabled(false)
 	_reset_pose()
 	_flash()

@@ -71,7 +71,7 @@ func _teardown() -> void:
 
 
 func _drop_onto_head() -> void:
-	_player.global_position = Vector2(0.0, -90.0)
+	_player.global_position = Vector2(_engineer.global_position.x, -90.0)
 	_player.velocity = Vector2(0.0, 120.0)
 
 
